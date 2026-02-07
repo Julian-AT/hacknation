@@ -149,6 +149,7 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        console.log('Stream execution started for model:', selectedChatModel);
         const tools: any = isReasoningModel
           ? {
               getWeather,
@@ -171,31 +172,43 @@ export async function POST(request: Request) {
               planMission,
             };
 
-        const result = streamText({
-          model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
-          messages: modelMessages,
-          providerOptions: isReasoningModel
-            ? {
-                anthropic: {
-                  thinking: { type: "enabled", budgetTokens: 10_000 },
-                },
-              }
-            : undefined,
-          tools,
-          maxSteps: isReasoningModel ? 1 : 10,
-          experimental_telemetry: {
-            isEnabled: isProductionEnvironment,
-            functionId: "stream-text",
-          },
-        } as any);
+        try {
+          const result = streamText({
+            model: getLanguageModel(selectedChatModel),
+            system: systemPrompt({ selectedChatModel, requestHints }),
+            messages: modelMessages,
+            providerOptions: isReasoningModel
+              ? {
+                  anthropic: {
+                    thinking: { type: "enabled", budgetTokens: 10_000 },
+                  },
+                }
+              : undefined,
+            tools,
+            maxSteps: isReasoningModel ? 1 : 10,
+            experimental_telemetry: {
+              isEnabled: isProductionEnvironment,
+              functionId: "stream-text",
+            },
+            onFinish: (event) => {
+              console.log('Stream finished. Usage:', event.usage);
+            },
+          } as any);
 
-        dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
+          dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
+        } catch (streamError: any) {
+          console.error('Error inside streamText:', streamError);
+          dataStream.write({ type: 'error', data: streamError.message });
+        }
 
         if (titlePromise) {
-          const title = await titlePromise;
-          dataStream.write({ type: "data-chat-title", data: title });
-          updateChatTitleById({ chatId: id, title });
+          try {
+            const title = await titlePromise;
+            dataStream.write({ type: "data-chat-title", data: title });
+            updateChatTitleById({ chatId: id, title });
+          } catch (titleError) {
+            console.error('Error generating title:', titleError);
+          }
         }
       },
       generateId: generateUUID,
