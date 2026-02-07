@@ -16,7 +16,9 @@ export const findNearby = tool({
     facilityType: z.string().optional().describe('Filter by type (e.g., "Hospital")'),
     limit: z.number().default(20),
   }),
-  execute: async ({ location, radiusKm, specialty, facilityType, limit }: any) => {
+  execute: async ({ location, radiusKm: rawRadiusKm, specialty, facilityType, limit: rawLimit }: any) => {
+    const radiusKm = typeof rawRadiusKm === 'number' && rawRadiusKm > 0 ? rawRadiusKm : 50;
+    const limit = typeof rawLimit === 'number' && rawLimit > 0 ? rawLimit : 20;
     const log = createToolLogger('findNearby');
     const start = Date.now();
     log.start({ location, radiusKm, specialty, facilityType, limit });
@@ -52,13 +54,15 @@ export const findNearby = tool({
       return result;
     }
 
-    const distanceSql = sql`
-      6371 * acos(
-        cos(radians(${lat})) * cos(radians(${facilities.lat})) *
-        cos(radians(${facilities.lng}) - radians(${lng})) +
-        sin(radians(${lat})) * sin(radians(${facilities.lat}))
+    const distanceSql = sql`(
+      6371.0 * acos(
+        LEAST(1.0, GREATEST(-1.0,
+          cos(radians(${lat})) * cos(radians(${facilities.lat})) *
+          cos(radians(${facilities.lng}) - radians(${lng})) +
+          sin(radians(${lat})) * sin(radians(${facilities.lat}))
+        ))
       )
-    `;
+    )`;
 
     try {
       const conditions = [

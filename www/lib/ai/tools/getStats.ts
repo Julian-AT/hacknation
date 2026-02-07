@@ -12,7 +12,8 @@ export const getStats = tool({
     groupBy: z.enum(['region', 'type', 'specialty']).optional().describe('Group results by region, facility type, or specialty'),
     limit: z.number().default(10),
   }),
-  execute: async ({ groupBy, limit }: any) => {
+  execute: async ({ groupBy, limit: rawLimit }: any) => {
+    const limit = typeof rawLimit === 'number' && rawLimit > 0 ? rawLimit : 10;
     const log = createToolLogger('getStats');
     const start = Date.now();
     log.start({ groupBy, limit });

@@ -13,7 +13,8 @@ export const findMedicalDeserts = tool({
     service: z.string().describe('The healthcare service to check (e.g., "neurosurgery", "dialysis")'),
     thresholdKm: z.number().default(100).describe('Distance threshold to consider an area "served"'),
   }),
-  execute: async ({ service, thresholdKm }: any) => {
+  execute: async ({ service, thresholdKm: rawThresholdKm }: any) => {
+    const thresholdKm = typeof rawThresholdKm === 'number' && rawThresholdKm > 0 ? rawThresholdKm : 100;
     const log = createToolLogger('findMedicalDeserts');
     const start = Date.now();
     log.start({ service, thresholdKm });

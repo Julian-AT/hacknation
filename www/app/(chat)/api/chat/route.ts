@@ -204,22 +204,27 @@ export async function POST(request: Request) {
               console.log(`[ChatRoute] Stream finished | duration=${duration}ms | usage=${JSON.stringify(event.usage)}`);
             },
             onStepFinish: (event) => {
-              const toolCalls = event.toolCalls ?? [];
-              const toolResults = event.toolResults ?? [];
-              if (toolCalls.length > 0) {
-                for (const tc of toolCalls) {
-                  console.log(`[ChatRoute] Tool called: ${tc.toolName} | callId=${tc.toolCallId} | args=${JSON.stringify(tc.args).slice(0, 300)}`);
-                }
-              }
-              if (toolResults.length > 0) {
-                for (const tr of toolResults) {
-                  const resultStr = JSON.stringify(tr.result);
-                  const hasError = typeof tr.result === 'object' && tr.result !== null && 'error' in tr.result;
-                  console.log(`[ChatRoute] Tool result: ${tr.toolName} | callId=${tr.toolCallId} | hasError=${hasError} | size=${resultStr.length} chars`);
-                  if (hasError) {
-                    console.error(`[ChatRoute] Tool ERROR: ${tr.toolName} | error=${(tr.result as any).error}`);
+              try {
+                const toolCalls = event.toolCalls ?? [];
+                const toolResults = event.toolResults ?? [];
+                if (toolCalls.length > 0) {
+                  for (const tc of toolCalls) {
+                    const argsStr = JSON.stringify(tc.args) ?? '';
+                    console.log(`[ChatRoute] Tool called: ${tc.toolName} | callId=${tc.toolCallId} | args=${argsStr.slice(0, 300)}`);
                   }
                 }
+                if (toolResults.length > 0) {
+                  for (const tr of toolResults) {
+                    const resultStr = JSON.stringify(tr.result) ?? '';
+                    const hasError = typeof tr.result === 'object' && tr.result !== null && 'error' in tr.result;
+                    console.log(`[ChatRoute] Tool result: ${tr.toolName} | callId=${tr.toolCallId} | hasError=${hasError} | size=${resultStr.length} chars`);
+                    if (hasError) {
+                      console.error(`[ChatRoute] Tool ERROR: ${tr.toolName} | error=${(tr.result as any).error}`);
+                    }
+                  }
+                }
+              } catch (logError) {
+                console.error('[ChatRoute] onStepFinish logging error:', logError instanceof Error ? logError.message : logError);
               }
             },
           } as any);

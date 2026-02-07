@@ -15,7 +15,8 @@ export const searchFacilities = tool({
     facilityType: z.string().optional().describe('Filter by facility type (Hospital, Clinic, etc.)'),
     limit: z.number().optional().default(10),
   }),
-  execute: async ({ query, region, facilityType, limit }: any) => {
+  execute: async ({ query, region, facilityType, limit: rawLimit }: any) => {
+    const limit = typeof rawLimit === 'number' && rawLimit > 0 ? rawLimit : 10;
     const log = createToolLogger('searchFacilities');
     const start = Date.now();
     log.start({ query, region, facilityType, limit });
