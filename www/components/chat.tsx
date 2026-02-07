@@ -104,7 +104,7 @@ export function Chat({
     },
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      fetch: fetchWithErrorHandlers,
+      fetch: fetchWithErrorHandlers as typeof fetch,
       prepareSendMessagesRequest(request) {
         const lastMessage = request.messages.at(-1);
         const isToolApprovalContinuation =
