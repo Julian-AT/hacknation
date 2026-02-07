@@ -2,7 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Wrench, Search, Map as MapIcon, Activity, BarChart, Database, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Wrench, Search, Map as MapIcon, Activity, BarChart, Database, AlertTriangle, Eye } from 'lucide-react';
+import { useVF } from '@/lib/vf-context';
 
 interface ToolTraceProps {
   toolCallId: string;
@@ -13,27 +14,77 @@ interface ToolTraceProps {
 
 export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
 
   const getToolIcon = (name: string) => {
     switch (name) {
-      case 'queryDatabase': return <Database className="w-4 h-4 text-blue-400" />;
-      case 'searchFacilities': return <Search className="w-4 h-4 text-green-400" />;
+      case 'queryDatabase': return <Database className="size-4 text-blue-400" />;
+      case 'searchFacilities': return <Search className="size-4 text-green-400" />;
       case 'findNearby': 
-      case 'findMedicalDeserts': return <MapIcon className="w-4 h-4 text-yellow-400" />;
-      case 'detectAnomalies': return <AlertTriangle className="w-4 h-4 text-red-400" />;
-      case 'getStats': return <BarChart className="w-4 h-4 text-purple-400" />;
-      case 'planMission': return <Activity className="w-4 h-4 text-pink-400" />;
-      default: return <Wrench className="w-4 h-4 text-zinc-400" />;
+      case 'findMedicalDeserts': return <MapIcon className="size-4 text-yellow-400" />;
+      case 'detectAnomalies': return <AlertTriangle className="size-4 text-red-400" />;
+      case 'getStats': return <BarChart className="size-4 text-purple-400" />;
+      case 'planMission': return <Activity className="size-4 text-pink-400" />;
+      default: return <Wrench className="size-4 text-zinc-400" />;
     }
   };
 
-  const formatArgs = (args: any) => {
-    // Summarize args for header
-    if (toolName === 'searchFacilities') return `query: "${args.query}"`;
-    if (toolName === 'findNearby') return `near: "${args.location}"`;
+  const formatArgs = (currentArgs: any) => {
+    if (toolName === 'searchFacilities') return `query: "${currentArgs.query}"`;
+    if (toolName === 'findNearby') return `near: "${currentArgs.location}"`;
     if (toolName === 'queryDatabase') return 'SQL Query';
-    if (toolName === 'planMission') return `specialty: "${args.specialty}"`;
-    return JSON.stringify(args).slice(0, 30) + (JSON.stringify(args).length > 30 ? '...' : '');
+    if (toolName === 'planMission') return `specialty: "${currentArgs.specialty}"`;
+    const str = JSON.stringify(currentArgs);
+    return str.slice(0, 30) + (str.length > 30 ? '...' : '');
+  };
+
+  const hasGeoData = (): boolean => {
+    if (!result || result.error) return false;
+    if (toolName === 'findNearby' && result.facilities?.length > 0) return true;
+    if (toolName === 'findMedicalDeserts' && result.desertZones?.length > 0) return true;
+    if (toolName === 'getFacility' && result.facility?.lat && result.facility?.lng) return true;
+    return false;
+  };
+
+  const handleViewOnMap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!result) return;
+
+    if (toolName === 'findNearby' && result.facilities) {
+      setMapFacilities(result.facilities);
+      if (result.center) {
+        setMapCenter([result.center.lat, result.center.lng]);
+        setMapZoom(10);
+      }
+      setMapVisible(true);
+    } else if (toolName === 'findMedicalDeserts' && result.desertZones) {
+      const markers = result.desertZones.map((z: any) => ({
+        id: Math.random(),
+        name: `${z.city} Gap (${z.distanceKm}km)`,
+        lat: z.coordinates.lat,
+        lng: z.coordinates.lng,
+        type: 'Medical Desert',
+        distanceKm: z.distanceKm,
+      }));
+      setMapFacilities(markers);
+      if (markers.length > 0) {
+        setMapCenter([markers[0].lat, markers[0].lng]);
+        setMapZoom(7);
+      }
+      setMapVisible(true);
+    } else if (toolName === 'getFacility' && result.facility?.lat && result.facility?.lng) {
+      setMapFacilities([{
+        id: result.facility.id,
+        name: result.facility.name,
+        lat: result.facility.lat,
+        lng: result.facility.lng,
+        type: result.facility.facilityType,
+        city: result.facility.addressCity,
+      }]);
+      setMapCenter([result.facility.lat, result.facility.lng]);
+      setMapZoom(12);
+      setMapVisible(true);
+    }
   };
 
   return (
@@ -51,6 +102,17 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {hasGeoData() && (
+            <button
+              type="button"
+              aria-label="View on map"
+              onClick={handleViewOnMap}
+              className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-900/50 hover:bg-blue-900/50"
+            >
+              <Eye className="size-3" />
+              Map
+            </button>
+          )}
           {result ? (
             <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/30 text-green-400 border border-green-900/50">
               Completed
@@ -60,7 +122,7 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
               Running...
             </span>
           )}
-          {isOpen ? <ChevronDown className="w-4 h-4 text-zinc-500" /> : <ChevronRight className="w-4 h-4 text-zinc-500" />}
+          {isOpen ? <ChevronDown className="size-4 text-zinc-500" /> : <ChevronRight className="size-4 text-zinc-500" />}
         </div>
       </button>
 

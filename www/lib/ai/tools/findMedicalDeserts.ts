@@ -2,9 +2,10 @@
 import { z } from 'zod';
 import { db } from '../../db';
 import { facilities } from '../../db/schema.facilities';
-import { sql, and, isNotNull, ilike } from 'drizzle-orm';
-import { CITY_COORDS, REGION_POPULATION } from '../../ghana';
+import { and, isNotNull, ilike } from 'drizzle-orm';
+import { CITY_COORDS } from '../../ghana';
 import { tool } from 'ai';
+import { createToolLogger } from './debug';
 
 export const findMedicalDeserts = tool({
   description: 'Identify geographic regions where specific healthcare services are absent or dangerously far. Returns "desert zones" with gap radius and affected population.',
@@ -13,9 +14,12 @@ export const findMedicalDeserts = tool({
     thresholdKm: z.number().default(100).describe('Distance threshold to consider an area "served"'),
   }),
   execute: async ({ service, thresholdKm }: any) => {
+    const log = createToolLogger('findMedicalDeserts');
+    const start = Date.now();
+    log.start({ service, thresholdKm });
+
     try {
-      // 1. Find all facilities offering the service
-      // We check raw text for flexibility
+      log.step('Querying providers for service', service);
       const providers = await db
         .select({
           id: facilities.id,
@@ -29,19 +33,24 @@ export const findMedicalDeserts = tool({
           isNotNull(facilities.lat),
           isNotNull(facilities.lng),
           ilike(facilities.proceduresRaw, `%${service}%`)
-          // Could also check specialties array, etc.
         ));
 
+      log.step('Providers found', providers.length);
+
       if (providers.length === 0) {
-        return {
+        const output = {
           service,
           status: 'NATIONAL_GAP',
           message: `No facilities in Ghana explicitly list "${service}" in their procedures.`,
         };
+        log.success(output, Date.now() - start);
+        return output;
       }
 
-      // 2. Check major cities against providers
-      // For each city, find distance to nearest provider
+      // Check major cities against providers
+      const cityCount = Object.keys(CITY_COORDS).length;
+      log.step('Computing distances for cities', cityCount);
+
       const cityGaps: any[] = [];
       
       for (const [cityName, coords] of Object.entries(CITY_COORDS)) {
@@ -68,19 +77,19 @@ export const findMedicalDeserts = tool({
         }
       }
 
-      // 3. Aggregate by Region
-      // Since we don't have a perfect city->region map in memory, we return city gaps.
-      // But we can infer region impact if many cities in a region are gaps.
-      
-      return {
+      log.step('Desert zones identified', cityGaps.length);
+
+      const output = {
         service,
         thresholdKm,
         totalProviders: providers.length,
-        desertZones: cityGaps.sort((a: any, b: any) => b.distanceKm - a.distanceKm).slice(0, 10), // Top 10 worst gaps
-        affectedPopulationEstimate: 'Calculating population impact requires precise region mapping.' // Placeholder
+        desertZones: cityGaps.sort((a: any, b: any) => b.distanceKm - a.distanceKm).slice(0, 10),
+        affectedPopulationEstimate: 'Calculating population impact requires precise region mapping.'
       };
-
+      log.success(output, Date.now() - start);
+      return output;
     } catch (error: any) {
+      log.error(error, { service, thresholdKm }, Date.now() - start);
       return { error: `Desert analysis failed: ${error.message}` };
     }
   },

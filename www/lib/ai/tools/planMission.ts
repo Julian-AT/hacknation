@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { tool } from 'ai';
 import { findMedicalDeserts } from './findMedicalDeserts';
 import { findNearby } from './findNearby';
+import { createToolLogger } from './debug';
 
 export const planMission = tool({
   description: 'Interactive volunteer deployment planner. Recommends facilities for a volunteer based on their specialty and Ghana\'s needs.',
@@ -12,33 +13,42 @@ export const planMission = tool({
     preference: z.string().optional().describe('Regional or facility type preference'),
   }),
   execute: async ({ specialty, duration, preference }: any, { toolCallId, messages }: any) => {
+    const log = createToolLogger('planMission');
+    const start = Date.now();
+    log.start({ specialty, duration, preference });
+
     try {
-      // Let's implement specific logic for planning:
-      // Find deserts for this specialty
+      log.step('Calling findMedicalDeserts sub-tool', { service: specialty, thresholdKm: 50 });
       const desertAnalysis = await (findMedicalDeserts as any).execute(
         { service: specialty, thresholdKm: 50 },
         { toolCallId, messages }
       );
+      log.step('findMedicalDeserts returned', {
+        hasDesertZones: 'desertZones' in desertAnalysis,
+        status: 'status' in desertAnalysis ? desertAnalysis.status : undefined,
+        totalProviders: 'totalProviders' in desertAnalysis ? desertAnalysis.totalProviders : 0,
+      });
       
       const recommendations: any[] = [];
       
-      // Type guard for tool result
-      // The tool returns either { error: string } or the success object
       if ('desertZones' in desertAnalysis && Array.isArray(desertAnalysis.desertZones) && desertAnalysis.desertZones.length > 0) {
-        // We have deserts!
-        // Recommend facilities NEAR the desert zones that match "Hospital" type (to host a specialist)
-        const topDesert = desertAnalysis.desertZones[0]; // Worst gap
+        const topDesert = desertAnalysis.desertZones[0];
+        log.step('Top desert zone', { city: topDesert.city, distanceKm: topDesert.distanceKm });
         
-        // Find host in that area
+        log.step('Calling findNearby sub-tool for host facilities');
         const potentialHosts = await (findNearby as any).execute(
           {
              location: `${topDesert.coordinates.lat},${topDesert.coordinates.lng}`,
              radiusKm: 50,
-             facilityType: 'Hospital', // Host needs infrastructure
+             facilityType: 'Hospital',
              limit: 3
           },
           { toolCallId, messages }
         );
+        log.step('findNearby returned', {
+          hasFacilities: 'facilities' in potentialHosts,
+          count: 'facilities' in potentialHosts ? potentialHosts.facilities?.length : 0,
+        });
 
         if ('facilities' in potentialHosts && Array.isArray(potentialHosts.facilities) && potentialHosts.facilities.length > 0) {
            recommendations.push({
@@ -48,7 +58,6 @@ export const planMission = tool({
              suggestedHost: potentialHosts.facilities[0]
            });
         } else {
-           // No hospital nearby, maybe a clinic?
            recommendations.push({
              priority: 'High - Critical Gap (Infrastructure Limited)',
              region: `${topDesert.city} Area`,
@@ -57,6 +66,7 @@ export const planMission = tool({
            });
         }
       } else if ('status' in desertAnalysis && desertAnalysis.status === 'NATIONAL_GAP') {
+         log.step('National gap detected for specialty', specialty);
          recommendations.push({
            priority: 'Critical - National Gap',
            region: 'Accra / Kumasi (Teaching Hospitals)',
@@ -65,23 +75,27 @@ export const planMission = tool({
          });
       }
 
-      // If no specific deserts found (maybe common specialty), just recommend under-served rural areas
       if (recommendations.length === 0) {
+         log.step('No specific gaps found, using fallback recommendation');
          recommendations.push({
            priority: 'Medium - Rural Support',
            region: 'Northern Region',
            reason: 'General need for specialists in northern rural districts.',
-           suggestedHost: { name: 'Tamale Teaching Hospital', city: 'Tamale' } // Fallback
+           suggestedHost: { name: 'Tamale Teaching Hospital', city: 'Tamale' }
          });
       }
 
-      return {
+      log.step('Generated recommendations', recommendations.length);
+
+      const output = {
         volunteerProfile: { specialty, duration },
         analysis: `Analyzed ${'totalProviders' in desertAnalysis ? desertAnalysis.totalProviders : 0} existing providers for ${specialty}.`,
         recommendations
       };
-
+      log.success(output, Date.now() - start);
+      return output;
     } catch (error: any) {
+      log.error(error, { specialty, duration, preference }, Date.now() - start);
       return { error: `Planning failed: ${error.message}` };
     }
   },

@@ -24,7 +24,7 @@ import { useChatVisibility } from '@/hooks/use-chat-visibility';
 import type { Vote } from '@/lib/db/schema';
 import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
-import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
+import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
 import { Artifact } from './artifact';
 import { useDataStream } from './data-stream-provider';
 import { Messages } from './messages';
@@ -52,7 +52,7 @@ export function Chat({
   autoResume: boolean;
 }) {
   const router = useRouter();
-  const { setMapFacilities, setMapCenter, setMapZoom } = useVF();
+  const { setMapFacilities, setMapCenter, setMapZoom, isMapVisible, setMapVisible } = useVF();
 
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -171,7 +171,7 @@ export function Chat({
 
     for (const part of toolParts) {
       if ((part as any).type !== 'tool-invocation') continue;
-      const { toolName, result, args } = (part as any).toolInvocation as any;
+      const { toolName, result } = (part as any).toolInvocation as any;
 
       if (!result) continue;
 
@@ -181,22 +181,10 @@ export function Chat({
           setMapCenter([result.center.lat, result.center.lng]);
           setMapZoom(10);
         }
-      } else if (toolName === 'searchFacilities' && result.results) {
-        // Map search results if they have lat/lng
-        // Need to fetch full details if not present, but searchFacilities returns mostly text
-        // Actually, let's assume searchFacilities might return lat/lng or we fetch it.
-        // The current implementation of searchFacilities DOES return lat/lng if we didn't remove it.
-        // Wait, looking at searchFacilities implementation: it returns id, name, region... 
-        // It does NOT return lat/lng in my implementation above! 
-        // I should update searchFacilities to return lat/lng for mapping.
-        // But for now, let's just handle findNearby.
-        
-        // Wait, findMedicalDeserts returns 'desertZones' with coordinates
+        setMapVisible(true);
       } else if (toolName === 'findMedicalDeserts' && result.desertZones) {
-        // Map desert zones? 
-        // We can map the "nearestProvider" or the center of the gap
         const markers = result.desertZones.map((z: any) => ({
-          id: Math.random(), // Temp ID
+          id: Math.random(),
           name: `${z.city} Gap (${z.distanceKm}km)`,
           lat: z.coordinates.lat,
           lng: z.coordinates.lng,
@@ -208,9 +196,22 @@ export function Chat({
            setMapCenter([markers[0].lat, markers[0].lng]);
            setMapZoom(7);
         }
+        setMapVisible(true);
+      } else if (toolName === 'getFacility' && result.facility?.lat && result.facility?.lng) {
+        setMapFacilities([{
+          id: result.facility.id,
+          name: result.facility.name,
+          lat: result.facility.lat,
+          lng: result.facility.lng,
+          type: result.facility.facilityType,
+          city: result.facility.addressCity,
+        }]);
+        setMapCenter([result.facility.lat, result.facility.lng]);
+        setMapZoom(12);
+        setMapVisible(true);
       }
     }
-  }, [messages, setMapFacilities, setMapCenter, setMapZoom]);
+  }, [messages, setMapFacilities, setMapCenter, setMapZoom, setMapVisible]);
 
 
   const searchParams = useSearchParams();
@@ -249,7 +250,10 @@ export function Chat({
     <>
       <div className="flex h-dvh min-w-0 bg-background overflow-hidden">
         {/* Left Panel: Chat */}
-        <div className="flex flex-col w-1/2 h-full border-r border-zinc-800">
+        <div className={cn(
+          'flex flex-col h-full',
+          isMapVisible ? 'w-1/2 border-r border-zinc-800' : 'w-full'
+        )}>
           <ChatHeader
             chatId={id}
             isReadonly={isReadonly}
@@ -292,23 +296,41 @@ export function Chat({
           </div>
         </div>
 
-        {/* Right Panel: Map */}
-        <div className="w-1/2 h-full bg-zinc-900 relative">
-          <FacilityMap />
-          
-          {/* Legend Overlay */}
-          <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm p-3 rounded-lg border border-zinc-800 text-xs text-zinc-300 z-[1000]">
-            <div className="font-semibold mb-2 text-white">Legend</div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-3 h-3 rounded-full bg-blue-500 border border-white/50"></span>
-              <span>Facility</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500 border border-white/50"></span>
-              <span>Desert/Gap</span>
+        {/* Right Panel: Map (only visible when geographic data is available) */}
+        {isMapVisible && (
+          <div className="w-1/2 h-full bg-zinc-900 relative">
+            <FacilityMap />
+
+            {/* Close button */}
+            <button
+              type="button"
+              aria-label="Close map panel"
+              className="absolute top-4 left-4 z-[1000] flex items-center justify-center size-8 rounded-lg bg-black/80 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700"
+              onClick={() => {
+                setMapVisible(false);
+                setMapFacilities([]);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+
+            {/* Legend Overlay */}
+            <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm p-3 rounded-lg border border-zinc-800 text-xs text-zinc-300 z-[1000]">
+              <div className="font-semibold mb-2 text-white">Legend</div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="size-3 rounded-full bg-blue-500 border border-white/50" />
+                <span>Facility</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="size-3 rounded-full bg-red-500 border border-white/50" />
+                <span>Desert/Gap</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       <Artifact

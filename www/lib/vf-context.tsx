@@ -22,6 +22,8 @@ type VFContextType = {
   setMapCenter: (center: [number, number]) => void;
   mapZoom: number;
   setMapZoom: (zoom: number) => void;
+  isMapVisible: boolean;
+  setMapVisible: (visible: boolean) => void;
 };
 
 const VFContext = createContext<VFContextType | undefined>(undefined);
@@ -31,6 +33,7 @@ export function VFProvider({ children }: { children: ReactNode }) {
   const [highlightedFacilityId, setHighlightedFacilityId] = useState<number | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([7.9465, -1.0232]); // Center of Ghana
   const [mapZoom, setMapZoom] = useState<number>(7);
+  const [isMapVisible, setMapVisible] = useState<boolean>(false);
 
   return (
     <VFContext.Provider
@@ -43,6 +46,8 @@ export function VFProvider({ children }: { children: ReactNode }) {
         setMapCenter,
         mapZoom,
         setMapZoom,
+        isMapVisible,
+        setMapVisible,
       }}
     >
       {children}

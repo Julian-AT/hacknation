@@ -2,9 +2,10 @@
 import { z } from 'zod';
 import { db } from '../../db';
 import { facilities } from '../../db/schema.facilities';
-import { sql, and, isNotNull, ilike, eq, gte } from 'drizzle-orm';
+import { sql, and, isNotNull, ilike } from 'drizzle-orm';
 import { CITY_COORDS } from '../../ghana';
 import { tool } from 'ai';
+import { createToolLogger } from './debug';
 
 export const findNearby = tool({
   description: 'Find facilities within a certain distance (km) of a location. Supports filtering by specialty or type.',
@@ -16,6 +17,10 @@ export const findNearby = tool({
     limit: z.number().default(20),
   }),
   execute: async ({ location, radiusKm, specialty, facilityType, limit }: any) => {
+    const log = createToolLogger('findNearby');
+    const start = Date.now();
+    log.start({ location, radiusKm, specialty, facilityType, limit });
+
     let lat: number;
     let lng: number;
 
@@ -24,25 +29,29 @@ export const findNearby = tool({
       const parts = location.split(',');
       lat = parseFloat(parts[0].trim());
       lng = parseFloat(parts[1].trim());
+      log.step('Parsed coordinates from string', { lat, lng });
     } else {
-      // Lookup city
-      // Case-insensitive lookup helper
       const cityKey = Object.keys(CITY_COORDS).find(c => c.toLowerCase() === location.toLowerCase());
       if (cityKey) {
         const coords = CITY_COORDS[cityKey];
         lat = coords.lat;
         lng = coords.lng;
+        log.step(`Resolved city "${location}" -> "${cityKey}"`, { lat, lng });
       } else {
-        return { error: `Could not resolve location "${location}". Please provide coordinates "lat,lng" or a major Ghana city name.` };
+        log.step('City resolution FAILED', location);
+        const result = { error: `Could not resolve location "${location}". Please provide coordinates "lat,lng" or a major Ghana city name.` };
+        log.success(result, Date.now() - start);
+        return result;
       }
     }
 
-    if (isNaN(lat) || isNaN(lng)) {
-      return { error: 'Invalid coordinates.' };
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      log.step('Invalid coordinates after parsing', { lat, lng });
+      const result = { error: 'Invalid coordinates.' };
+      log.success(result, Date.now() - start);
+      return result;
     }
 
-    // Haversine formula in SQL
-    // 6371 is Earth radius in km
     const distanceSql = sql`
       6371 * acos(
         cos(radians(${lat})) * cos(radians(${facilities.lat})) *
@@ -59,14 +68,16 @@ export const findNearby = tool({
       ];
 
       if (specialty) {
-        // Check both parsed array and raw text
         conditions.push(sql`(${ilike(facilities.specialtiesRaw, `%${specialty}%`)} OR ${specialty} = ANY(${facilities.specialties}))`);
+        log.step('Filter added: specialty', specialty);
       }
 
       if (facilityType) {
         conditions.push(ilike(facilities.facilityType, `%${facilityType}%`));
+        log.step('Filter added: facilityType', facilityType);
       }
 
+      log.step('Executing Haversine distance query');
       const results = await db
         .select({
           id: facilities.id,
@@ -84,17 +95,21 @@ export const findNearby = tool({
         .orderBy(distanceSql)
         .limit(limit);
 
-      return {
+      log.step('Query returned facilities', results.length);
+
+      const output = {
         center: { location, lat, lng },
         radiusKm,
         count: results.length,
         facilities: results.map(r => ({
           ...r,
-          distanceKm: Math.round(Number(r.distanceKm) * 10) / 10 // Round to 1 decimal
+          distanceKm: Math.round(Number(r.distanceKm) * 10) / 10
         }))
       };
-
+      log.success(output, Date.now() - start);
+      return output;
     } catch (error: any) {
+      log.error(error, { location, radiusKm, specialty, facilityType, limit }, Date.now() - start);
       return { error: `Geospatial search failed: ${error.message}` };
     }
   },

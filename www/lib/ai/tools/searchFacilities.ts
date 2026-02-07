@@ -1,10 +1,11 @@
 
 import { z } from 'zod';
 import { db } from '../../db';
-import { sql, gt, desc, cosineDistance, and, isNotNull, ilike, eq } from 'drizzle-orm';
+import { sql, desc, cosineDistance, and, isNotNull, ilike } from 'drizzle-orm';
 import { facilities } from '../../db/schema.facilities';
 import { embed } from '../../embed';
 import { tool } from 'ai';
+import { createToolLogger } from './debug';
 
 export const searchFacilities = tool({
   description: 'Semantic search for facilities using vector embeddings. Use when the user asks for facilities based on free-text descriptions like "eye surgery", "trauma center", "dialysis", where keywords might not be exact.',
@@ -15,76 +16,28 @@ export const searchFacilities = tool({
     limit: z.number().optional().default(10),
   }),
   execute: async ({ query, region, facilityType, limit }: any) => {
+    const log = createToolLogger('searchFacilities');
+    const start = Date.now();
+    log.start({ query, region, facilityType, limit });
+
     try {
+      log.step('Generating embedding for query', query);
       const queryEmbedding = await embed(query);
+      log.step('Embedding generated', `${queryEmbedding.length} dimensions`);
+
       const similarity = sql<number>`1 - (${cosineDistance(facilities.embedding, queryEmbedding)})`;
-      
-      let baseQuery = db
-        .select({
-          id: facilities.id,
-          name: facilities.name,
-          region: facilities.addressRegion,
-          type: facilities.facilityType,
-          similarity: similarity,
-          description: facilities.description,
-          specialties: facilities.specialtiesRaw,
-          procedures: facilities.proceduresRaw,
-        })
-        .from(facilities)
-        .where(isNotNull(facilities.embedding))
-        .orderBy(desc(similarity))
-        .limit(limit);
 
-      if (region) {
-        // Simple case-insensitive match for region
-        // Note: Drizzle's `ilike` is useful here.
-        // But since baseQuery is a chain, we need to construct the where clause dynamically
-        // Drizzle query builder allows chaining .where().
-        // However, mixing similarity sort with where requires careful construction if not using query builder API fully.
-        // Let's use the $dynamic API or just simple where chaining.
-        
-        // Actually, with `cosineDistance` in `orderBy`, we need to ensure the WHERE clause is applied.
-        // Drizzle's `.where()` appends AND.
-        
-        // We'll reimplement using query builder pattern more cleanly:
-        const conditions = [isNotNull(facilities.embedding)];
-        
-        if (region) conditions.push(ilike(facilities.addressRegion, `%${region}%`));
-        if (facilityType) conditions.push(ilike(facilities.facilityType, `%${facilityType}%`));
-        
-        // Threshold for relevance? Usually handled by limit, but let's keep it simple.
-        
-        const results = await db
-          .select({
-            id: facilities.id,
-            name: facilities.name,
-            region: facilities.addressRegion,
-            type: facilities.facilityType,
-            similarity: similarity,
-            description: facilities.description,
-            // Return snippets of text fields for context
-            procedures: facilities.proceduresRaw,
-          })
-          .from(facilities)
-          .where(and(...conditions))
-          .orderBy(desc(similarity))
-          .limit(limit);
-          
-        return {
-          query,
-          results: results.map(r => ({
-            ...r,
-            matchConfidence: r.similarity > 0.8 ? 'High' : r.similarity > 0.7 ? 'Medium' : 'Low'
-          }))
-        };
-      }
-      
-      // If no filters, run the basic query (logic repeated because of 'let' vs const issue in TS if not structured well)
-      // I'll refactor slightly to be cleaner.
       const conditions = [isNotNull(facilities.embedding)];
-      if (region) conditions.push(ilike(facilities.addressRegion, `%${region}%`));
-      if (facilityType) conditions.push(ilike(facilities.facilityType, `%${facilityType}%`));
+      if (region) {
+        conditions.push(ilike(facilities.addressRegion, `%${region}%`));
+        log.step('Filter added: region', region);
+      }
+      if (facilityType) {
+        conditions.push(ilike(facilities.facilityType, `%${facilityType}%`));
+        log.step('Filter added: facilityType', facilityType);
+      }
 
+      log.step('Executing vector search query');
       const results = await db
         .select({
           id: facilities.id,
@@ -92,7 +45,7 @@ export const searchFacilities = tool({
           region: facilities.addressRegion,
           city: facilities.addressCity,
           type: facilities.facilityType,
-          similarity: similarity,
+          similarity,
           procedures: facilities.proceduresRaw,
           equipment: facilities.equipmentRaw,
         })
@@ -101,13 +54,17 @@ export const searchFacilities = tool({
         .orderBy(desc(similarity))
         .limit(limit);
 
-      return {
+      log.step('Query returned results', results.length);
+
+      const output = {
         query,
         count: results.length,
-        results: results
+        results,
       };
-
+      log.success(output, Date.now() - start);
+      return output;
     } catch (error: any) {
+      log.error(error, { query, region, facilityType, limit }, Date.now() - start);
       return { error: `Search failed: ${error.message}` };
     }
   },
