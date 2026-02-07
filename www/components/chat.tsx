@@ -32,7 +32,7 @@ import { MultimodalInput } from './multimodal-input';
 import { getChatHistoryPaginationKey } from './sidebar-history';
 import { toast } from './toast';
 import type { VisibilityType } from './visibility-selector';
-import FacilityMap from './vf-ui/FacilityMap';
+import GlobeView from './vf-ui/GlobeView';
 import { SuggestedQueries } from './vf-ui/SuggestedQueries';
 import { useVF } from '@/lib/vf-context';
 
@@ -298,14 +298,14 @@ export function Chat({
 
         {/* Right Panel: Map (only visible when geographic data is available) */}
         {isMapVisible && (
-          <div className="w-1/2 h-full bg-zinc-900 relative">
-            <FacilityMap />
+          <div className="w-1/2 h-full bg-zinc-950 relative">
+            <GlobeView />
 
             {/* Close button */}
             <button
               type="button"
               aria-label="Close map panel"
-              className="absolute top-4 left-4 z-[1000] flex items-center justify-center size-8 rounded-lg bg-black/80 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700"
+              className="absolute top-4 left-4 z-10 flex items-center justify-center size-8 rounded-lg bg-black/70 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700"
               onClick={() => {
                 setMapVisible(false);
                 setMapFacilities([]);
@@ -318,15 +318,15 @@ export function Chat({
             </button>
 
             {/* Legend Overlay */}
-            <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm p-3 rounded-lg border border-zinc-800 text-xs text-zinc-300 z-[1000]">
+            <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-sm p-3 rounded-lg border border-zinc-800 text-xs text-zinc-300 z-10">
               <div className="font-semibold mb-2 text-white">Legend</div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="size-3 rounded-full bg-blue-500 border border-white/50" />
+                <span className="size-2.5 rounded-full bg-blue-500" />
                 <span>Facility</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full bg-red-500 border border-white/50" />
-                <span>Desert/Gap</span>
+                <span className="size-2.5 rounded-full bg-red-500" />
+                <span>Desert / Gap</span>
               </div>
             </div>
           </div>

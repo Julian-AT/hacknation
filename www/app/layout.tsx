@@ -7,9 +7,33 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
-  description: "Next.js chatbot template using the AI SDK.",
+  metadataBase: new URL("https://caremap.app"),
+  title: "CareMap",
+  description:
+    "Interactive healthcare facility mapping and AI analysis for Ghana",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/icons/icon-192x192.svg",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CareMap",
+  },
+  openGraph: {
+    title: "CareMap",
+    description:
+      "Interactive healthcare facility mapping and AI analysis for Ghana",
+    siteName: "CareMap",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CareMap",
+    description:
+      "Interactive healthcare facility mapping and AI analysis for Ghana",
+  },
 };
 
 export const viewport = {

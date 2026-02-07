@@ -48,3 +48,9 @@ yarn-error.log*
 
 # AI SDK DevTools
 .devtools
+
+# Serwist PWA (generated at build)
+www/public/sw.js
+www/public/sw.js.map
+www/public/serwist-worker-*.js
+www/public/serwist-worker-*.js.map

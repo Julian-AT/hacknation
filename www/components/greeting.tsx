@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { CareMapLogo } from "./icons";
 
 export const Greeting = () => {
   return (
@@ -8,21 +9,31 @@ export const Greeting = () => {
     >
       <motion.div
         animate={{ opacity: 1, y: 0 }}
+        className="mb-4 text-muted-foreground"
+        exit={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 10 }}
+        transition={{ delay: 0.4 }}
+      >
+        <CareMapLogo size={36} />
+      </motion.div>
+      <motion.div
+        animate={{ opacity: 1, y: 0 }}
         className="font-semibold text-xl md:text-2xl"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5 }}
       >
-        Hello there!
+        Welcome to CareMap
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="text-xl text-zinc-500 md:text-2xl"
+        className="text-base text-zinc-500 md:text-lg"
         exit={{ opacity: 0, y: 10 }}
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
       >
-        How can I help you today?
+        Explore Ghana&apos;s 987 healthcare facilities on an interactive globe.
+        Ask about coverage gaps, plan missions, or analyze facility data.
       </motion.div>
     </div>
   );

@@ -17,7 +17,14 @@ import type { ArtifactKind, UIArtifact } from "./artifact";
 import { CodeEditor } from "./code-editor";
 import { DocumentToolCall, DocumentToolResult } from "./document";
 import { InlineDocumentSkeleton } from "./document-skeleton";
-import { FileIcon, FullscreenIcon, ImageIcon, LoaderIcon } from "./icons";
+import {
+  CodeIcon,
+  FileIcon,
+  FullscreenIcon,
+  ImageIcon,
+  LineChartIcon,
+  LoaderIcon,
+} from "./icons";
 import { ImageEditor } from "./image-editor";
 import { SpreadsheetEditor } from "./sheet-editor";
 import { Editor } from "./text-editor";
@@ -203,6 +210,20 @@ const HitboxLayer = memo(PureHitboxLayer, (prevProps, nextProps) => {
   return true;
 });
 
+function getArtifactIcon(kind: ArtifactKind) {
+  if (kind === "image") return <ImageIcon />;
+  if (kind === "code") return <CodeIcon />;
+  if (kind === "sheet") return <LineChartIcon />;
+  return <FileIcon />;
+}
+
+function getArtifactLabel(kind: ArtifactKind) {
+  if (kind === "image") return "Image";
+  if (kind === "code") return "Code";
+  if (kind === "sheet") return "Spreadsheet";
+  return "Document";
+}
+
 const PureDocumentHeader = ({
   title,
   kind,
@@ -219,13 +240,18 @@ const PureDocumentHeader = ({
           <div className="animate-spin">
             <LoaderIcon />
           </div>
-        ) : kind === "image" ? (
-          <ImageIcon />
         ) : (
-          <FileIcon />
+          getArtifactIcon(kind)
         )}
       </div>
-      <div className="-translate-y-1 font-medium sm:translate-y-0">{title}</div>
+      <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+        <div className="-translate-y-1 font-medium sm:translate-y-0">
+          {title}
+        </div>
+        <span className="rounded-md bg-muted-foreground/10 px-1.5 py-0.5 text-muted-foreground text-xs">
+          {getArtifactLabel(kind)}
+        </span>
+      </div>
     </div>
     <div className="w-8" />
   </div>
