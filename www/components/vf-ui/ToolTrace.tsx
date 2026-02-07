@@ -2,9 +2,21 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Wrench, Search, Map as MapIcon, Activity, BarChart, Database, AlertTriangle, Eye } from 'lucide-react';
+import { ChevronDown, ChevronRight, Wrench, Search, Map as MapIcon, Activity, Database, AlertTriangle, Eye, Brain, Globe, GitCompare, Stethoscope } from 'lucide-react';
 import { useVF } from '@/lib/vf-context';
+import { cn } from '@/lib/utils';
 
+/**
+ * Agent delegation tool names — these represent subagent calls
+ */
+const AGENT_TOOLS = new Set([
+  'investigateData',
+  'analyzeGeography',
+  'medicalReasoning',
+  'researchWeb',
+]);
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface ToolTraceProps {
   toolCallId: string;
   toolName: string;
@@ -16,24 +28,57 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
   const [isOpen, setIsOpen] = useState(false);
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
 
+  const isAgentTool = AGENT_TOOLS.has(toolName);
+
   const getToolIcon = (name: string) => {
     switch (name) {
+      // Agent delegation tools
+      case 'investigateData': return <Database className="size-4 text-blue-400" />;
+      case 'analyzeGeography': return <MapIcon className="size-4 text-yellow-400" />;
+      case 'medicalReasoning': return <Stethoscope className="size-4 text-red-400" />;
+      case 'researchWeb': return <Globe className="size-4 text-emerald-400" />;
+      // Direct tools (subagent-level)
       case 'queryDatabase': return <Database className="size-4 text-blue-400" />;
       case 'searchFacilities': return <Search className="size-4 text-green-400" />;
-      case 'findNearby': 
+      case 'findNearby':
       case 'findMedicalDeserts': return <MapIcon className="size-4 text-yellow-400" />;
+      case 'compareRegions': return <GitCompare className="size-4 text-cyan-400" />;
       case 'detectAnomalies': return <AlertTriangle className="size-4 text-red-400" />;
-      case 'getStats': return <BarChart className="size-4 text-purple-400" />;
+      case 'crossValidateClaims': return <Brain className="size-4 text-orange-400" />;
+      case 'classifyServices': return <Stethoscope className="size-4 text-pink-400" />;
       case 'planMission': return <Activity className="size-4 text-pink-400" />;
+      case 'firecrawlSearch':
+      case 'firecrawlScrape':
+      case 'firecrawlExtract': return <Globe className="size-4 text-emerald-400" />;
       default: return <Wrench className="size-4 text-zinc-400" />;
     }
   };
 
+  const getToolDisplayName = (name: string) => {
+    switch (name) {
+      case 'investigateData': return 'Data Analysis';
+      case 'analyzeGeography': return 'Geographic Analysis';
+      case 'medicalReasoning': return 'Medical Reasoning';
+      case 'researchWeb': return 'Web Research';
+      default: return name;
+    }
+  };
+
   const formatArgs = (currentArgs: any) => {
+    // Agent tools show the task description
+    if (isAgentTool && currentArgs.task) {
+      const task = String(currentArgs.task);
+      return task.slice(0, 60) + (task.length > 60 ? '...' : '');
+    }
     if (toolName === 'searchFacilities') return `query: "${currentArgs.query}"`;
     if (toolName === 'findNearby') return `near: "${currentArgs.location}"`;
     if (toolName === 'queryDatabase') return 'SQL Query';
     if (toolName === 'planMission') return `specialty: "${currentArgs.specialty}"`;
+    if (toolName === 'compareRegions' && Array.isArray(currentArgs.regions)) {
+      return (currentArgs.regions as string[]).join(' vs ');
+    }
+    if (toolName === 'firecrawlSearch') return `"${currentArgs.query}"`;
+    if (toolName === 'firecrawlScrape') return String(currentArgs.url ?? '').slice(0, 40);
     const str = JSON.stringify(currentArgs);
     return str.slice(0, 30) + (str.length > 30 ? '...' : '');
   };
@@ -88,7 +133,12 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
   };
 
   return (
-    <div className="my-2 border border-zinc-800 rounded-md bg-zinc-900/50 overflow-hidden text-sm">
+    <div className={cn(
+      "my-2 rounded-md overflow-hidden text-sm",
+      isAgentTool
+        ? "border border-zinc-700 bg-zinc-900/70"
+        : "border border-zinc-800 bg-zinc-900/50"
+    )}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -96,7 +146,14 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
       >
         <div className="flex items-center gap-2">
           {getToolIcon(toolName)}
-          <span className="font-medium text-zinc-300 font-mono">{toolName}</span>
+          <span className="font-medium text-zinc-300 font-mono">
+            {isAgentTool ? getToolDisplayName(toolName) : toolName}
+          </span>
+          {isAgentTool && (
+            <span className="text-[10px] px-1 py-0.5 rounded bg-zinc-800 text-zinc-500 uppercase tracking-wider">
+              Agent
+            </span>
+          )}
           <span className="text-zinc-500 text-xs truncate max-w-[200px]">
             {formatArgs(args)}
           </span>
@@ -119,7 +176,7 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
             </span>
           ) : (
             <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-900/50 animate-pulse">
-              Running...
+              {isAgentTool ? 'Working...' : 'Running...'}
             </span>
           )}
           {isOpen ? <ChevronDown className="size-4 text-zinc-500" /> : <ChevronRight className="size-4 text-zinc-500" />}
@@ -129,9 +186,13 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
       {isOpen && (
         <div className="p-3 border-t border-zinc-800 bg-zinc-950 font-mono text-xs overflow-x-auto">
           <div className="mb-2">
-            <div className="text-zinc-500 mb-1 uppercase tracking-wider text-[10px]">Input</div>
+            <div className="text-zinc-500 mb-1 uppercase tracking-wider text-[10px]">
+              {isAgentTool ? 'Task' : 'Input'}
+            </div>
             <pre className="text-zinc-300 whitespace-pre-wrap break-all">
-              {JSON.stringify(args, null, 2)}
+              {isAgentTool
+                ? String(args?.task ?? JSON.stringify(args, null, 2))
+                : JSON.stringify(args, null, 2)}
             </pre>
           </div>
           

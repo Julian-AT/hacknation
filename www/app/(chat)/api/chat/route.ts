@@ -4,29 +4,12 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateId,
-  stepCountIs,
-  streamText,
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
+import { createOrchestratorAgent } from "@/lib/ai/agents";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
-import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
-import { createDocument } from "@/lib/ai/tools/create-document";
-import { getWeather } from "@/lib/ai/tools/get-weather";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
-import { updateDocument } from "@/lib/ai/tools/update-document";
-import {
-  queryDatabase,
-  searchFacilities,
-  getFacility,
-  findNearby,
-  findMedicalDeserts,
-  detectAnomalies,
-  getStats,
-  planMission,
-} from "@/lib/ai/tools";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -46,15 +29,7 @@ import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
-export const maxDuration = 60;
-
-/** Tool names available for reasoning models (limited set, single-step) */
-const REASONING_TOOL_NAMES = [
-  "getWeather",
-  "createDocument",
-  "updateDocument",
-  "requestSuggestions",
-] as const;
+export const maxDuration = 120;
 
 function getStreamContext() {
   try {
@@ -129,15 +104,6 @@ export async function POST(request: Request) {
       ? (messages as ChatMessage[])
       : [...convertToUIMessages(messagesFromDb), message as ChatMessage];
 
-    const { longitude, latitude, city, country } = geolocation(request);
-
-    const requestHints: RequestHints = {
-      longitude,
-      latitude,
-      city,
-      country,
-    };
-
     if (message?.role === "user") {
       await saveMessages({
         messages: [
@@ -153,113 +119,31 @@ export async function POST(request: Request) {
       });
     }
 
-    const isReasoningModel =
-      selectedChatModel.includes("reasoning") ||
-      selectedChatModel.includes("thinking");
+    console.log(
+      `[ChatRoute] START | chatId=${id} | model=${selectedChatModel} | messages=${uiMessages.length} | isToolApproval=${isToolApprovalFlow}`
+    );
 
     const modelMessages = await convertToModelMessages(uiMessages);
-
-    console.log(
-      `[ChatRoute] START | chatId=${id} | model=${selectedChatModel} | reasoning=${isReasoningModel} | messages=${uiMessages.length} | isToolApproval=${isToolApprovalFlow}`
-    );
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const streamStart = Date.now();
         console.log(
-          `[ChatRoute] Stream execute started | model=${selectedChatModel}`
+          `[ChatRoute] Agent execute started | model=${selectedChatModel}`
         );
 
-        // Define ALL tools once. Use activeTools to limit which are available.
-        const tools = {
-          getWeather,
-          createDocument: createDocument({ session, dataStream }),
-          updateDocument: updateDocument({ session, dataStream }),
-          requestSuggestions: requestSuggestions({ session, dataStream }),
-          queryDatabase,
-          searchFacilities,
-          getFacility,
-          findNearby,
-          findMedicalDeserts,
-          detectAnomalies,
-          getStats,
-          planMission,
-        };
-
         try {
-          const stepLimit = isReasoningModel ? 1 : 10;
-          console.log(
-            `[ChatRoute] Calling streamText | stopWhen=stepCountIs(${stepLimit})`
-          );
+          // Create the orchestrator agent with dataStream access for artifact tools
+          const agent = createOrchestratorAgent({
+            session,
+            dataStream,
+            modelId: selectedChatModel,
+          });
 
-          const result = streamText({
-            model: getLanguageModel(selectedChatModel),
-            system: systemPrompt({ selectedChatModel, requestHints }),
+          // Run the agent and merge its output stream into our data stream
+          const result = await agent.stream({
             messages: modelMessages,
-            providerOptions: isReasoningModel
-              ? {
-                  anthropic: {
-                    thinking: { type: "enabled", budgetTokens: 10_000 },
-                  },
-                }
-              : undefined,
-            tools,
-            // Use activeTools to limit reasoning models to a safe subset
-            activeTools: isReasoningModel
-              ? [...REASONING_TOOL_NAMES]
-              : undefined,
-            stopWhen: stepCountIs(stepLimit),
-            experimental_telemetry: {
-              isEnabled: isProductionEnvironment,
-              functionId: "stream-text",
-            },
-            onFinish: (event) => {
-              const duration = Date.now() - streamStart;
-              console.log(
-                `[ChatRoute] Stream finished | duration=${duration}ms | usage=${JSON.stringify(event.usage)}`
-              );
-            },
-            onStepFinish: (event) => {
-              try {
-                const toolCalls = event.toolCalls ?? [];
-                const toolResults = event.toolResults ?? [];
-
-                for (const tc of toolCalls) {
-                  const inputStr = JSON.stringify(tc.input) ?? "";
-                  console.log(
-                    `[ChatRoute] Tool called: ${tc.toolName} | callId=${tc.toolCallId} | input=${inputStr.slice(0, 300)}`
-                  );
-                }
-
-                for (const tr of toolResults) {
-                  const outputStr = JSON.stringify(tr.output) ?? "";
-                  const hasError =
-                    typeof tr.output === "object" &&
-                    tr.output !== null &&
-                    "error" in (tr.output as Record<string, unknown>);
-                  console.log(
-                    `[ChatRoute] Tool result: ${tr.toolName} | callId=${tr.toolCallId} | hasError=${hasError} | size=${outputStr.length} chars`
-                  );
-                  if (hasError) {
-                    console.error(
-                      `[ChatRoute] Tool ERROR: ${tr.toolName} | error=${(tr.output as Record<string, unknown>).error}`
-                    );
-                  }
-                }
-              } catch (logError) {
-                console.error(
-                  "[ChatRoute] onStepFinish logging error:",
-                  logError instanceof Error ? logError.message : logError
-                );
-              }
-            },
-            onAbort: ({ steps }) => {
-              const duration = Date.now() - streamStart;
-              console.log(
-                `[ChatRoute] Stream ABORTED | duration=${duration}ms | completedSteps=${steps.length} | chatId=${id}`
-              );
-            },
           });
 
           dataStream.merge(
@@ -271,20 +155,15 @@ export async function POST(request: Request) {
             streamError instanceof Error
               ? streamError.message
               : String(streamError);
-          const errorStack =
-            streamError instanceof Error ? streamError.stack : undefined;
           console.error(
-            `[ChatRoute] streamText ERROR | duration=${duration}ms | message=${errorMessage}`
+            `[ChatRoute] Agent ERROR | duration=${duration}ms | message=${errorMessage}`
           );
-          if (errorStack) {
+          if (streamError instanceof Error && streamError.stack) {
             console.error(
-              `[ChatRoute] streamText ERROR | stack:`,
-              errorStack
+              `[ChatRoute] Agent ERROR | stack:`,
+              streamError.stack
             );
           }
-          console.error(
-            `[ChatRoute] streamText ERROR | model=${selectedChatModel} | chatId=${id}`
-          );
           dataStream.write({ type: "error", errorText: errorMessage });
         }
 

@@ -21,6 +21,7 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+import { ToolTrace } from "./vf-ui/ToolTrace";
 import { Weather } from "./weather";
 
 const PurePreviewMessage = ({
@@ -339,6 +340,32 @@ const PurePreviewMessage = ({
                     )}
                   </ToolContent>
                 </Tool>
+              );
+            }
+
+            // Generic tool invocations (agent delegation tools and subagent tools)
+            // These come from ToolLoopAgent and have a toolName property
+            if ("toolName" in part && "toolCallId" in part) {
+              const invocationPart = part as unknown as {
+                toolCallId: string;
+                toolName: string;
+                state: string;
+                input?: Record<string, unknown>;
+                output?: Record<string, unknown>;
+              };
+
+              return (
+                <ToolTrace
+                  key={invocationPart.toolCallId}
+                  toolCallId={invocationPart.toolCallId}
+                  toolName={invocationPart.toolName}
+                  args={invocationPart.input ?? {}}
+                  result={
+                    invocationPart.state === "output-available"
+                      ? invocationPart.output
+                      : undefined
+                  }
+                />
               );
             }
 

@@ -145,16 +145,19 @@ About the origin of user's request:
 - country: ${requestHints.country}
 `;
 
+/**
+ * @deprecated Use agent-specific prompts from `@/lib/ai/agents/prompts` instead.
+ * This is kept for backwards compatibility if needed.
+ */
 export const systemPrompt = ({
-  selectedChatModel,
   requestHints,
 }: {
-  selectedChatModel: string;
+  selectedChatModel?: string;
   requestHints: RequestHints;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
-  // Combine VF Agent prompt with artifacts instructions and request context
+  // Agent-specific prompts are now in lib/ai/agents/prompts.ts
   return `${vfAgentPrompt}\n\n${artifactsPrompt}\n\n${requestPrompt}`;
 };
 
