@@ -1,47 +1,85 @@
+import { z } from "zod";
+import { db } from "../../db";
+import { facilities } from "../../db/schema.facilities";
+import { and, isNotNull, ilike } from "drizzle-orm";
+import { CITY_COORDS } from "../../ghana";
+import { tool } from "ai";
+import { createToolLogger } from "./debug";
+import { withTimeout, clampNumber, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 
-import { z } from 'zod';
-import { db } from '../../db';
-import { facilities } from '../../db/schema.facilities';
-import { and, isNotNull, ilike } from 'drizzle-orm';
-import { CITY_COORDS } from '../../ghana';
-import { tool } from 'ai';
-import { createToolLogger } from './debug';
+// Haversine distance in km
+function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export const findMedicalDeserts = tool({
-  description: 'Identify geographic regions where specific healthcare services are absent or dangerously far. Returns "desert zones" with gap radius and affected population.',
-  parameters: z.object({
-    service: z.string().describe('The healthcare service to check (e.g., "neurosurgery", "dialysis")'),
-    thresholdKm: z.number().default(100).describe('Distance threshold to consider an area "served"'),
+  description:
+    "Identify geographic regions where specific healthcare services are absent or dangerously far. Returns 'desert zones' with gap radius and affected population.",
+  inputSchema: z.object({
+    service: z
+      .string()
+      .min(1)
+      .max(200)
+      .describe(
+        'The healthcare service to check (e.g., "neurosurgery", "dialysis")'
+      ),
+    thresholdKm: z
+      .number()
+      .min(10)
+      .max(500)
+      .default(100)
+      .describe('Distance threshold to consider an area "served" (10-500km)'),
   }),
-  execute: async ({ service, thresholdKm: rawThresholdKm }: any) => {
-    const thresholdKm = typeof rawThresholdKm === 'number' && rawThresholdKm > 0 ? rawThresholdKm : 100;
-    const log = createToolLogger('findMedicalDeserts');
+  execute: async ({ service, thresholdKm: rawThreshold }, { abortSignal }) => {
+    const thresholdKm = clampNumber(rawThreshold, 10, 500, 100);
+    const log = createToolLogger("findMedicalDeserts");
     const start = Date.now();
     log.start({ service, thresholdKm });
 
     try {
-      log.step('Querying providers for service', service);
-      const providers = await db
-        .select({
-          id: facilities.id,
-          name: facilities.name,
-          lat: facilities.lat,
-          lng: facilities.lng,
-          city: facilities.addressCity,
-        })
-        .from(facilities)
-        .where(and(
-          isNotNull(facilities.lat),
-          isNotNull(facilities.lng),
-          ilike(facilities.proceduresRaw, `%${service}%`)
-        ));
+      log.step("Querying providers for service", service);
+      const providers = await withTimeout(
+        db
+          .select({
+            id: facilities.id,
+            name: facilities.name,
+            lat: facilities.lat,
+            lng: facilities.lng,
+            city: facilities.addressCity,
+          })
+          .from(facilities)
+          .where(
+            and(
+              isNotNull(facilities.lat),
+              isNotNull(facilities.lng),
+              ilike(facilities.proceduresRaw, `%${service}%`)
+            )
+          ),
+        DB_QUERY_TIMEOUT_MS,
+        abortSignal
+      );
 
-      log.step('Providers found', providers.length);
+      log.step("Providers found", providers.length);
 
       if (providers.length === 0) {
         const output = {
           service,
-          status: 'NATIONAL_GAP',
+          status: "NATIONAL_GAP" as const,
           message: `No facilities in Ghana explicitly list "${service}" in their procedures.`,
         };
         log.success(output, Date.now() - start);
@@ -49,67 +87,67 @@ export const findMedicalDeserts = tool({
       }
 
       // Check major cities against providers
-      const cityCount = Object.keys(CITY_COORDS).length;
-      log.step('Computing distances for cities', cityCount);
+      const cityEntries = Object.entries(CITY_COORDS);
+      const cityCount = cityEntries.length;
+      log.step("Computing distances for cities", cityCount);
 
-      const cityGaps: any[] = [];
-      
-      for (const [cityName, coords] of Object.entries(CITY_COORDS)) {
-        let minDist = Infinity;
-        let nearestProvider = null;
+      const cityGaps: Array<{
+        city: string;
+        nearestProvider: string | null;
+        distanceKm: number;
+        coordinates: { lat: number; lng: number };
+      }> = [];
+
+      for (const [cityName, coords] of cityEntries) {
+        // Respect abort signal during long computation
+        if (abortSignal?.aborted) {
+          log.step("Aborted during city distance computation");
+          return { error: "Operation was aborted" };
+        }
+
+        let minDist = Number.POSITIVE_INFINITY;
+        let nearestProvider: string | null = null;
 
         for (const p of providers) {
-          if (!p.lat || !p.lng) continue;
-          
-          const d = getDistanceFromLatLonInKm(coords.lat, coords.lng, p.lat, p.lng);
+          if (!p.lat || !p.lng) {
+            continue;
+          }
+
+          const d = haversineKm(coords.lat, coords.lng, p.lat, p.lng);
           if (d < minDist) {
             minDist = d;
-            nearestProvider = p;
+            nearestProvider = p.name;
           }
         }
 
         if (minDist > thresholdKm) {
           cityGaps.push({
             city: cityName,
-            nearestProvider: nearestProvider?.name,
+            nearestProvider,
             distanceKm: Math.round(minDist),
             coordinates: coords,
           });
         }
       }
 
-      log.step('Desert zones identified', cityGaps.length);
+      log.step("Desert zones identified", cityGaps.length);
 
       const output = {
         service,
         thresholdKm,
         totalProviders: providers.length,
-        desertZones: cityGaps.sort((a: any, b: any) => b.distanceKm - a.distanceKm).slice(0, 10),
-        affectedPopulationEstimate: 'Calculating population impact requires precise region mapping.'
+        desertZones: cityGaps
+          .sort((a, b) => b.distanceKm - a.distanceKm)
+          .slice(0, 10),
+        desertZoneCount: cityGaps.length,
       };
       log.success(output, Date.now() - start);
       return output;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown desert analysis error";
       log.error(error, { service, thresholdKm }, Date.now() - start);
-      return { error: `Desert analysis failed: ${error.message}` };
+      return { error: `Desert analysis failed: ${message}` };
     }
   },
-} as any) as any;
-
-// Helper
-function getDistanceFromLatLonInKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLng = deg2rad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in km
-  return d;
-}
-
-function deg2rad(deg: number) {
-  return deg * (Math.PI / 180);
-}
+});

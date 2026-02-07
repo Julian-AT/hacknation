@@ -1,58 +1,73 @@
-
-import { z } from 'zod';
-import { db } from '../../db';
-import { sql } from 'drizzle-orm';
-import { tool } from 'ai';
-import { createToolLogger } from './debug';
+import { z } from "zod";
+import { db } from "../../db";
+import { sql } from "drizzle-orm";
+import { tool } from "ai";
+import { createToolLogger } from "./debug";
+import {
+  validateReadOnlySQL,
+  withTimeout,
+  truncateResults,
+  DB_QUERY_TIMEOUT_MS,
+  MAX_RESULT_ROWS,
+} from "./safeguards";
 
 export const queryDatabase = tool({
-  description: 'Execute a read-only SQL query against the facilities table. Use for counts, aggregations, and structured filtering.',
-  parameters: z.object({
-    query: z.string().describe('The SQL SELECT query to execute. Must start with SELECT and query the "facilities" table.'),
-    reasoning: z.string().describe('Explanation of why this query answers the user question.'),
+  description:
+    'Execute a read-only SQL SELECT query against the facilities table. Use for counts, aggregations, and structured filtering. Only the "facilities" table is available.',
+  inputSchema: z.object({
+    query: z
+      .string()
+      .max(2000)
+      .describe(
+        'The SQL SELECT query to execute. Must start with SELECT and query the "facilities" table.'
+      ),
+    reasoning: z
+      .string()
+      .describe("Explanation of why this query answers the user question."),
   }),
-  execute: async ({ query, reasoning }: any) => {
-    const log = createToolLogger('queryDatabase');
+  execute: async ({ query, reasoning }, { abortSignal }) => {
+    const log = createToolLogger("queryDatabase");
     const start = Date.now();
     log.start({ query, reasoning });
 
-    // Safety check: only allow SELECT
-    const normalizedQuery = query.trim().toUpperCase();
-    if (!normalizedQuery.startsWith('SELECT')) {
-      log.step('Safety check FAILED', 'Query does not start with SELECT');
-      const result = { error: 'Only SELECT queries are allowed.' };
-      log.success(result, Date.now() - start);
-      return result;
-    }
-    
-    // Prevent destructive commands
-    const destructiveKeywords = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER'];
-    const foundDestructive = destructiveKeywords.find(kw => normalizedQuery.includes(kw));
-    if (foundDestructive) {
-      log.step('Safety check FAILED', `Found destructive keyword: ${foundDestructive}`);
-      const result = { error: 'Destructive queries are not allowed.' };
-      log.success(result, Date.now() - start);
-      return result;
+    // Validate SQL safety
+    const validation = validateReadOnlySQL(query);
+    if (!validation.valid) {
+      log.step("SQL validation FAILED", validation.reason);
+      return { error: `Query rejected: ${validation.reason}` };
     }
 
-    log.step('Safety checks passed');
+    log.step("SQL validation passed");
 
     try {
-      log.step('Executing SQL query');
-      const result = await db.execute(sql.raw(query));
-      log.step('Query returned rows', result.length);
+      log.step("Executing SQL query");
+      const result = await withTimeout(
+        db.execute(sql.raw(query)),
+        DB_QUERY_TIMEOUT_MS,
+        abortSignal
+      );
+
+      const rawRows = Array.isArray(result) ? result : [];
+      log.step("Query returned rows", rawRows.length);
+
+      const { rows, truncated, totalCount } = truncateResults(
+        rawRows,
+        MAX_RESULT_ROWS
+      );
 
       const output = {
         query,
-        count: result.length,
-        rows: result.slice(0, 100),
-        truncated: result.length > 100,
+        count: totalCount,
+        rows,
+        truncated,
       };
       log.success(output, Date.now() - start);
       return output;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown query error";
       log.error(error, { query, reasoning }, Date.now() - start);
-      return { error: `Query failed: ${error.message}` };
+      return { error: `Query failed: ${message}` };
     }
   },
-} as any);
+});

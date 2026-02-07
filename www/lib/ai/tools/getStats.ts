@@ -1,74 +1,147 @@
-
-import { z } from 'zod';
-import { db } from '../../db';
-import { facilities } from '../../db/schema.facilities';
-import { sql } from 'drizzle-orm';
-import { tool } from 'ai';
-import { createToolLogger } from './debug';
+import { z } from "zod";
+import { db } from "../../db";
+import { facilities } from "../../db/schema.facilities";
+import { sql, and, isNotNull } from "drizzle-orm";
+import { tool } from "ai";
+import { createToolLogger } from "./debug";
+import { withTimeout, clampNumber, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 
 export const getStats = tool({
-  description: 'Get aggregated statistics about the facilities in Ghana. Use for overview questions like "How many hospitals are there?", "What are the top regions?".',
-  parameters: z.object({
-    groupBy: z.enum(['region', 'type', 'specialty']).optional().describe('Group results by region, facility type, or specialty'),
-    limit: z.number().default(10),
+  description:
+    'Get aggregated statistics about the facilities in Ghana. Use for overview questions like "How many hospitals are there?", "What are the top regions?".',
+  inputSchema: z.object({
+    groupBy: z
+      .enum(["region", "type", "specialty"])
+      .optional()
+      .describe("Group results by region, facility type, or specialty"),
+    limit: z
+      .number()
+      .min(1)
+      .max(50)
+      .default(10)
+      .describe("Maximum number of grouped results to return"),
   }),
-  execute: async ({ groupBy, limit: rawLimit }: any) => {
-    const limit = typeof rawLimit === 'number' && rawLimit > 0 ? rawLimit : 10;
-    const log = createToolLogger('getStats');
+  execute: async ({ groupBy, limit: rawLimit }, { abortSignal }) => {
+    const limit = clampNumber(rawLimit, 1, 50, 10);
+    const log = createToolLogger("getStats");
     const start = Date.now();
     log.start({ groupBy, limit });
 
     try {
-      if (groupBy === 'region') {
-        log.step('Aggregating by region');
-        const stats = await db
-          .select({
-            region: facilities.addressRegion,
-            count: sql<number>`count(*)`,
-            doctors: sql<number>`sum(${facilities.numDoctors})`,
-            beds: sql<number>`sum(${facilities.capacity})`,
-          })
-          .from(facilities)
-          .groupBy(facilities.addressRegion)
-          .orderBy(sql`count(*) DESC`)
-          .limit(limit);
-        log.step('Region stats returned', stats.length);
-        const output = { stats };
+      if (groupBy === "region") {
+        log.step("Aggregating by region");
+        const stats = await withTimeout(
+          db
+            .select({
+              region: facilities.addressRegion,
+              count: sql<number>`count(*)`,
+              doctors: sql<number>`sum(${facilities.numDoctors})`,
+              beds: sql<number>`sum(${facilities.capacity})`,
+            })
+            .from(facilities)
+            .groupBy(facilities.addressRegion)
+            .orderBy(sql`count(*) DESC`)
+            .limit(limit),
+          DB_QUERY_TIMEOUT_MS,
+          abortSignal
+        );
+        log.step("Region stats returned", stats.length);
+        const output = { groupBy, stats };
         log.success(output, Date.now() - start);
         return output;
       }
 
-      if (groupBy === 'type') {
-        log.step('Aggregating by facility type');
-        const stats = await db
+      if (groupBy === "type") {
+        log.step("Aggregating by facility type");
+        const stats = await withTimeout(
+          db
+            .select({
+              type: facilities.facilityType,
+              count: sql<number>`count(*)`,
+            })
+            .from(facilities)
+            .groupBy(facilities.facilityType)
+            .orderBy(sql`count(*) DESC`)
+            .limit(limit),
+          DB_QUERY_TIMEOUT_MS,
+          abortSignal
+        );
+        log.step("Type stats returned", stats.length);
+        const output = { groupBy, stats };
+        log.success(output, Date.now() - start);
+        return output;
+      }
+
+      if (groupBy === "specialty") {
+        log.step("Aggregating by specialty");
+        // Unnest the specialties array and group
+        const stats = await withTimeout(
+          db.execute(
+            sql`SELECT unnest(specialties) AS specialty, count(*) AS count
+                FROM facilities
+                WHERE specialties IS NOT NULL
+                GROUP BY specialty
+                ORDER BY count DESC
+                LIMIT ${limit}`
+          ),
+          DB_QUERY_TIMEOUT_MS,
+          abortSignal
+        );
+        const rows = Array.isArray(stats) ? stats : [];
+        log.step("Specialty stats returned", rows.length);
+        const output = { groupBy, stats: rows };
+        log.success(output, Date.now() - start);
+        return output;
+      }
+
+      // Default: Total counts
+      log.step("Fetching total facility count");
+      const total = await withTimeout(
+        db.select({ count: sql<number>`count(*)` }).from(facilities),
+        DB_QUERY_TIMEOUT_MS,
+        abortSignal
+      );
+
+      // Also get counts by type for additional context
+      const typeCounts = await withTimeout(
+        db
           .select({
             type: facilities.facilityType,
             count: sql<number>`count(*)`,
           })
           .from(facilities)
           .groupBy(facilities.facilityType)
-          .orderBy(sql`count(*) DESC`)
-          .limit(limit);
-        log.step('Type stats returned', stats.length);
-        const output = { stats };
-        log.success(output, Date.now() - start);
-        return output;
-      }
+          .orderBy(sql`count(*) DESC`),
+        DB_QUERY_TIMEOUT_MS,
+        abortSignal
+      );
 
-      // Default: Total counts
-      log.step('Fetching total facility count');
-      const total = await db.select({ count: sql<number>`count(*)` }).from(facilities);
-      log.step('Total count', total[0].count);
-      
+      // Count facilities with coordinates for spatial queries
+      const geoCount = await withTimeout(
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(facilities)
+          .where(and(isNotNull(facilities.lat), isNotNull(facilities.lng))),
+        DB_QUERY_TIMEOUT_MS,
+        abortSignal
+      );
+
+      log.step("Total count", total[0].count);
+
       const output = {
         totalFacilities: total[0].count,
-        message: 'For more specific breakdowns, please specify groupBy="region" or "type".'
+        facilitiesByType: typeCounts,
+        facilitiesWithCoordinates: geoCount[0].count,
+        message:
+          'For more specific breakdowns, specify groupBy="region", "type", or "specialty".',
       };
       log.success(output, Date.now() - start);
       return output;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown stats error";
       log.error(error, { groupBy, limit }, Date.now() - start);
-      return { error: `Stats failed: ${error.message}` };
+      return { error: `Stats failed: ${message}` };
     }
   },
-} as any);
+});

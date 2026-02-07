@@ -45,3 +45,6 @@ yarn-error.log*
 
 # pnpm
 .pnpm-store/
+
+# AI SDK DevTools
+.devtools

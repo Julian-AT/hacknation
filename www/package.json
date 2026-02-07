@@ -15,9 +15,11 @@
     "db:pull": "drizzle-kit pull",
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
-    "test": "export PLAYWRIGHT=True && pnpm exec playwright test"
+    "test": "export PLAYWRIGHT=True && pnpm exec playwright test",
+    "devtools": "npx @ai-sdk/devtools"
   },
   "dependencies": {
+    "@ai-sdk/devtools": "^0.0.12",
     "@ai-sdk/gateway": "^3.0.15",
     "@ai-sdk/google": "^3.0.22",
     "@ai-sdk/openai": "^3.0.26",

@@ -1,9 +1,8 @@
-
-export * from './queryDatabase';
-export * from './searchFacilities';
-export * from './getFacility';
-export * from './findNearby';
-export * from './getStats';
-export * from './detectAnomalies';
-export * from './findMedicalDeserts';
-export * from './planMission';
+export { queryDatabase } from "./queryDatabase";
+export { searchFacilities } from "./searchFacilities";
+export { getFacility } from "./getFacility";
+export { findNearby } from "./findNearby";
+export { getStats } from "./getStats";
+export { detectAnomalies } from "./detectAnomalies";
+export { findMedicalDeserts } from "./findMedicalDeserts";
+export { planMission } from "./planMission";

@@ -1,102 +1,293 @@
+import { z } from "zod";
+import { db } from "../../db";
+import { facilities } from "../../db/schema.facilities";
+import { and, isNotNull, ilike, sql } from "drizzle-orm";
+import { CITY_COORDS } from "../../ghana";
+import { tool } from "ai";
+import { createToolLogger } from "./debug";
+import { withTimeout, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 
-import { z } from 'zod';
-import { tool } from 'ai';
-import { findMedicalDeserts } from './findMedicalDeserts';
-import { findNearby } from './findNearby';
-import { createToolLogger } from './debug';
+// Haversine distance in km
+function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+type Recommendation = {
+  priority: string;
+  region: string;
+  reason: string;
+  suggestedHost?:
+    | {
+        id?: number;
+        name: string;
+        city?: string | null;
+        distanceKm?: number;
+      }
+    | undefined;
+  suggestedLocation?: string | undefined;
+};
 
 export const planMission = tool({
-  description: 'Interactive volunteer deployment planner. Recommends facilities for a volunteer based on their specialty and Ghana\'s needs.',
-  parameters: z.object({
-    specialty: z.string().describe('Volunteer medical specialty (e.g., "Ophthalmologist")'),
-    duration: z.string().optional().describe('Available duration (e.g., "2 weeks")'),
-    preference: z.string().optional().describe('Regional or facility type preference'),
+  description:
+    "Interactive volunteer deployment planner. Recommends facilities for a volunteer based on their specialty and Ghana's healthcare needs.",
+  inputSchema: z.object({
+    specialty: z
+      .string()
+      .min(1)
+      .max(200)
+      .describe('Volunteer medical specialty (e.g., "Ophthalmologist")'),
+    duration: z
+      .string()
+      .max(100)
+      .optional()
+      .describe('Available duration (e.g., "2 weeks")'),
+    preference: z
+      .string()
+      .max(200)
+      .optional()
+      .describe("Regional or facility type preference"),
   }),
-  execute: async ({ specialty, duration, preference }: any, { toolCallId, messages }: any) => {
-    const log = createToolLogger('planMission');
+  execute: async ({ specialty, duration, preference }, { abortSignal }) => {
+    const log = createToolLogger("planMission");
     const start = Date.now();
     log.start({ specialty, duration, preference });
 
     try {
-      log.step('Calling findMedicalDeserts sub-tool', { service: specialty, thresholdKm: 50 });
-      const desertAnalysis = await (findMedicalDeserts as any).execute(
-        { service: specialty, thresholdKm: 50 },
-        { toolCallId, messages }
+      // Step 1: Find facilities that provide this specialty (medical desert analysis)
+      log.step("Querying providers for specialty", specialty);
+      const providers = await withTimeout(
+        db
+          .select({
+            id: facilities.id,
+            name: facilities.name,
+            lat: facilities.lat,
+            lng: facilities.lng,
+            city: facilities.addressCity,
+            region: facilities.addressRegion,
+          })
+          .from(facilities)
+          .where(
+            and(
+              isNotNull(facilities.lat),
+              isNotNull(facilities.lng),
+              ilike(facilities.proceduresRaw, `%${specialty}%`)
+            )
+          ),
+        DB_QUERY_TIMEOUT_MS,
+        abortSignal
       );
-      log.step('findMedicalDeserts returned', {
-        hasDesertZones: 'desertZones' in desertAnalysis,
-        status: 'status' in desertAnalysis ? desertAnalysis.status : undefined,
-        totalProviders: 'totalProviders' in desertAnalysis ? desertAnalysis.totalProviders : 0,
-      });
-      
-      const recommendations: any[] = [];
-      
-      if ('desertZones' in desertAnalysis && Array.isArray(desertAnalysis.desertZones) && desertAnalysis.desertZones.length > 0) {
-        const topDesert = desertAnalysis.desertZones[0];
-        log.step('Top desert zone', { city: topDesert.city, distanceKm: topDesert.distanceKm });
-        
-        log.step('Calling findNearby sub-tool for host facilities');
-        const potentialHosts = await (findNearby as any).execute(
-          {
-             location: `${topDesert.coordinates.lat},${topDesert.coordinates.lng}`,
-             radiusKm: 50,
-             facilityType: 'Hospital',
-             limit: 3
+
+      log.step("Providers found for specialty", providers.length);
+
+      const recommendations: Recommendation[] = [];
+
+      if (providers.length === 0) {
+        // NATIONAL_GAP: No facilities offer this specialty at all
+        log.step("National gap detected for specialty", specialty);
+        recommendations.push({
+          priority: "Critical - National Gap",
+          region: "Accra / Kumasi (Teaching Hospitals)",
+          reason: `No facilities in Ghana explicitly list ${specialty}. Recommend starting at a major teaching hospital to build capacity.`,
+          suggestedHost: {
+            name: "Korle Bu or Komfo Anokye Teaching Hospital",
           },
-          { toolCallId, messages }
-        );
-        log.step('findNearby returned', {
-          hasFacilities: 'facilities' in potentialHosts,
-          count: 'facilities' in potentialHosts ? potentialHosts.facilities?.length : 0,
         });
+      } else {
+        // Step 2: Find cities that are medical deserts for this specialty
+        const DESERT_THRESHOLD_KM = 50;
+        const cityEntries = Object.entries(CITY_COORDS);
 
-        if ('facilities' in potentialHosts && Array.isArray(potentialHosts.facilities) && potentialHosts.facilities.length > 0) {
-           recommendations.push({
-             priority: 'High - Critical Gap',
-             region: `${topDesert.city} Area`,
-             reason: `This area is a medical desert for ${specialty} (nearest is ${topDesert.distanceKm}km away).`,
-             suggestedHost: potentialHosts.facilities[0]
-           });
-        } else {
-           recommendations.push({
-             priority: 'High - Critical Gap (Infrastructure Limited)',
-             region: `${topDesert.city} Area`,
-             reason: `This area is a severe medical desert (${topDesert.distanceKm}km gap) but lacks major hospitals. Consider mobile clinic deployment.`,
-             suggestedLocation: topDesert.city
-           });
+        log.step(
+          "Computing desert zones for cities",
+          cityEntries.length
+        );
+
+        const desertZones: Array<{
+          city: string;
+          nearestProvider: string | null;
+          distanceKm: number;
+          coordinates: { lat: number; lng: number };
+        }> = [];
+
+        for (const [cityName, coords] of cityEntries) {
+          if (abortSignal?.aborted) {
+            return { error: "Operation was aborted" };
+          }
+
+          let minDist = Number.POSITIVE_INFINITY;
+          let nearestName: string | null = null;
+
+          for (const p of providers) {
+            if (!p.lat || !p.lng) {
+              continue;
+            }
+            const d = haversineKm(coords.lat, coords.lng, p.lat, p.lng);
+            if (d < minDist) {
+              minDist = d;
+              nearestName = p.name;
+            }
+          }
+
+          if (minDist > DESERT_THRESHOLD_KM) {
+            desertZones.push({
+              city: cityName,
+              nearestProvider: nearestName,
+              distanceKm: Math.round(minDist),
+              coordinates: coords,
+            });
+          }
         }
-      } else if ('status' in desertAnalysis && desertAnalysis.status === 'NATIONAL_GAP') {
-         log.step('National gap detected for specialty', specialty);
-         recommendations.push({
-           priority: 'Critical - National Gap',
-           region: 'Accra / Kumasi (Teaching Hospitals)',
-           reason: `No facilities in Ghana explicitly list ${specialty}. Recommend starting at a major teaching hospital to build capacity.`,
-           suggestedHost: { name: 'Korle Bu or Komfo Anokye Teaching Hospital' }
-         });
+
+        desertZones.sort((a, b) => b.distanceKm - a.distanceKm);
+        log.step("Desert zones found", desertZones.length);
+
+        if (desertZones.length > 0) {
+          const topDesert = desertZones[0];
+          log.step("Top desert zone", {
+            city: topDesert.city,
+            distanceKm: topDesert.distanceKm,
+          });
+
+          // Step 3: Find nearby hospitals that could host the volunteer
+          const distanceSql = sql`(
+            6371.0 * acos(
+              LEAST(1.0, GREATEST(-1.0,
+                cos(radians(${topDesert.coordinates.lat})) * cos(radians(${facilities.lat})) *
+                cos(radians(${facilities.lng}) - radians(${topDesert.coordinates.lng})) +
+                sin(radians(${topDesert.coordinates.lat})) * sin(radians(${facilities.lat}))
+              ))
+            )
+          )`;
+
+          log.step("Searching for host facilities near desert zone");
+          const potentialHosts = await withTimeout(
+            db
+              .select({
+                id: facilities.id,
+                name: facilities.name,
+                city: facilities.addressCity,
+                distanceKm: distanceSql,
+              })
+              .from(facilities)
+              .where(
+                and(
+                  isNotNull(facilities.lat),
+                  isNotNull(facilities.lng),
+                  ilike(facilities.facilityType, "%Hospital%"),
+                  sql`${distanceSql} <= 50`
+                )
+              )
+              .orderBy(distanceSql)
+              .limit(3),
+            DB_QUERY_TIMEOUT_MS,
+            abortSignal
+          );
+
+          log.step("Potential host facilities found", potentialHosts.length);
+
+          if (potentialHosts.length > 0) {
+            const host = potentialHosts[0];
+            recommendations.push({
+              priority: "High - Critical Gap",
+              region: `${topDesert.city} Area`,
+              reason: `This area is a medical desert for ${specialty} (nearest is ${topDesert.distanceKm}km away).`,
+              suggestedHost: {
+                id: host.id,
+                name: host.name,
+                city: host.city,
+                distanceKm:
+                  Math.round(Number(host.distanceKm) * 10) / 10,
+              },
+            });
+          } else {
+            recommendations.push({
+              priority: "High - Critical Gap (Infrastructure Limited)",
+              region: `${topDesert.city} Area`,
+              reason: `This area is a severe medical desert (${topDesert.distanceKm}km gap) but lacks major hospitals. Consider mobile clinic deployment.`,
+              suggestedLocation: topDesert.city,
+            });
+          }
+
+          // Add additional desert zones as secondary recommendations
+          for (const zone of desertZones.slice(1, 3)) {
+            recommendations.push({
+              priority: "Medium - Desert Zone",
+              region: `${zone.city} Area`,
+              reason: `${zone.distanceKm}km from nearest ${specialty} provider (${zone.nearestProvider}).`,
+              suggestedLocation: zone.city,
+            });
+          }
+        }
       }
 
+      // Fallback if no specific gaps were found
       if (recommendations.length === 0) {
-         log.step('No specific gaps found, using fallback recommendation');
-         recommendations.push({
-           priority: 'Medium - Rural Support',
-           region: 'Northern Region',
-           reason: 'General need for specialists in northern rural districts.',
-           suggestedHost: { name: 'Tamale Teaching Hospital', city: 'Tamale' }
-         });
+        log.step("No specific gaps found, using fallback recommendation");
+        recommendations.push({
+          priority: "Medium - Rural Support",
+          region: "Northern Region",
+          reason:
+            "General need for specialists in northern rural districts.",
+          suggestedHost: {
+            name: "Tamale Teaching Hospital",
+            city: "Tamale",
+          },
+        });
       }
 
-      log.step('Generated recommendations', recommendations.length);
+      // Apply preference filter if provided
+      if (preference) {
+        const preferenceMatches = recommendations.filter(
+          (r) =>
+            r.region.toLowerCase().includes(preference.toLowerCase()) ||
+            r.suggestedHost?.city
+              ?.toLowerCase()
+              .includes(preference.toLowerCase()) ||
+            r.suggestedLocation
+              ?.toLowerCase()
+              .includes(preference.toLowerCase())
+        );
+        if (preferenceMatches.length > 0) {
+          log.step(
+            "Preference filter applied, matching recommendations",
+            preferenceMatches.length
+          );
+        }
+      }
+
+      log.step("Generated recommendations", recommendations.length);
 
       const output = {
-        volunteerProfile: { specialty, duration },
-        analysis: `Analyzed ${'totalProviders' in desertAnalysis ? desertAnalysis.totalProviders : 0} existing providers for ${specialty}.`,
-        recommendations
+        volunteerProfile: { specialty, duration, preference },
+        analysis: `Analyzed ${providers.length} existing providers for ${specialty}.`,
+        recommendations,
       };
       log.success(output, Date.now() - start);
       return output;
-    } catch (error: any) {
-      log.error(error, { specialty, duration, preference }, Date.now() - start);
-      return { error: `Planning failed: ${error.message}` };
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown planning error";
+      log.error(
+        error,
+        { specialty, duration, preference },
+        Date.now() - start
+      );
+      return { error: `Planning failed: ${message}` };
     }
   },
-} as any);
+});

@@ -141,8 +141,8 @@ export const systemPrompt = ({
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
-  // Combine VF Agent prompt with request context
-  return `${vfAgentPrompt}\n\n${requestPrompt}`;
+  // Combine VF Agent prompt with artifacts instructions and request context
+  return `${vfAgentPrompt}\n\n${artifactsPrompt}\n\n${requestPrompt}`;
 };
 
 export const codePrompt = `
