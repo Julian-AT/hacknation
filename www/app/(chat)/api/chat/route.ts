@@ -17,6 +17,16 @@ import { createDocument } from "@/lib/ai/tools/create-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
+import { 
+  queryDatabase,
+  searchFacilities,
+  getFacility,
+  findNearby,
+  findMedicalDeserts,
+  detectAnomalies,
+  getStats,
+  planMission 
+} from "@/lib/ai/tools";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -139,19 +149,32 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        const tools: any = isReasoningModel
+          ? {
+              getWeather,
+              createDocument: createDocument({ session, dataStream }),
+              updateDocument: updateDocument({ session, dataStream }),
+              requestSuggestions: requestSuggestions({ session, dataStream }),
+            }
+          : {
+              getWeather,
+              createDocument: createDocument({ session, dataStream }),
+              updateDocument: updateDocument({ session, dataStream }),
+              requestSuggestions: requestSuggestions({ session, dataStream }),
+              queryDatabase,
+              searchFacilities,
+              getFacility,
+              findNearby,
+              findMedicalDeserts,
+              detectAnomalies,
+              getStats,
+              planMission,
+            };
+
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
-          stopWhen: stepCountIs(5),
-          experimental_activeTools: isReasoningModel
-            ? []
-            : [
-                "getWeather",
-                "createDocument",
-                "updateDocument",
-                "requestSuggestions",
-              ],
           providerOptions: isReasoningModel
             ? {
                 anthropic: {
@@ -159,17 +182,13 @@ export async function POST(request: Request) {
                 },
               }
             : undefined,
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({ session, dataStream }),
-          },
+          tools,
+          maxSteps: isReasoningModel ? 1 : 10,
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",
           },
-        });
+        } as any);
 
         dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
 

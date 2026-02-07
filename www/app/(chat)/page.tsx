@@ -13,40 +13,25 @@ export default function Page() {
   );
 }
 
+import { VFProvider } from "@/lib/vf-context";
+
 async function NewChatPage() {
   const cookieStore = await cookies();
   const modelIdFromCookie = cookieStore.get("chat-model");
   const id = generateUUID();
 
-  if (!modelIdFromCookie) {
-    return (
-      <>
-        <Chat
-          autoResume={false}
-          id={id}
-          initialChatModel={DEFAULT_CHAT_MODEL}
-          initialMessages={[]}
-          initialVisibilityType="private"
-          isReadonly={false}
-          key={id}
-        />
-        <DataStreamHandler />
-      </>
-    );
-  }
-
   return (
-    <>
+    <VFProvider>
       <Chat
         autoResume={false}
         id={id}
-        initialChatModel={modelIdFromCookie.value}
+        initialChatModel={modelIdFromCookie?.value || DEFAULT_CHAT_MODEL}
         initialMessages={[]}
         initialVisibilityType="private"
         isReadonly={false}
         key={id}
       />
       <DataStreamHandler />
-    </>
+    </VFProvider>
   );
 }

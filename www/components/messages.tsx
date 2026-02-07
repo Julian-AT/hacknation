@@ -7,6 +7,8 @@ import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
 
+import { ToolTrace } from "./vf-ui/ToolTrace";
+
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
@@ -53,26 +55,48 @@ function PureMessages({
           {messages.length === 0 && <Greeting />}
 
           {messages.map((message, index) => (
-            <PreviewMessage
-              addToolApprovalResponse={addToolApprovalResponse}
-              chatId={chatId}
-              isLoading={
-                status === "streaming" && messages.length - 1 === index
-              }
-              isReadonly={isReadonly}
-              key={message.id}
-              message={message}
-              regenerate={regenerate}
-              requiresScrollPadding={
-                hasSentMessage && index === messages.length - 1
-              }
-              setMessages={setMessages}
-              vote={
-                votes
-                  ? votes.find((vote) => vote.messageId === message.id)
-                  : undefined
-              }
-            />
+            <div key={message.id}>
+              <PreviewMessage
+                addToolApprovalResponse={addToolApprovalResponse}
+                chatId={chatId}
+                isLoading={
+                  status === "streaming" && messages.length - 1 === index
+                }
+                isReadonly={isReadonly}
+                message={message}
+                regenerate={regenerate}
+                requiresScrollPadding={
+                  hasSentMessage && index === messages.length - 1
+                }
+                setMessages={setMessages}
+                vote={
+                  votes
+                    ? votes.find((vote) => vote.messageId === message.id)
+                    : undefined
+                }
+              />
+              
+              {message.role === 'assistant' && message.parts && (
+                <div className="ml-10">
+                  {message.parts.map((part, i) => {
+                    if ((part as any).type === 'tool-invocation') {
+                      const { toolCallId, toolName, args } = (part as any).toolInvocation;
+                      const result = 'result' in (part as any).toolInvocation ? (part as any).toolInvocation.result : undefined;
+                      return (
+                        <ToolTrace 
+                          key={toolCallId}
+                          toolCallId={toolCallId}
+                          toolName={toolName}
+                          args={args}
+                          result={result}
+                        />
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              )}
+            </div>
           ))}
 
           {status === "submitted" &&

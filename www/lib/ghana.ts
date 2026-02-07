@@ -102,3 +102,43 @@ export const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   'Abelemkpe': { lat: 5.6167, lng: -0.2167 },
   'Abelenkpe': { lat: 5.6167, lng: -0.2167 },
 };
+
+export const GHANA_REGIONS = [
+  'Greater Accra',
+  'Ashanti',
+  'Northern',
+  'Western',
+  'Eastern',
+  'Central',
+  'Volta',
+  'Upper East',
+  'Upper West',
+  'Brong-Ahafo', // Legacy, now Bono, Bono East, Ahafo
+  'Savannah',
+  'North East',
+  'Oti',
+  'Bono East',
+  'Ahafo',
+  'Western North',
+];
+
+// Approximate population by region (2021 census estimates)
+export const REGION_POPULATION: Record<string, number> = {
+  'Greater Accra': 5455692,
+  'Ashanti': 5440463,
+  'Northern': 2310939,
+  'Western': 2060585,
+  'Eastern': 2925653,
+  'Central': 2859821,
+  'Volta': 1659040,
+  'Upper East': 1301226,
+  'Upper West': 901502,
+  'Brong-Ahafo': 2500000, // Aggregate estimate if legacy name used
+  'Savannah': 653266,
+  'North East': 658946,
+  'Oti': 747248,
+  'Bono East': 1203400,
+  'Ahafo': 564668,
+  'Western North': 880921,
+  'Bono': 1208649
+};
