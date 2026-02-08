@@ -15,15 +15,11 @@ type SuggestedActionsProps = {
 
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const suggestedActions = [
-    "Where are the biggest gaps in emergency care coverage?",
-    "Plan a volunteer surgical mission to address unmet orthopedic needs",
-    "Which facilities have suspicious capability claims that need verification?",
-    "Compare healthcare access between two regions and recommend improvements",
-    "Find medical deserts for maternal care and suggest where to place new clinics",
-    "What specialties have critically few providers relative to population?",
-    "Search the web for the latest WHO guidelines on doctor-to-patient ratios",
-    "Detect anomalies in facility data and flag potential reporting issues",
-  ];
+    "Plan a volunteer mission for orthopedic gaps in Ghana",
+    "Find maternal care deserts and suggest clinic sites",
+    "Flag facilities with suspicious capability data",
+    "Compare healthcare access between Ghana and Austria",
+  ]; 
 
   return (
     <div

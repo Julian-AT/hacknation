@@ -60,7 +60,7 @@ export const Greeting = () => {
 
   return (
     <div
-      className="mx-auto mt-4 flex size-full max-w-3xl flex-col justify-center px-4 md:mt-16 md:px-8"
+      className="mx-auto mt-4 flex size-full max-w-4xl flex-col justify-center px-4 md:mt-16 md:px-8"
       key="overview"
     >
       <motion.div
@@ -88,6 +88,7 @@ export const Greeting = () => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
       >
+        Meridian is an AI assistant for advanced healthcare data analytics. Analyze facility-level attributes, orchestrate mission strategies, identify critical service gaps, and extract actionable intelligence.
         Your AI-powered healthcare intelligence assistant. Explore facilities,
         plan missions, and analyze coverage data.
       </motion.p>

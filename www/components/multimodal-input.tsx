@@ -31,6 +31,7 @@ import {
   chatModels,
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
+  topChatModels,
 } from "@/lib/ai/models";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -538,6 +539,30 @@ function PureModelSelectorCompact({
       <ModelSelectorContent>
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
+          {topChatModels.length > 0 && (
+            <ModelSelectorGroup heading="Top models" key="top">
+              {topChatModels.map((model) => {
+                const logoProvider = model.id.split("/")[0];
+                return (
+                  <ModelSelectorItem
+                    key={model.id}
+                    onSelect={() => {
+                      onModelChange?.(model.id);
+                      setCookie("chat-model", model.id);
+                      setOpen(false);
+                    }}
+                    value={model.id}
+                  >
+                    <ModelSelectorLogo provider={logoProvider} />
+                    <ModelSelectorName>{model.name}</ModelSelectorName>
+                    {model.id === selectedModel.id && (
+                      <CheckIcon className="ml-auto size-4" />
+                    )}
+                  </ModelSelectorItem>
+                );
+              })}
+            </ModelSelectorGroup>
+          )}
           {Object.entries(modelsByProvider).map(
             ([providerKey, providerModels]) => (
               <ModelSelectorGroup
