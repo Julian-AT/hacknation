@@ -393,12 +393,12 @@ function PureArtifact({
                   }
                 : {
                     opacity: 1,
-                    x: 400,
+                    x: 600,
                     y: 0,
                     height: windowHeight,
                     width: windowWidth
-                      ? windowWidth - 400
-                      : "calc(100dvw-600px)",
+                      ? windowWidth - 600
+                      : "calc(100dvw - 600px)",
                     borderRadius: 0,
                     transition: {
                       delay: 0,

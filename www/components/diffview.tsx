@@ -1,3 +1,4 @@
+import { marked } from "marked";
 import OrderedMap from "orderedmap";
 import {
   DOMParser,
@@ -10,8 +11,6 @@ import { addListNodes } from "prosemirror-schema-list";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { useEffect, useRef } from "react";
-import { renderToString } from "react-dom/server";
-import { Streamdown } from "streamdown";
 
 import { DiffType, diffEditor } from "@/lib/editor/diff";
 
@@ -59,12 +58,12 @@ export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
     if (editorRef.current && !viewRef.current) {
       const parser = DOMParser.fromSchema(diffSchema);
 
-      const oldHtmlContent = renderToString(
-        <Streamdown>{oldContent}</Streamdown>
-      );
-      const newHtmlContent = renderToString(
-        <Streamdown>{newContent}</Streamdown>
-      );
+      const oldHtmlContent = marked.parse(oldContent, {
+        async: false,
+      }) as string;
+      const newHtmlContent = marked.parse(newContent, {
+        async: false,
+      }) as string;
 
       const oldContainer = document.createElement("div");
       oldContainer.innerHTML = oldHtmlContent;
