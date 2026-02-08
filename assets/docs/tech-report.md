@@ -42,4 +42,4 @@ Data quality is the binding constraint: ~733 facilities lack region data, ~600 l
 
 ---
 
-**Live demo**: [meridian-ai.vercel.app](https://meridian-ai.vercel.app) | **Stack**: Next.js 16, Vercel AI SDK v6, PostgreSQL + pgvector, deck.gl, Drizzle ORM | **Data**: 987 Ghana healthcare facilities (Virtue Foundation)
+**Live demo**: [hacknation-alpha.vercel.app](https://hacknation-alpha.vercel.app) | **Stack**: Next.js 16, Vercel AI SDK v6, PostgreSQL + pgvector, deck.gl, Drizzle ORM | **Data**: 987 Ghana healthcare facilities (Virtue Foundation)
