@@ -84,10 +84,56 @@ export const findMedicalDeserts = tool({
       log.step("Providers found", providers.length);
 
       if (providers.length === 0) {
+        // Try broader matches by splitting the service into individual words
+        const words = service
+          .split(/\s+/)
+          .filter((w) => w.length > 3)
+          .map((w) => w.toLowerCase());
+
+        const suggestedAlternatives: Array<{
+          term: string;
+          matchCount: number;
+        }> = [];
+
+        for (const word of words) {
+          if (abortSignal?.aborted) {
+            return { error: "Operation was aborted" };
+          }
+          const broadMatches = await withTimeout(
+            db
+              .select({ id: facilities.id })
+              .from(facilities)
+              .where(
+                and(
+                  isNotNull(facilities.lat),
+                  isNotNull(facilities.lng),
+                  or(
+                    ilike(facilities.proceduresRaw, `%${word}%`),
+                    ilike(facilities.specialtiesRaw, `%${word}%`)
+                  )
+                )
+              )
+              .limit(1000),
+            DB_QUERY_TIMEOUT_MS,
+            abortSignal
+          );
+          if (broadMatches.length > 0) {
+            suggestedAlternatives.push({
+              term: word,
+              matchCount: broadMatches.length,
+            });
+          }
+        }
+
+        log.step("No exact match; alternatives found", suggestedAlternatives);
+
         const output = {
           service,
           status: "NATIONAL_GAP" as const,
           message: `No facilities in the database explicitly list "${service}" in their procedures.`,
+          suggestedAlternatives: suggestedAlternatives.sort(
+            (a, b) => b.matchCount - a.matchCount
+          ),
         };
         log.success(output, Date.now() - start);
         return output;

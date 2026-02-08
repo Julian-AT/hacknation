@@ -401,6 +401,89 @@ export const detectAnomalies = tool({
         log.step("procedure_breadth_mismatch results", breadthAnomalies.length);
       }
 
+      // 7. Name-Location Mismatch
+      // Facilities whose name contains a city different from their geocoded location
+      if (!type) {
+        log.step("Checking name_location_mismatch");
+        const KNOWN_CITIES = [
+          "accra",
+          "kumasi",
+          "tamale",
+          "takoradi",
+          "sunyani",
+          "cape coast",
+          "obuasi",
+          "koforidua",
+          "techiman",
+          "ho",
+          "wa",
+          "bolgatanga",
+          "tema",
+          "bawku",
+          "yendi",
+        ];
+
+        const geoFacilities = await withTimeout(
+          db
+            .select({
+              id: facilities.id,
+              name: facilities.name,
+              city: facilities.addressCity,
+              region: facilities.addressRegion,
+              lat: facilities.lat,
+              lng: facilities.lng,
+            })
+            .from(facilities)
+            .where(
+              and(...baseConditions, isNotNull(facilities.lat), isNotNull(facilities.lng))
+            )
+            .limit(500),
+          DB_QUERY_TIMEOUT_MS,
+          abortSignal
+        );
+
+        const nameMismatches: Record<string, unknown>[] = [];
+
+        for (const fac of geoFacilities) {
+          if (abortSignal?.aborted) {
+            return { error: "Operation was aborted" };
+          }
+
+          const nameLower = (fac.name ?? "").toLowerCase();
+          const cityLower = (fac.city ?? "").toLowerCase();
+
+          for (const knownCity of KNOWN_CITIES) {
+            // Check if the facility name contains a city name that differs from its geocoded city
+            if (
+              nameLower.includes(knownCity) &&
+              cityLower.length > 0 &&
+              !cityLower.includes(knownCity) &&
+              knownCity !== "ho" // Skip "ho" — too short, causes false positives
+            ) {
+              nameMismatches.push({
+                id: fac.id,
+                name: fac.name,
+                nameContainsCity: knownCity,
+                geocodedCity: fac.city,
+                geocodedRegion: fac.region,
+              });
+              break;
+            }
+          }
+        }
+
+        if (nameMismatches.length > 0) {
+          anomalies.push({
+            type: "Name-Location Mismatch",
+            description:
+              "Facilities whose name references a different city than their geocoded location. May indicate incorrect geocoding or data entry errors.",
+            facilities: nameMismatches.slice(0, 10),
+          });
+        }
+
+        log.step("name_location_mismatch results", nameMismatches.length);
+      }
+
       const output = {
         region: region ?? "All regions",
         foundAnomalies: anomalies.length,

@@ -114,9 +114,14 @@ function createDelegationTool({
 
 /**
  * Creates a parallel investigation tool that runs 2-4 sub-agents
- * concurrently via Promise.all(). This is the key performance feature —
- * complex queries that need database + medical + geo analysis can
- * run all three simultaneously instead of sequentially.
+ * concurrently and streams results as each agent finishes.
+ *
+ * Key improvements over sequential Promise.all():
+ *   - Interleaved streaming: yields messages as each agent completes,
+ *     so the user sees results from fast agents immediately
+ *   - Synthetic error messages: failed agents produce visible error
+ *     messages instead of silently returning empty arrays
+ *   - Promise.allSettled: partial failures don't block other agents
  */
 function createParallelInvestigateTool() {
   // Map of agent names to their ToolLoopAgent instances
@@ -155,50 +160,92 @@ function createParallelInvestigateTool() {
     async *execute({ tasks }, { abortSignal }) {
       const startTime = Date.now();
 
-      // Start all agent streams in parallel
-      const completedStreams = await Promise.all(
-        tasks.map(async ({ agent, task }) => {
-          const agentInstance = agentMap[agent as AgentName];
-          try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const result = await (agentInstance as any).stream({
-              prompt: task,
-              abortSignal,
-            });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const messages: any[] = [];
-            for await (const message of readUIMessageStream({
-              stream: result.toUIMessageStream(),
-            })) {
-              messages.push(message);
-            }
-            return { agent, task, status: "success" as const, messages };
-          } catch (error) {
-            return {
-              agent,
-              task,
-              status: "error" as const,
-              messages: [] as never[],
-              error:
-                error instanceof Error
-                  ? error.message
-                  : "Unknown error during investigation",
-            };
+      // Shared message queue for interleaved streaming.
+      // Messages from any agent are pushed here and yielded immediately
+      // instead of waiting for all agents to finish.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const messageQueue: any[] = [];
+      let resolveWaiting: (() => void) | null = null;
+      let activeAgents = tasks.length;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function enqueue(message: any) {
+        messageQueue.push(message);
+        if (resolveWaiting) {
+          resolveWaiting();
+          resolveWaiting = null;
+        }
+      }
+
+      function markAgentDone() {
+        activeAgents--;
+        if (resolveWaiting) {
+          resolveWaiting();
+          resolveWaiting = null;
+        }
+      }
+
+      // Start all agent streams concurrently — each pushes to shared queue
+      const agentPromises = tasks.map(async ({ agent, task }) => {
+        const agentInstance = agentMap[agent as AgentName];
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const result = await (agentInstance as any).stream({
+            prompt: task,
+            abortSignal,
+          });
+          for await (const message of readUIMessageStream({
+            stream: result.toUIMessageStream(),
+          })) {
+            enqueue(message);
           }
-        })
-      );
+        } catch (error) {
+          // Yield a synthetic error message so the orchestrator and user
+          // can see which agent failed and why, instead of silent failure
+          const errorMsg =
+            error instanceof Error
+              ? error.message
+              : "Unknown error during investigation";
+          console.error(
+            `[parallelInvestigate] ${agent} agent failed:`,
+            errorMsg
+          );
+          enqueue({
+            role: "assistant",
+            parts: [
+              { type: "step-start" },
+              {
+                type: "text",
+                text: `[${agent} agent] Investigation failed: ${errorMsg}`,
+                state: "done",
+              },
+            ],
+          });
+        } finally {
+          markAgentDone();
+        }
+      });
+
+      // Yield messages as they arrive from any agent (interleaved streaming)
+      while (activeAgents > 0 || messageQueue.length > 0) {
+        if (messageQueue.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          yield messageQueue.shift()!;
+        } else if (activeAgents > 0) {
+          // Wait for the next message or agent completion
+          await new Promise<void>((resolve) => {
+            resolveWaiting = resolve;
+          });
+        }
+      }
+
+      // Ensure all agent promises have settled (should already be done)
+      await Promise.allSettled(agentPromises);
 
       const duration = Date.now() - startTime;
       console.log(
         `[parallelInvestigate] ${tasks.length} agents completed in ${duration}ms`
       );
-
-      // Yield all messages from all agents sequentially
-      for (const { messages } of completedStreams) {
-        for (const message of messages) {
-          yield message;
-        }
-      }
     },
     toModelOutput: ({ output }) => {
       // Summarize the combined subagent outputs for the orchestrator's context
@@ -214,10 +261,26 @@ function createParallelInvestigateTool() {
       const texts = textParts
         .map((p: { text?: string }) => (p.text ? p.text.trim() : ""))
         .filter(Boolean);
-      const value =
-        texts.length > 0
-          ? texts.join("\n\n---\n\n")
+
+      // Flag partial failures in the summary
+      const errorTexts = texts.filter(
+        (t: string) =>
+          t.startsWith("[") && t.includes("Investigation failed:")
+      );
+      const successTexts = texts.filter(
+        (t: string) =>
+          !(t.startsWith("[") && t.includes("Investigation failed:"))
+      );
+
+      let value =
+        successTexts.length > 0
+          ? successTexts.join("\n\n---\n\n")
           : "Parallel investigation completed but produced no text output.";
+
+      if (errorTexts.length > 0) {
+        value += `\n\n**Partial failures (${errorTexts.length} agent(s) failed):**\n${errorTexts.join("\n")}`;
+      }
+
       return { type: "text" as const, value };
     },
   });

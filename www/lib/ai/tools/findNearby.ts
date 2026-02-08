@@ -128,14 +128,39 @@ export const findNearby = tool({
 
       log.step("Query returned facilities", results.length);
 
+      const mappedFacilities = results.map((r) => ({
+        ...r,
+        distanceKm: Math.round(Number(r.distanceKm) * 10) / 10,
+      }));
+
+      // Detect coordinate clustering — indicates city-level geocoding only
+      let coordinateQualityWarning: string | undefined;
+      if (mappedFacilities.length > 3) {
+        const uniqueCoords = new Set(
+          mappedFacilities.map((f) => `${f.lat},${f.lng}`)
+        );
+        if (uniqueCoords.size === 1) {
+          coordinateQualityWarning =
+            "All facilities share identical coordinates (city-level geocoding only). Distance calculations between these facilities are unreliable — they all appear at 0km from each other.";
+          log.step("WARNING: all facilities share identical coordinates");
+        } else if (
+          uniqueCoords.size < mappedFacilities.length * 0.2 &&
+          uniqueCoords.size < 5
+        ) {
+          coordinateQualityWarning = `Only ${uniqueCoords.size} unique coordinate(s) across ${mappedFacilities.length} facilities. Most facilities use city-level geocoding. Distance calculations may be unreliable.`;
+          log.step(
+            "WARNING: low coordinate diversity",
+            `${uniqueCoords.size}/${mappedFacilities.length}`
+          );
+        }
+      }
+
       const output = {
         center: { location, lat, lng },
         radiusKm,
         count: results.length,
-        facilities: results.map((r) => ({
-          ...r,
-          distanceKm: Math.round(Number(r.distanceKm) * 10) / 10,
-        })),
+        facilities: mappedFacilities,
+        ...(coordinateQualityWarning ? { coordinateQualityWarning } : {}),
       };
       log.success(output, Date.now() - start);
       return output;
