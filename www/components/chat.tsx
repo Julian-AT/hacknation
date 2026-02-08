@@ -345,7 +345,7 @@ export function Chat({
         <div
           className={cn(
             "flex flex-col h-full",
-            isMapVisible
+            isMapVisible && !isCanvasVisible
               ? "w-full md:w-[45%] md:border-r md:border-border"
               : "w-full"
           )}
