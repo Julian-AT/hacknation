@@ -5,12 +5,7 @@ import {
   CheckCircle2,
   ChevronDownIcon,
   CircleDot,
-  Database,
-  Globe,
-  HeartPulse,
   Loader2,
-  Map as MapIcon,
-  Stethoscope,
   WrenchIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -38,78 +33,38 @@ const AGENT_CONFIG: Record<
   string,
   {
     label: string;
-    icon: typeof Database;
-    color: string;
-    model: string;
-    tools: string[];
     description: string;
   }
 > = {
   investigateData: {
-    label: "Data Analysis Agent",
-    icon: Database,
-    color: "text-blue-400",
-    model: "gemini-2.5-flash-lite",
-    tools: ["queryDatabase", "searchFacilities", "getFacility"],
+    label: "Data Analysis",
     description:
-      "Executes database queries, semantic facility search, and deep-dive facility lookups.",
+      "Database queries, semantic facility search, and facility lookups.",
   },
   analyzeGeography: {
-    label: "Geographic Analysis Agent",
-    icon: MapIcon,
-    color: "text-amber-400",
-    model: "gemini-2.5-flash-lite",
-    tools: [
-      "findNearby",
-      "findMedicalDeserts",
-      "compareRegions",
-      "planMission",
-    ],
+    label: "Geographic Analysis",
     description:
       "Proximity search, medical desert detection, region comparison, and mission planning.",
   },
   medicalReasoning: {
-    label: "Medical Reasoning Agent",
-    icon: Stethoscope,
-    color: "text-red-400",
-    model: "gemini-2.5-flash-lite",
-    tools: ["detectAnomalies", "crossValidateClaims", "classifyServices"],
+    label: "Medical Reasoning",
     description:
       "Data quality checks, cross-validates claims, and classifies service delivery models.",
   },
   researchWeb: {
-    label: "Web Research Agent",
-    icon: Globe,
-    color: "text-emerald-400",
-    model: "gemini-2.5-flash-lite",
-    tools: ["firecrawlSearch", "firecrawlScrape", "firecrawlExtract"],
+    label: "Web Research",
     description:
       "Real-time web search, page scraping, and structured data extraction.",
   },
   searchHealthcare: {
-    label: "Healthcare Search Agent",
-    icon: HeartPulse,
-    color: "text-pink-400",
-    model: "gemini-2.5-flash-lite",
-    tools: [
-      "askClarifyingQuestion",
-      "searchProviders",
-      "getProviderProfile",
-      "firecrawlSearch",
-      "firecrawlScrape",
-      "firecrawlExtract",
-    ],
+    label: "Healthcare Search",
     description:
-      "Interactive provider discovery — reads medical documents, asks clarifying questions, and searches for matching doctors, hospitals, and clinics.",
+      "Provider discovery — searches for matching doctors, hospitals, and clinics.",
   },
   parallelInvestigate: {
     label: "Parallel Investigation",
-    icon: BotIcon,
-    color: "text-violet-400",
-    model: "multi-agent",
-    tools: ["database", "geospatial", "medical", "web"],
     description:
-      "Runs 2-4 specialized sub-agents simultaneously for complex multi-perspective analysis.",
+      "Runs specialized sub-agents simultaneously for complex multi-perspective analysis.",
   },
 };
 
@@ -150,7 +105,7 @@ function extractToolInfo(part: NestedPart): {
   };
 }
 
-/** Compact activity ticker shown outside the collapsible -- always visible */
+/** Compact activity ticker shown outside the collapsible */
 function AgentActivityTicker({
   parts,
   isRunning,
@@ -170,7 +125,7 @@ function AgentActivityTicker({
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-muted-foreground">
         <Loader2 className="size-3 animate-spin" />
-        <span>Initializing agent...</span>
+        <span>Initializing...</span>
       </div>
     );
   }
@@ -192,19 +147,17 @@ function AgentActivityTicker({
           >
             {isDone ? (
               hasError ? (
-                <CircleDot className="size-2.5 text-red-400" />
+                <CircleDot className="size-2.5 text-destructive" />
               ) : (
-                <CheckCircle2 className="size-2.5 text-green-500" />
+                <CheckCircle2 className="size-2.5 text-muted-foreground" />
               )
             ) : (
-              <Loader2 className="size-2.5 animate-spin text-amber-400" />
+              <Loader2 className="size-2.5 animate-spin text-muted-foreground" />
             )}
             <span
               className={cn(
                 "font-mono",
-                isDone
-                  ? "text-muted-foreground"
-                  : "text-foreground"
+                isDone ? "text-muted-foreground" : "text-foreground"
               )}
             >
               {tool.toolName}
@@ -266,7 +219,7 @@ function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
 
   return (
     <div className="space-y-1.5">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         Output
       </span>
       <ScrollArea className="max-h-48">
@@ -291,7 +244,6 @@ export function AgentDelegationCard({
   if (!config) {
     return null;
   }
-  const Icon = config.icon;
   const task = args.task as string | undefined;
 
   const nestedParts = (result?.parts as NestedPart[] | undefined) ?? [];
@@ -306,28 +258,27 @@ export function AgentDelegationCard({
   const showTaskPreview = Boolean(task) && !isOpen;
 
   return (
-    <Card className="not-prose my-2 overflow-hidden bg-muted/50">
+    <Card className="not-prose my-2 overflow-hidden">
       <Collapsible onOpenChange={setIsOpen} open={isOpen}>
         {/* Agent header */}
-        <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-muted/80">
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-muted/50">
           <div className="flex min-w-0 items-center gap-2">
-            <Icon className={cn("size-4 shrink-0", config.color)} />
-            <span className="truncate text-balance text-xs font-semibold text-foreground">
+            <BotIcon className="size-4 shrink-0 text-muted-foreground" />
+            <span className="truncate text-sm font-medium text-foreground">
               {config.label}
             </span>
             <Badge
               className="gap-1 px-1.5 py-0 text-[9px] uppercase tracking-wider"
               variant="secondary"
             >
-              <BotIcon className="size-2.5" />
               Agent
             </Badge>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {hasResult ? (
               <Badge
-                className="gap-1 border-green-500/20 bg-green-500/10 text-[10px] text-green-600 dark:text-green-400"
-                variant="outline"
+                className="gap-1 text-[10px]"
+                variant="secondary"
               >
                 <CheckCircle2 className="size-3" />
                 {totalTools > 0
@@ -336,11 +287,11 @@ export function AgentDelegationCard({
               </Badge>
             ) : (
               <Badge
-                className="animate-pulse gap-1 border-amber-500/20 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
+                className="gap-1 text-[10px]"
                 variant="outline"
               >
                 <Loader2 className="size-3 animate-spin" />
-                Working...
+                Working
               </Badge>
             )}
             <ChevronDownIcon
@@ -370,7 +321,7 @@ export function AgentDelegationCard({
         )}
 
         {/* Expanded: full details + output */}
-        <CollapsibleContent className="data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
+        <CollapsibleContent>
           <Separator />
           <CardContent className="space-y-3 p-3">
             {/* Task description */}
@@ -384,25 +335,6 @@ export function AgentDelegationCard({
             <p className="text-pretty text-[11px] text-muted-foreground">
               {config.description}
             </p>
-
-            {/* Available tools */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Available Tools
-              </span>
-              <div className="flex flex-wrap gap-1">
-                {config.tools.map((tool) => (
-                  <Badge
-                    className="gap-1 font-mono text-[10px]"
-                    key={tool}
-                    variant="secondary"
-                  >
-                    <WrenchIcon className="size-2.5" />
-                    {tool}
-                  </Badge>
-                ))}
-              </div>
-            </div>
 
             {/* Nested sub-tool results and agent text output */}
             {result && (

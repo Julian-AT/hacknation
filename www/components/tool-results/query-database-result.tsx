@@ -44,10 +44,10 @@ export function QueryDatabaseResult({
     rows.length > 0 ? Object.keys(rows.at(0) as Record<string, unknown>) : [];
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Database className="size-3.5 text-blue-400" />
+          <Database className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             SQL Query
           </span>
@@ -59,9 +59,8 @@ export function QueryDatabaseResult({
 
       {rows.length === 0 && (
         <CardContent className="flex flex-col items-center gap-2 py-6 text-center">
-          <Database className="size-5 text-muted-foreground/50" />
+          <Database className="size-5 text-muted-foreground/40" />
           <p className="text-xs text-muted-foreground">Query returned no results</p>
-          <p className="text-[11px] text-muted-foreground/70">Try adjusting your query criteria</p>
         </CardContent>
       )}
 
@@ -141,7 +140,7 @@ export function QueryDatabaseResult({
           >
             <CodeBlockHeader className="border-b-0 bg-transparent px-3 py-1.5">
               <CodeBlockTitle>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                   SQL
                 </span>
               </CodeBlockTitle>

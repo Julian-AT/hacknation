@@ -1,11 +1,9 @@
 "use client";
 
-import { ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
 
 interface AnomalyFlag {
@@ -34,24 +32,6 @@ interface CredibilityAssessmentResultProps {
   result: Record<string, unknown>;
 }
 
-const LEVEL_ICON = {
-  green: ShieldCheck,
-  yellow: ShieldAlert,
-  red: ShieldX,
-} as const;
-
-const LEVEL_BADGE: Record<string, string> = {
-  green: "border-green-500/20 bg-green-500/10 text-green-400",
-  yellow: "border-amber-500/20 bg-amber-500/10 text-amber-400",
-  red: "border-red-500/20 bg-red-500/10 text-red-400",
-};
-
-const LEVEL_LABELS: Record<string, string> = {
-  red: "flagged",
-  yellow: "caution",
-  green: "verified",
-};
-
 export function CredibilityAssessmentResult({
   result,
 }: CredibilityAssessmentResultProps) {
@@ -61,10 +41,10 @@ export function CredibilityAssessmentResult({
   const summary = result.summary as string | undefined;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <ShieldAlert className="size-3.5 text-amber-400" />
+          <ShieldAlert className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Credibility Assessment
           </span>
@@ -80,15 +60,14 @@ export function CredibilityAssessmentResult({
           if (count === 0) {
             return null;
           }
-          const LevelIcon = LEVEL_ICON[level];
+          const labels = { red: "flagged", yellow: "caution", green: "verified" } as const;
           return (
             <Badge
-              className={cn("gap-1 text-[10px]", LEVEL_BADGE[level])}
+              className="gap-1 text-[10px]"
               key={level}
               variant="outline"
             >
-              <LevelIcon className="size-2.5" />
-              {count} {LEVEL_LABELS[level]}
+              {count} {labels[level]}
             </Badge>
           );
         })}
@@ -124,58 +103,37 @@ function FacilityAssessmentItem({
   assessment: FacilityAssessment;
 }) {
   const { confidence } = assessment;
-  const LevelIcon = LEVEL_ICON[confidence.level];
-  const badgeClass = LEVEL_BADGE[confidence.level];
 
   return (
-    <Card className="p-2.5">
+    <div className="rounded-md border border-border p-2.5">
       <div className="flex items-center justify-between">
-        <div className="flex min-w-0 items-center gap-2">
-          <LevelIcon
-            className={cn(
-              "size-3.5 shrink-0",
-              confidence.level === "green"
-                ? "text-green-400"
-                : confidence.level === "yellow"
-                  ? "text-amber-400"
-                  : "text-red-400"
-            )}
-          />
-          <span className="truncate text-xs font-medium text-foreground">
-            {assessment.facilityName}
-          </span>
-        </div>
+        <span className="truncate text-xs font-medium text-foreground">
+          {assessment.facilityName}
+        </span>
         <Badge
-          className={cn("shrink-0 font-mono tabular-nums text-[11px]", badgeClass)}
+          className="shrink-0 font-mono tabular-nums text-[11px]"
           variant="outline"
         >
           {confidence.score}
         </Badge>
       </div>
 
-      <div className="mt-1 flex flex-wrap items-center gap-2">
+      <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
         {assessment.facilityType && (
-          <Badge
-            className="border-blue-500/20 bg-blue-500/10 text-[10px] text-blue-400"
-            variant="outline"
-          >
+          <Badge variant="secondary" className="text-[10px] font-normal">
             {assessment.facilityType}
           </Badge>
         )}
         {(assessment.region ?? assessment.city) && (
-          <span className="text-[10px] text-muted-foreground">
+          <span>
             {[assessment.region, assessment.city].filter(Boolean).join(", ")}
           </span>
         )}
         {assessment.beds !== null && (
-          <span className="tabular-nums text-[10px] text-muted-foreground">
-            {assessment.beds} beds
-          </span>
+          <span className="tabular-nums">{assessment.beds} beds</span>
         )}
         {assessment.doctors !== null && (
-          <span className="tabular-nums text-[10px] text-muted-foreground">
-            {assessment.doctors} doctors
-          </span>
+          <span className="tabular-nums">{assessment.doctors} doctors</span>
         )}
       </div>
 
@@ -184,6 +142,6 @@ function FacilityAssessmentItem({
           <AnomalyConfidenceBadge confidence={confidence} />
         </div>
       )}
-    </Card>
+    </div>
   );
 }

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useVF } from "@/lib/vf-context";
-import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
 
 interface FacilityConfidence {
   level: "green" | "yellow" | "red";
@@ -63,13 +62,13 @@ export function SearchFacilitiesResult({
   };
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Search className="size-3.5 text-green-400" />
+          <Search className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Facilities matching{" "}
-            <span className="text-foreground">{query}</span>
+            <span className="text-foreground">&ldquo;{query}&rdquo;</span>
           </span>
         </div>
         <Badge className="font-mono text-[11px]" variant="secondary">
@@ -80,7 +79,7 @@ export function SearchFacilitiesResult({
       <CardContent className="px-3 pb-3 pt-0">
         {results.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <Search className="size-5 text-muted-foreground/50" />
+            <Search className="size-5 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">No matching facilities found</p>
             <p className="text-[11px] text-muted-foreground/70">Try different keywords or broaden your search</p>
           </div>
@@ -88,44 +87,25 @@ export function SearchFacilitiesResult({
         <ul className="flex flex-col gap-1.5">
           {results.map((facility) => (
             <li key={facility.id}>
-              <Card className="p-2.5">
+              <div className="rounded-md border border-border p-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    {facility.confidence && (
-                      <AnomalyConfidenceBadge
-                        compact
-                        confidence={{
-                          level: facility.confidence.level,
-                          score: facility.confidence.score,
-                          summary:
-                            facility.confidence.flagCount > 0
-                              ? `${facility.confidence.flagCount} issue${facility.confidence.flagCount === 1 ? "" : "s"} detected`
-                              : "No issues detected",
-                          flags: [],
-                        }}
-                      />
-                    )}
-                    <span className="truncate text-[13px] font-medium text-foreground">
-                      {facility.name}
-                    </span>
-                  </div>
+                  <span className="truncate text-[13px] font-medium text-foreground">
+                    {facility.name}
+                  </span>
                   <Badge
-                    className="shrink-0 font-mono text-[11px] text-green-400"
+                    className="shrink-0 font-mono text-[11px]"
                     variant="outline"
                   >
                     {Math.round(facility.similarity * 100)}%
                   </Badge>
                 </div>
-                <div className="mt-1.5 flex items-center gap-2">
+                <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
                   {facility.type && (
-                    <Badge
-                      className="border-blue-500/20 bg-blue-500/10 text-[10px] text-blue-400"
-                      variant="outline"
-                    >
+                    <Badge variant="secondary" className="text-[10px] font-normal">
                       {facility.type}
                     </Badge>
                   )}
-                  <span className="truncate text-[11px] text-muted-foreground">
+                  <span className="truncate">
                     {[facility.region, facility.city]
                       .filter(Boolean)
                       .join(", ")}
@@ -136,7 +116,7 @@ export function SearchFacilitiesResult({
                     {facility.procedures}
                   </p>
                 )}
-              </Card>
+              </div>
             </li>
           ))}
         </ul>

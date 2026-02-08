@@ -51,12 +51,12 @@ function StarRating({ rating }: { rating: number }) {
     <div className="flex items-center gap-0.5">
       {Array.from({ length: fullStars }, (_, i) => (
         <StarIcon
-          className="size-3 fill-amber-400 text-amber-400"
+          className="size-3 fill-foreground text-foreground"
           key={`full-${String(i)}`}
         />
       ))}
       {hasHalf && (
-        <StarIcon className="size-3 fill-amber-400/50 text-amber-400" />
+        <StarIcon className="size-3 fill-foreground/50 text-foreground" />
       )}
       {Array.from({ length: emptyStars }, (_, i) => (
         <StarIcon
@@ -67,15 +67,6 @@ function StarRating({ rating }: { rating: number }) {
     </div>
   );
 }
-
-const TYPE_COLORS: Record<string, string> = {
-  hospital: "border-blue-500/20 bg-blue-500/10 text-blue-400",
-  doctor: "border-green-500/20 bg-green-500/10 text-green-400",
-  clinic: "border-purple-500/20 bg-purple-500/10 text-purple-400",
-  specialist: "border-amber-500/20 bg-amber-500/10 text-amber-400",
-  dentist: "border-teal-500/20 bg-teal-500/10 text-teal-400",
-  pharmacy: "border-pink-500/20 bg-pink-500/10 text-pink-400",
-};
 
 export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } =
@@ -104,17 +95,14 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden bg-muted/50">
+    <Card className="overflow-hidden">
       <CardHeader className="flex-row items-start justify-between space-y-0 px-3 py-2.5">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="truncate text-sm font-semibold text-foreground">
             {provider.name}
           </span>
           <div className="flex items-center gap-1.5">
-            <Badge
-              className={`text-[10px] capitalize ${TYPE_COLORS[provider.type.toLowerCase()] ?? ""}`}
-              variant="outline"
-            >
+            <Badge variant="secondary" className="text-[10px] capitalize">
               {provider.type}
             </Badge>
             {provider.specialty && (
@@ -161,7 +149,7 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
               )}
               {provider.distanceKm !== null &&
                 provider.distanceKm !== undefined && (
-                  <span className="font-mono text-[11px] font-medium tabular-nums text-amber-400">
+                  <span className="font-mono text-[11px] font-medium tabular-nums text-muted-foreground">
                     {provider.distanceKm.toFixed(1)} km away
                   </span>
                 )}
@@ -182,7 +170,7 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
             )}
             {provider.phone && (
               <a
-                className="flex items-center gap-1 text-[11px] text-blue-400 hover:underline"
+                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
                 href={`tel:${provider.phone}`}
               >
                 <PhoneIcon className="size-3" />
@@ -200,7 +188,7 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
           <>
             <Separator />
             <CardContent className="px-3 py-2">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Insurance
               </span>
               <div className="flex flex-wrap gap-1">

@@ -58,10 +58,10 @@ export function NearbyFacilitiesResult({
   };
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-1.5">
-          <MapPin className="size-3.5 text-amber-400" />
+          <MapPin className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Near {center?.location ?? "location"} ({radiusKm}km)
           </span>
@@ -74,15 +74,15 @@ export function NearbyFacilitiesResult({
       <CardContent className="px-3 pb-2 pt-0">
         {facilities.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <MapPin className="size-5 text-muted-foreground/50" />
+            <MapPin className="size-5 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">No facilities found nearby</p>
-            <p className="text-[11px] text-muted-foreground/70">Try increasing the search radius or changing location</p>
+            <p className="text-[11px] text-muted-foreground/70">Try increasing the search radius</p>
           </div>
         ) : (
         <ul className="flex flex-col gap-1">
           {facilities.map((f) => (
             <li key={f.id}>
-              <Card className="flex items-center justify-between px-2.5 py-2">
+              <div className="flex items-center justify-between rounded-md border border-border px-2.5 py-2">
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-xs font-medium text-foreground">
                     {f.name}
@@ -98,12 +98,12 @@ export function NearbyFacilitiesResult({
                   </span>
                 </div>
                 <Badge
-                  className="ml-2 shrink-0 font-mono text-[11px] tabular-nums text-amber-400"
+                  className="ml-2 shrink-0 font-mono text-[11px] tabular-nums"
                   variant="outline"
                 >
                   {f.distanceKm.toFixed(0)} km
                 </Badge>
-              </Card>
+              </div>
             </li>
           ))}
         </ul>

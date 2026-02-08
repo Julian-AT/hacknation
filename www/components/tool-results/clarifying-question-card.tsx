@@ -59,9 +59,9 @@ export function ClarifyingQuestionCard({
   const isAnswered = selected !== null;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-start gap-2 space-y-0 px-3 py-3">
-        <MessageCircleQuestionIcon className="mt-0.5 size-4 shrink-0 text-blue-400" />
+        <MessageCircleQuestionIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <div className="flex min-w-0 flex-col gap-1">
           <span className="text-balance text-sm font-medium text-foreground">
             {question}
@@ -82,11 +82,8 @@ export function ClarifyingQuestionCard({
             <Button
               className={cn(
                 "h-auto px-3 py-1.5 text-xs",
-                isSelected &&
-                  "border-blue-500/50 bg-blue-500/10 text-blue-400",
-                isAnswered &&
-                  !isSelected &&
-                  "opacity-50"
+                isSelected && "bg-secondary",
+                isAnswered && !isSelected && "opacity-50"
               )}
               disabled={isAnswered}
               key={option.value}
@@ -136,10 +133,10 @@ export function ClarifyingQuestionCard({
       {isAnswered && (
         <>
           <Separator />
-          <CardContent className="bg-green-500/5 px-3 py-1.5">
+          <CardContent className="px-3 py-1.5">
             <Badge
-              className="gap-1 border-green-500/20 bg-green-500/10 text-[11px] text-green-400"
-              variant="outline"
+              className="gap-1 text-[11px]"
+              variant="secondary"
             >
               <CheckIcon className="size-3" />
               Answered: {selected}

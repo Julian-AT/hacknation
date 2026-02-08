@@ -8,6 +8,7 @@ import {
   ShieldX,
 } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface AnomalyFlag {
@@ -33,38 +34,16 @@ const LEVEL_CONFIG = {
   green: {
     icon: ShieldCheck,
     label: "Verified",
-    dotColor: "bg-green-400",
-    iconColor: "text-green-400",
-    bgColor: "bg-green-950/50",
-    textColor: "text-green-400",
-    borderColor: "border-green-900/50",
   },
   yellow: {
     icon: ShieldAlert,
     label: "Caution",
-    dotColor: "bg-amber-400",
-    iconColor: "text-amber-400",
-    bgColor: "bg-amber-950/50",
-    textColor: "text-amber-400",
-    borderColor: "border-amber-900/50",
   },
   red: {
     icon: ShieldX,
     label: "Flagged",
-    dotColor: "bg-red-400",
-    iconColor: "text-red-400",
-    bgColor: "bg-red-950/50",
-    textColor: "text-red-400",
-    borderColor: "border-red-900/50",
   },
 } as const;
-
-const SEVERITY_STYLES: Record<string, { bg: string; text: string }> = {
-  critical: { bg: "bg-red-950/50", text: "text-red-400" },
-  high: { bg: "bg-orange-950/50", text: "text-orange-400" },
-  medium: { bg: "bg-amber-950/50", text: "text-amber-400" },
-  low: { bg: "bg-green-950/50", text: "text-green-400" },
-};
 
 export function AnomalyConfidenceBadge({
   confidence,
@@ -74,40 +53,27 @@ export function AnomalyConfidenceBadge({
   const config = LEVEL_CONFIG[confidence.level];
   const Icon = config.icon;
 
-  // Compact mode: just a colored dot with a tooltip-style title
+  // Compact mode: just a small badge
   if (compact) {
     return (
-      <span
-        className={cn("inline-block size-2 shrink-0 rounded-full", config.dotColor)}
-        title={`${config.label} (${confidence.score}/100): ${confidence.summary}`}
-      />
+      <Badge variant="outline" className="gap-1 text-[10px] font-normal" title={`${config.label} (${confidence.score}/100): ${confidence.summary}`}>
+        <Icon className="size-2.5" />
+        {confidence.score}
+      </Badge>
     );
   }
 
   return (
-    <div
-      className={cn(
-        "rounded-md border",
-        config.borderColor,
-        config.bgColor
-      )}
-    >
+    <div className="rounded-md border border-border">
       {/* Header row */}
       <div className="flex items-center justify-between px-2.5 py-2">
         <div className="flex items-center gap-1.5">
-          <Icon className={cn("size-3.5", config.iconColor)} />
-          <span
-            className={cn("text-[11px] font-semibold", config.textColor)}
-          >
+          <Icon className="size-3.5 text-muted-foreground" />
+          <span className="text-[11px] font-medium text-foreground">
             {config.label}
           </span>
         </div>
-        <span
-          className={cn(
-            "font-mono text-[11px] font-bold",
-            config.textColor
-          )}
-        >
+        <span className="font-mono text-[11px] font-bold tabular-nums text-foreground">
           {confidence.score}
         </span>
       </div>
@@ -119,7 +85,7 @@ export function AnomalyConfidenceBadge({
 
       {/* Expandable flags */}
       {confidence.flags.length > 0 && (
-        <div className="border-t border-border/50">
+        <div className="border-t border-border">
           <button
             className="flex w-full items-center gap-1 px-2.5 py-1.5 text-[10px] text-muted-foreground hover:text-foreground"
             onClick={() => setIsExpanded(!isExpanded)}
@@ -136,29 +102,19 @@ export function AnomalyConfidenceBadge({
 
           {isExpanded && (
             <div className="flex flex-col gap-1 px-2.5 pb-2.5">
-              {confidence.flags.map((flag, idx) => {
-                const sevStyle =
-                  SEVERITY_STYLES[flag.severity] ?? SEVERITY_STYLES.low;
-                return (
-                  <div
-                    className="rounded bg-muted/60 p-2"
-                    key={`${flag.checkId}-${idx}`}
-                  >
-                    <span
-                      className={cn(
-                        "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                        sevStyle.bg,
-                        sevStyle.text
-                      )}
-                    >
-                      {flag.severity}
-                    </span>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {flag.explanation}
-                    </p>
-                  </div>
-                );
-              })}
+              {confidence.flags.map((flag, idx) => (
+                <div
+                  className="rounded bg-muted p-2"
+                  key={`${flag.checkId}-${idx}`}
+                >
+                  <Badge variant="secondary" className="text-[9px] uppercase tracking-wider font-medium">
+                    {flag.severity}
+                  </Badge>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {flag.explanation}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
         </div>

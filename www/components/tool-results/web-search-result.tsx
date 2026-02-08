@@ -27,10 +27,10 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
   const results = (result.results as SearchResult[]) ?? [];
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Globe className="size-3.5 text-emerald-400" />
+          <Globe className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Web Search
           </span>
@@ -55,17 +55,17 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
         <ul className="flex flex-col gap-1.5">
           {results.slice(0, 3).map((item) => (
             <li key={item.url}>
-              <Card className="p-2.5">
+              <div className="rounded-md border border-border p-2.5">
                 <a
-                  className="flex items-center gap-1 text-xs font-medium text-blue-400 hover:text-blue-300"
+                  className="flex items-center gap-1 text-xs font-medium text-foreground hover:underline"
                   href={item.url}
                   rel="noopener noreferrer"
                   target="_blank"
                 >
                   {item.title}
-                  <ExternalLink className="size-3 shrink-0" />
+                  <ExternalLink className="size-3 shrink-0 text-muted-foreground" />
                 </a>
-                <span className="mt-0.5 block truncate font-mono text-[10px] text-emerald-500/70">
+                <span className="mt-0.5 block truncate font-mono text-[10px] text-muted-foreground">
                   {item.url}
                 </span>
                 {item.snippet && (
@@ -73,7 +73,7 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
                     {item.snippet}
                   </p>
                 )}
-              </Card>
+              </div>
             </li>
           ))}
         </ul>

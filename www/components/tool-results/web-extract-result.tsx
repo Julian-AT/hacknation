@@ -24,9 +24,9 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
   const extractedData = result.extractedData;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-        <Sparkles className="size-3.5 text-emerald-400" />
+        <Sparkles className="size-3.5 text-muted-foreground" />
         <span className="text-xs font-medium text-muted-foreground">
           Extracted Data
         </span>
@@ -52,7 +52,7 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
         <>
           <Separator />
           <CardContent className="px-3 py-2">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Extraction Prompt
             </span>
             <p className="text-pretty text-[11px] text-muted-foreground">
@@ -67,7 +67,7 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
           <Separator />
           <CardContent className="px-3 py-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Result
               </span>
               <Button

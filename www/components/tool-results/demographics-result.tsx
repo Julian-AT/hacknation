@@ -48,23 +48,13 @@ export function DemographicsResult({ args, result }: DemographicsResultProps) {
 function SectionHeader({
   icon: Icon,
   label,
-  accent = "emerald",
 }: {
   icon: typeof Users;
   label: string;
-  accent?: string;
 }) {
-  const colorMap: Record<string, string> = {
-    emerald: "text-emerald-400",
-    amber: "text-amber-400",
-    rose: "text-rose-400",
-    blue: "text-blue-400",
-  };
   return (
     <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-      <Icon
-        className={cn("size-3.5", colorMap[accent] ?? "text-emerald-400")}
-      />
+      <Icon className="size-3.5 text-muted-foreground" />
       <span className="text-balance text-xs font-medium text-muted-foreground">
         {label}
       </span>
@@ -75,28 +65,21 @@ function SectionHeader({
 function MetricCard({
   label,
   value,
-  accent,
 }: {
   label: string;
   value: string | number;
-  accent?: boolean;
 }) {
   const display =
     typeof value === "number" ? value.toLocaleString() : String(value);
   return (
-    <Card className="flex flex-1 basis-20 flex-col gap-1 p-3">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="flex flex-1 basis-20 flex-col gap-1 rounded-md border border-border p-3">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <span
-        className={cn(
-          "font-mono text-lg font-bold tabular-nums",
-          accent ? "text-emerald-400" : "text-foreground"
-        )}
-      >
+      <span className="font-mono text-lg font-bold tabular-nums text-foreground">
         {display}
       </span>
-    </Card>
+    </div>
   );
 }
 
@@ -138,7 +121,7 @@ function DataTable({
                     className={cn(
                       "whitespace-nowrap px-3 py-1.5 tabular-nums text-xs",
                       col === highlightColumn
-                        ? "font-mono font-bold text-emerald-400"
+                        ? "font-mono font-bold text-foreground"
                         : "text-foreground"
                     )}
                     key={`${String(i)}-${col}`}
@@ -192,7 +175,7 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
   const diseases = (region.diseaseBurden as string[]) ?? [];
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <SectionHeader
         icon={Users}
         label={`${String(region.region)} \u2014 Demographics`}
@@ -200,7 +183,6 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
 
       <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
         <MetricCard
-          accent
           label="Population"
           value={Number(region.population ?? 0)}
         />
@@ -222,7 +204,7 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
         <>
           <Separator />
           <CardContent className="px-3 py-2">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Health Indicators
             </span>
             <div className="flex flex-wrap gap-2">
@@ -243,7 +225,7 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
         <>
           <Separator />
           <CardContent className="px-3 py-2">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Age Distribution
             </span>
             <div className="flex flex-wrap gap-2">
@@ -261,16 +243,12 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
         <>
           <Separator />
           <CardContent className="px-3 py-2">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Disease Burden
             </span>
             <div className="flex flex-wrap gap-1">
               {diseases.map((d) => (
-                <Badge
-                  className="border-rose-500/20 bg-rose-500/10 text-[10px] text-rose-400"
-                  key={d}
-                  variant="outline"
-                >
+                <Badge className="text-[10px]" key={d} variant="outline">
                   {d}
                 </Badge>
               ))}
@@ -283,7 +261,7 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
         <>
           <Separator />
           <CardContent className="px-3 py-2.5">
-            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               vs National Average
             </span>
             <div className="flex flex-wrap gap-2">
@@ -309,12 +287,12 @@ function AllRegions({ result }: { result: Record<string, unknown> }) {
   const nationalPop = result.nationalPopulation as number | undefined;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <SectionHeader icon={Globe} label="All Regions Overview" />
       {(total !== undefined || nationalPop !== undefined) && (
         <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
           {total !== undefined && (
-            <MetricCard accent label="Regions" value={total} />
+            <MetricCard label="Regions" value={total} />
           )}
           {nationalPop !== undefined && (
             <MetricCard label="National Pop." value={nationalPop} />
@@ -343,9 +321,8 @@ function UnderservedRanking({ result }: { result: Record<string, unknown> }) {
   const methodology = result.methodology as string | undefined;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <SectionHeader
-        accent="rose"
         icon={TrendingDown}
         label="Underserved Region Rankings"
       />
@@ -379,8 +356,8 @@ function AgeDemographics({ result }: { result: Record<string, unknown> }) {
   const note = result.note as string | undefined;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
-      <SectionHeader accent="blue" icon={Users} label="Age Demographics" />
+    <Card className="my-2 w-full overflow-hidden">
+      <SectionHeader icon={Users} label="Age Demographics" />
       <CardContent className="px-0 pb-0">
         <DataTable
           columns={[
@@ -418,20 +395,15 @@ function DiseaseBurden({ result }: { result: Record<string, unknown> }) {
 
   if (singleRegion) {
     return (
-      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <Card className="my-2 w-full overflow-hidden">
         <SectionHeader
-          accent="rose"
           icon={Activity}
           label={`Disease Burden \u2014 ${String(result.region)}`}
         />
         <CardContent className="px-3 pb-3 pt-0">
           <div className="flex flex-wrap gap-1">
             {((result.diseaseBurden as string[]) ?? []).map((d) => (
-              <Badge
-                className="border-rose-500/20 bg-rose-500/10 text-[10px] text-rose-400"
-                key={d}
-                variant="outline"
-              >
+              <Badge className="text-[10px]" key={d} variant="outline">
                 {d}
               </Badge>
             ))}
@@ -442,24 +414,19 @@ function DiseaseBurden({ result }: { result: Record<string, unknown> }) {
   }
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <SectionHeader
-        accent="rose"
         icon={Activity}
         label="Disease Burden by Region"
       />
       {mostPrevalent.length > 0 && (
         <CardContent className="px-3 pb-2 pt-0">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Most Prevalent Conditions
           </span>
           <div className="flex flex-wrap gap-1">
             {mostPrevalent.slice(0, 10).map((item) => (
-              <Badge
-                className="border-rose-500/20 bg-rose-500/10 text-[10px] text-rose-400"
-                key={item.disease}
-                variant="outline"
-              >
+              <Badge className="text-[10px]" key={item.disease} variant="outline">
                 {item.disease} ({item.regionCount} regions)
               </Badge>
             ))}
@@ -488,9 +455,8 @@ function WHOBenchmarks({ result }: { result: Record<string, unknown> }) {
     (result.regionComparisons as Record<string, unknown>[]) ?? [];
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <SectionHeader
-        accent="amber"
         icon={Globe}
         label="WHO Benchmark Comparison"
       />
@@ -521,16 +487,14 @@ function UrbanRuralGap({ result }: { result: Record<string, unknown> }) {
   const gap = result.gap as Record<string, unknown> | undefined;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <SectionHeader
-        accent="amber"
         icon={TrendingDown}
         label="Urban vs Rural Healthcare Gap"
       />
       {gap && (
         <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
           <MetricCard
-            accent
             label="Avg Doctors (Urban)"
             value={String(gap.avgDoctorsUrban)}
           />
@@ -549,7 +513,7 @@ function UrbanRuralGap({ result }: { result: Record<string, unknown> }) {
           <Separator />
           <CardContent className="px-0 py-2">
             <div className="px-3 pb-1">
-              <Badge className="text-[10px] uppercase" variant="secondary">
+              <Badge className="text-[10px]" variant="secondary">
                 Urban Regions
               </Badge>
             </div>
@@ -562,7 +526,7 @@ function UrbanRuralGap({ result }: { result: Record<string, unknown> }) {
           <Separator />
           <CardContent className="px-0 py-2">
             <div className="px-3 pb-1">
-              <Badge className="text-[10px] uppercase" variant="secondary">
+              <Badge className="text-[10px]" variant="secondary">
                 Rural Regions
               </Badge>
             </div>
@@ -579,9 +543,8 @@ function HighImpactSites({ result }: { result: Record<string, unknown> }) {
   const methodology = result.methodology as string | undefined;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <SectionHeader
-        accent="emerald"
         icon={TrendingDown}
         label="High-Impact Intervention Sites"
       />
