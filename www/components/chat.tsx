@@ -170,16 +170,25 @@ export function Chat({
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role !== 'assistant' || !lastMessage.parts) return;
 
-    const toolParts = lastMessage.parts.filter(
-      (part) => (part as any).type === 'tool-invocation' && 'result' in (part as any).toolInvocation
-    );
+    for (const part of lastMessage.parts) {
+      const p = part as any;
+      const { type } = p;
 
-    for (const part of toolParts) {
-      if ((part as any).type !== 'tool-invocation') continue;
-      const { toolName, result } = (part as any).toolInvocation as any;
-      if (!result) continue;
+      // Match both static "tool-getFacility" and dynamic-tool with toolName
+      let toolName: string | undefined;
+      let result: any;
 
-      if (toolName === 'getFacility' && result.facility?.lat && result.facility?.lng) {
+      if (type === "tool-getFacility") {
+        toolName = "getFacility";
+        result = p.state === "output-available" ? p.output : undefined;
+      } else if (type === "dynamic-tool" && p.toolName === "getFacility") {
+        toolName = "getFacility";
+        result = p.state === "output-available" ? p.output : undefined;
+      }
+
+      if (toolName !== "getFacility" || !result) continue;
+
+      if (result.facility?.lat && result.facility?.lng) {
         setMapFacilities([{
           id: result.facility.id,
           name: result.facility.name,

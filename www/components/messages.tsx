@@ -6,16 +6,6 @@ import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
-import { OrchestratorProgress } from "./vf-ui/OrchestratorProgress";
-
-import { ToolResultRouter } from "./tool-results";
-
-const AGENT_TOOLS = new Set([
-  "investigateData",
-  "analyzeGeography",
-  "medicalReasoning",
-  "researchWeb",
-]);
 
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
@@ -83,46 +73,6 @@ function PureMessages({
                     : undefined
                 }
               />
-              
-              {message.role === 'assistant' && message.parts && (() => {
-                // Extract tool invocation parts
-                const toolParts = message.parts
-                  .filter((part: any) => part.type === 'tool-invocation')
-                  .map((part: any) => ({
-                    toolCallId: part.toolInvocation.toolCallId,
-                    toolName: part.toolInvocation.toolName,
-                    args: part.toolInvocation.args,
-                    result: 'result' in part.toolInvocation ? part.toolInvocation.result : undefined,
-                  }));
-
-                const agentSteps = toolParts.filter((t: any) => AGENT_TOOLS.has(t.toolName));
-                const nonAgentParts = toolParts.filter((t: any) => !AGENT_TOOLS.has(t.toolName));
-                const isLastMessage = messages.length - 1 === index;
-                const isStreamingMsg = status === "streaming" && isLastMessage;
-
-                return (
-                  <div className="ml-10">
-                    {/* Orchestrator progress for agent delegation steps */}
-                    {agentSteps.length > 0 && (
-                      <OrchestratorProgress
-                        steps={agentSteps}
-                        isStreaming={isStreamingMsg}
-                      />
-                    )}
-
-                    {/* Individual tool result cards */}
-                    {toolParts.map((tool: any) => (
-                      <ToolResultRouter
-                        key={tool.toolCallId}
-                        toolCallId={tool.toolCallId}
-                        toolName={tool.toolName}
-                        args={tool.args}
-                        result={tool.result}
-                      />
-                    ))}
-                  </div>
-                );
-              })()}
             </div>
           ))}
 

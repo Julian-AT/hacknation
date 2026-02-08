@@ -13,11 +13,12 @@ import {
 import { useState } from "react";
 import {
   Agent,
-  AgentHeader,
   AgentContent,
 } from "@/components/ai-elements/agent";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { ToolTrace } from "../vf-ui/ToolTrace";
+import { getToolComponent } from "./tool-component-map";
 
 interface AgentDelegationCardProps {
   toolCallId: string;
@@ -84,6 +85,115 @@ const AGENT_CONFIG: Record<
       "Real-time web search, page scraping, and structured data extraction.",
   },
 };
+
+interface NestedPart {
+  type: string;
+  toolCallId?: string;
+  toolName?: string;
+  state?: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  text?: string;
+}
+
+/**
+ * Extracts the tool name from a nested part, handling both
+ * "tool-<name>" (static) and "dynamic-tool" (dynamic) formats.
+ */
+function extractToolInfo(part: NestedPart): {
+  toolName: string;
+  toolCallId: string;
+  args: Record<string, unknown>;
+  result: Record<string, unknown> | undefined;
+} | null {
+  const { type } = part;
+  let name: string | undefined;
+
+  if (type === "dynamic-tool" && part.toolName) {
+    name = part.toolName;
+  } else if (type.startsWith("tool-")) {
+    name = type.slice(5);
+  }
+
+  if (!name || !part.toolCallId) return null;
+
+  return {
+    toolName: name,
+    toolCallId: part.toolCallId,
+    args: part.input ?? {},
+    result: part.state === "output-available" ? part.output : undefined,
+  };
+}
+
+/**
+ * Renders the nested parts from an agent delegation result,
+ * routing sub-tool calls to their custom UI components and
+ * rendering text output inline.
+ */
+function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
+  const parts = result.parts as NestedPart[] | undefined;
+
+  // If the result has a parts array (agent response), render each part
+  if (Array.isArray(parts) && parts.length > 0) {
+    return (
+      <div className="space-y-2">
+        {parts.map((part, idx) => {
+          // Render sub-tool results with custom UI
+          const toolInfo = extractToolInfo(part);
+          if (toolInfo) {
+            const { toolName, toolCallId, args, result: toolResult } = toolInfo;
+
+            // Try custom component first
+            if (toolResult && !("error" in toolResult)) {
+              const custom = getToolComponent(toolName, args, toolResult);
+              if (custom) {
+                return <div key={toolCallId}>{custom}</div>;
+              }
+            }
+
+            // Fall back to ToolTrace
+            return (
+              <ToolTrace
+                key={toolCallId}
+                toolCallId={toolCallId}
+                toolName={toolName}
+                args={args}
+                result={toolResult}
+              />
+            );
+          }
+
+          // Render text parts
+          if (part.type === "text" && part.text?.trim()) {
+            return (
+              <div
+                key={`text-${idx.toString()}`}
+                className="rounded-md bg-muted p-2.5 text-xs leading-relaxed text-muted-foreground"
+              >
+                {part.text}
+              </div>
+            );
+          }
+
+          // Skip step-start, reasoning, and other non-visual parts
+          return null;
+        })}
+      </div>
+    );
+  }
+
+  // Fallback: result has no parts array, show raw JSON
+  return (
+    <div className="space-y-1.5">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Output
+      </span>
+      <pre className="max-h-48 overflow-y-auto rounded-md bg-muted p-2.5 font-mono text-[10px] text-muted-foreground">
+        {JSON.stringify(result, null, 2)}
+      </pre>
+    </div>
+  );
+}
 
 export function AgentDelegationCard({
   toolCallId,
@@ -183,16 +293,9 @@ export function AgentDelegationCard({
             </div>
           </div>
 
-          {/* Result output */}
+          {/* Nested sub-tool results and agent text output */}
           {result && (
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Output
-              </span>
-              <pre className="max-h-48 overflow-y-auto rounded-md bg-muted p-2.5 font-mono text-[10px] text-muted-foreground">
-                {JSON.stringify(result, null, 2)}
-              </pre>
-            </div>
+            <AgentNestedParts result={result} />
           )}
         </AgentContent>
       )}

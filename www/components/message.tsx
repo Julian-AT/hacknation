@@ -78,7 +78,7 @@ const PurePreviewMessage = ({
                 (message.parts?.some(
                   (p) => p.type === "text" && p.text?.trim()
                 ) ||
-                  message.parts?.some((p) => p.type.startsWith("tool-")))) ||
+                  message.parts?.some((p) => p.type.startsWith("tool-") || p.type === "dynamic-tool"))) ||
               mode === "edit",
             "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
               message.role === "user" && mode !== "edit",
@@ -254,12 +254,15 @@ const PurePreviewMessage = ({
               );
             }
 
-            // Generic tool invocations (agent delegation tools and subagent tools)
-            // These come from ToolLoopAgent and have a toolName property
-            if ("toolName" in part && "toolCallId" in part) {
-              const invocationPart = part as unknown as {
+            // All other tool parts: both static (tool-<name>) and dynamic formats
+            if (type.startsWith("tool-") || type === "dynamic-tool") {
+              const toolName =
+                type === "dynamic-tool"
+                  ? ((part as unknown as { toolName: string }).toolName)
+                  : type.slice(5); // Remove "tool-" prefix
+
+              const toolPart = part as unknown as {
                 toolCallId: string;
-                toolName: string;
                 state: string;
                 input?: Record<string, unknown>;
                 output?: Record<string, unknown>;
@@ -267,13 +270,13 @@ const PurePreviewMessage = ({
 
               return (
                 <ToolResultRouter
-                  key={invocationPart.toolCallId}
-                  toolCallId={invocationPart.toolCallId}
-                  toolName={invocationPart.toolName}
-                  args={invocationPart.input ?? {}}
+                  key={toolPart.toolCallId}
+                  toolCallId={toolPart.toolCallId}
+                  toolName={toolName}
+                  args={toolPart.input ?? {}}
                   result={
-                    invocationPart.state === "output-available"
-                      ? invocationPart.output
+                    toolPart.state === "output-available"
+                      ? toolPart.output
                       : undefined
                   }
                 />
