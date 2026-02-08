@@ -31,7 +31,10 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
 
   if (!session) {
-    redirect("/api/auth/guest");
+    // Middleware normally creates a guest session before we reach here.
+    // If we still have no session, redirect home rather than creating a
+    // secondary redirect chain through /api/auth/guest.
+    redirect("/");
   }
 
   if (chat.visibility === "private") {
