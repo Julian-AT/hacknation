@@ -141,7 +141,7 @@ export async function createOrchestratorAgent({
       // --- Subagent delegation tools (for complex multi-step analysis) ---
       investigateData: createDelegationTool({
         description:
-          "Query and analyze healthcare facility data from the database. Use for counts, aggregations, SQL queries, facility lookups, semantic search, data filtering, AND Ghana population/demographics/WHO benchmarks (via getDemographics tool). Use for demand analysis, unmet needs, and benchmarking questions.",
+          "Query and analyze healthcare facility data from the database. Use for counts, aggregations, SQL queries, facility lookups, semantic search, data filtering, AND population/demographics/WHO benchmarks for any country (via getDemographics tool). Use for demand analysis, unmet needs, and benchmarking questions.",
         agent: databaseAgent,
       }),
 

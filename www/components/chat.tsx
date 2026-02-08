@@ -67,6 +67,35 @@ export function Chat({
 
   const { mutate } = useSWRConfig();
 
+  // --- Chat state reset: clear stale state when navigating to a new chat ---
+  const { setDataStream } = useDataStream();
+  const isNewChat = initialMessages.length === 0;
+
+  useEffect(() => {
+    // Clear layout-level data stream so old artifacts don't bleed through
+    setDataStream([]);
+
+    // Reset map state
+    setMapFacilities([]);
+    setMapVisible(false);
+
+    // Reset old artifact SWR state
+    if (isNewChat) {
+      mutate("artifact", {
+        documentId: "init",
+        content: "",
+        kind: "text",
+        title: "",
+        status: "idle",
+        isVisible: false,
+        boundingBox: { top: 0, left: 0, width: 0, height: 0 },
+      }, false);
+    }
+
+    // Reset canvas dismissed state
+    setCanvasDismissed(false);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
@@ -77,7 +106,6 @@ export function Chat({
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [router]);
-  const { setDataStream } = useDataStream();
 
   const [input, setInput] = useState<string>('');
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);

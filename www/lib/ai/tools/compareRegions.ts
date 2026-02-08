@@ -8,7 +8,7 @@ import { withTimeout, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 
 export const compareRegions = tool({
   description:
-    "Compare healthcare metrics between two or more Ghana regions. Provides side-by-side statistics including facility counts, capacity, specialties, and coverage gaps.",
+    "Compare healthcare metrics between two or more regions. Provides side-by-side statistics including facility counts, capacity, specialties, and coverage gaps.",
   inputSchema: z.object({
     regions: z
       .array(z.string().max(100))

@@ -188,7 +188,7 @@ export const getStatsArtifact = ({ dataStream }: ArtifactToolDeps) =>
       const stats = result.stats ?? [];
       const title = params.groupBy
         ? `Stats by ${params.groupBy}`
-        : "Ghana Healthcare Overview";
+        : "Healthcare Overview";
 
       await art.complete({
         title,

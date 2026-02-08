@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import type { UIArtifact } from "@/components/artifact";
 
 export const initialArtifactData: UIArtifact = {
@@ -18,6 +18,17 @@ export const initialArtifactData: UIArtifact = {
     height: 0,
   },
 };
+
+/**
+ * Reset the global artifact SWR state back to initial values.
+ * Call this when navigating to a new chat to prevent stale artifacts.
+ */
+export function useResetArtifact() {
+  const { mutate } = useSWRConfig();
+  return useCallback(() => {
+    mutate("artifact", initialArtifactData, false);
+  }, [mutate]);
+}
 
 type Selector<T> = (state: UIArtifact) => T;
 

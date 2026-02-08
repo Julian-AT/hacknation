@@ -31,7 +31,7 @@ const VFContext = createContext<VFContextType | undefined>(undefined);
 export function VFProvider({ children }: { children: ReactNode }) {
   const [mapFacilities, setMapFacilities] = useState<Facility[]>([]);
   const [highlightedFacilityId, setHighlightedFacilityId] = useState<number | null>(null);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([7.9465, -1.0232]); // Center of Ghana
+  const [mapCenter, setMapCenter] = useState<[number, number]>([20, 0]); // World center (adjusts dynamically when data loads)
   const [mapZoom, setMapZoom] = useState<number>(7);
   const [isMapVisible, setMapVisible] = useState<boolean>(false);
 

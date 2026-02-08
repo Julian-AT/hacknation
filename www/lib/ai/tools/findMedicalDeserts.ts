@@ -7,6 +7,10 @@ import { tool } from "ai";
 import { createToolLogger } from "./debug";
 import { withTimeout, clampNumber, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 
+// Note: CITY_COORDS is still used as reference points for desert analysis.
+// These are the cities checked against provider locations to find gaps.
+// Future: could be augmented with cities from other countries.
+
 // Haversine distance in km
 function haversineKm(
   lat1: number,
@@ -80,7 +84,7 @@ export const findMedicalDeserts = tool({
         const output = {
           service,
           status: "NATIONAL_GAP" as const,
-          message: `No facilities in Ghana explicitly list "${service}" in their procedures.`,
+          message: `No facilities in the database explicitly list "${service}" in their procedures.`,
         };
         log.success(output, Date.now() - start);
         return output;

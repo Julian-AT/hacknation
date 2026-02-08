@@ -2,7 +2,7 @@ import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
 import { sql, and, isNotNull, ilike } from "drizzle-orm";
-import { CITY_COORDS } from "../../ghana";
+import { resolveLocation, isGeoError } from "../../geocode";
 import { tool } from "ai";
 import { createToolLogger } from "./debug";
 import {
@@ -50,31 +50,14 @@ export const findNearby = tool({
     const start = Date.now();
     log.start({ location, radiusKm, specialty, facilityType, limit });
 
-    let lat: number;
-    let lng: number;
-
-    // Resolve location
-    if (location.includes(",")) {
-      const parts = location.split(",");
-      lat = Number.parseFloat(parts[0].trim());
-      lng = Number.parseFloat(parts[1].trim());
-      log.step("Parsed coordinates from string", { lat, lng });
-    } else {
-      const cityKey = Object.keys(CITY_COORDS).find(
-        (c) => c.toLowerCase() === location.toLowerCase()
-      );
-      if (cityKey) {
-        const coords = CITY_COORDS[cityKey];
-        lat = coords.lat;
-        lng = coords.lng;
-        log.step(`Resolved city "${location}" -> "${cityKey}"`, { lat, lng });
-      } else {
-        log.step("City resolution FAILED", location);
-        return {
-          error: `Could not resolve location "${location}". Please provide coordinates "lat,lng" or a major Ghana city name.`,
-        };
-      }
+    // Resolve location (supports any city worldwide via geocoding)
+    const geo = await resolveLocation(location);
+    if (isGeoError(geo)) {
+      log.step("Location resolution FAILED", location);
+      return { error: geo.error };
     }
+    const { lat, lng } = geo;
+    log.step(`Resolved location "${location}" -> "${geo.resolvedName}"`, { lat, lng });
 
     // Validate coordinates
     const coordCheck = isValidCoordinates(lat, lng);

@@ -122,6 +122,7 @@ export const corroborateClaims = tool({
             twitter: facilities.twitter,
             region: facilities.addressRegion,
             city: facilities.addressCity,
+            country: facilities.addressCountry,
           })
           .from(facilities)
           .where(and(...conditions))
@@ -198,7 +199,8 @@ export const corroborateClaims = tool({
         // Build search queries
         const searchQueries: string[] = [];
         // Primary: facility name + location
-        searchQueries.push(`"${fac.name}" ${fac.city ?? ""} Ghana hospital`);
+        const country = fac.country ?? fac.city ?? "";
+        searchQueries.push(`"${fac.name}" ${country} hospital`);
         // Secondary: facility name + top claims
         if (procs.length > 0) {
           searchQueries.push(`"${fac.name}" ${procs.slice(0, 3).join(" ")}`);
