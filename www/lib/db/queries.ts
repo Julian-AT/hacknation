@@ -658,6 +658,21 @@ export async function saveChatDocument({
   }
 }
 
+export async function getChatDocumentById({ id }: { id: string }) {
+  try {
+    const [doc] = await db
+      .select()
+      .from(chatDocument)
+      .where(eq(chatDocument.id, id));
+    return doc ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get chat document by id"
+    );
+  }
+}
+
 export async function deleteChatDocument({ id }: { id: string }) {
   try {
     return await db

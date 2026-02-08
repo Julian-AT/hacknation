@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
   Database,
   Globe,
+  HeartPulse,
   Map as MapIcon,
   Stethoscope,
   WrenchIcon,
@@ -81,6 +82,22 @@ const AGENT_CONFIG: Record<
     tools: ["firecrawlSearch", "firecrawlScrape", "firecrawlExtract"],
     description:
       "Real-time web search, page scraping, and structured data extraction.",
+  },
+  searchHealthcare: {
+    label: "Healthcare Search Agent",
+    icon: HeartPulse,
+    color: "text-pink-400",
+    model: "gemini-2.5-flash-lite",
+    tools: [
+      "askClarifyingQuestion",
+      "searchProviders",
+      "getProviderProfile",
+      "firecrawlSearch",
+      "firecrawlScrape",
+      "firecrawlExtract",
+    ],
+    description:
+      "Interactive provider discovery — reads medical documents, asks clarifying questions, and searches for matching doctors, hospitals, and clinics.",
   },
 };
 
