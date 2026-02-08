@@ -28,10 +28,17 @@ export const databaseAgent = new ToolLoopAgent({
   },
   stopWhen: stepCountIs(8),
   prepareStep: ({ stepNumber }) => {
-    // Phase 1 (steps 0-1): Schema discovery + initial query
-    if (stepNumber <= 1) {
+    // Phase 1a (step 0): Schema discovery ONLY — force getSchema before any queries
+    if (stepNumber === 0) {
       return {
-        activeTools: ["getSchema", "queryDatabase", "getDemographics"],
+        activeTools: ["getSchema", "getDemographics"],
+      };
+    }
+
+    // Phase 1b (step 1): Value discovery + initial queries informed by schema
+    if (stepNumber === 1) {
+      return {
+        activeTools: ["queryDatabase", "getDemographics"],
       };
     }
 

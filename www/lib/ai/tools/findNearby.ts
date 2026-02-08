@@ -128,14 +128,66 @@ export const findNearby = tool({
 
       log.step("Query returned facilities", results.length);
 
+      const mappedFacilities = results.map((r) => ({
+        ...r,
+        distanceKm: Math.round(Number(r.distanceKm) * 10) / 10,
+      }));
+
+      // Detect coordinate clustering — indicates city-level geocoding only
+      let coordinateQualityWarning: string | undefined;
+      if (mappedFacilities.length > 3) {
+        const uniqueCoords = new Set(
+          mappedFacilities.map((f) => `${f.lat},${f.lng}`)
+        );
+        if (uniqueCoords.size === 1) {
+          coordinateQualityWarning =
+            "All facilities share identical coordinates (city-level geocoding only). Distance calculations between these facilities are unreliable — they all appear at 0km from each other.";
+          log.step("WARNING: all facilities share identical coordinates");
+        } else if (
+          uniqueCoords.size < mappedFacilities.length * 0.2 &&
+          uniqueCoords.size < 5
+        ) {
+          coordinateQualityWarning = `Only ${uniqueCoords.size} unique coordinate(s) across ${mappedFacilities.length} facilities. Most facilities use city-level geocoding. Distance calculations may be unreliable.`;
+          log.step(
+            "WARNING: low coordinate diversity",
+            `${uniqueCoords.size}/${mappedFacilities.length}`
+          );
+        }
+      }
+
+      // Compute data completeness summary so consumers know what fields are usable
+      const nullDoctors = mappedFacilities.filter(
+        (f) => f.doctors === null || f.doctors === undefined
+      ).length;
+      const nullBeds = mappedFacilities.filter(
+        (f) => f.beds === null || f.beds === undefined
+      ).length;
+      const total = mappedFacilities.length;
+
+      const dataCompleteness =
+        total > 0
+          ? {
+              totalFacilities: total,
+              withDoctorData: total - nullDoctors,
+              withBedData: total - nullBeds,
+              note:
+                nullDoctors === total && nullBeds === total
+                  ? "No facilities in this result set have doctor or bed capacity data. Numeric comparisons are not possible."
+                  : nullDoctors === total
+                    ? "No facilities have doctor count data. Bed data is available for some."
+                    : nullBeds === total
+                      ? "No facilities have bed capacity data. Doctor data is available for some."
+                      : undefined,
+            }
+          : undefined;
+
       const output = {
         center: { location, lat, lng },
         radiusKm,
         count: results.length,
-        facilities: results.map((r) => ({
-          ...r,
-          distanceKm: Math.round(Number(r.distanceKm) * 10) / 10,
-        })),
+        facilities: mappedFacilities,
+        ...(coordinateQualityWarning ? { coordinateQualityWarning } : {}),
+        ...(dataCompleteness ? { dataCompleteness } : {}),
       };
       log.success(output, Date.now() - start);
       return output;
