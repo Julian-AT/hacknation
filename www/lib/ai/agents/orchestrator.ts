@@ -37,7 +37,6 @@ import {
   getStatsArtifact,
   planMissionArtifact,
 } from "../tools/artifact-tools";
-import { getWeather } from "../tools/get-weather";
 import { databaseAgent } from "./database-agent";
 import { geospatialAgent } from "./geospatial-agent";
 import { medicalReasoningAgent } from "./medical-reasoning-agent";
@@ -236,8 +235,6 @@ export async function createOrchestratorAgent({
     instructions,
     tools: {
       // --- Direct tools (simple or need session/dataStream) ---
-      getWeather,
-
       // --- Artifact-enhanced geospatial tools (stream directly to canvas) ---
       findNearby: cached(findNearbyArtifact({ dataStream }), {
         ttl: 30 * 60 * 1000,
