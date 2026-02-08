@@ -9,7 +9,7 @@ const defineArtifact = <T>(id: string, schema: z.ZodType<T>) =>
   artifact(id, schema as any);
 
 /**
- * Facility map artifact — rendered as an interactive Leaflet map with markers.
+ * Facility map artifact — rendered as an interactive deck.gl map with markers.
  * Produced by: findNearby, searchFacilities, getFacility
  */
 export const FacilityMapArtifact = defineArtifact(

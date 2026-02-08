@@ -1,72 +1,175 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import { useState, useEffect, useMemo } from "react";
+import { DeckGL, ScatterplotLayer } from "deck.gl";
+import type { MapViewState, PickingInfo } from "deck.gl";
+import { Map } from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false },
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false },
-);
-const LeafletMarker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false },
-);
-const Popup = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Popup),
-  { ssr: false },
-);
-const Circle = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Circle),
-  { ssr: false },
-);
+const DARK_STYLE =
+  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-const desertIcon = L.divIcon({
-  html: '<div style="background:#ef4444;width:14px;height:14px;border-radius:50%;border:2px solid #fca5a5;box-shadow:0 0 8px rgba(239,68,68,0.5)"></div>',
-  className: "",
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
-});
+type DesertZone = {
+  city: string;
+  nearestProvider: string | null;
+  distanceKm: number;
+  coordinates: { lat: number; lng: number };
+};
 
-const providerIcon = L.divIcon({
-  html: '<div style="background:#22c55e;width:10px;height:10px;border-radius:50%;border:2px solid #86efac"></div>',
-  className: "",
-  iconSize: [10, 10],
-  iconAnchor: [5, 5],
-});
+type Provider = {
+  name: string;
+  lat: number;
+  lng: number;
+  city: string | null;
+};
 
 type MedicalDesertData = {
   title: string;
   service: string;
   thresholdKm: number;
   totalProviders: number;
-  providers: Array<{
-    name: string;
-    lat: number;
-    lng: number;
-    city: string | null;
-  }>;
-  desertZones: Array<{
-    city: string;
-    nearestProvider: string | null;
-    distanceKm: number;
-    coordinates: { lat: number; lng: number };
-  }>;
+  providers: Provider[];
+  desertZones: DesertZone[];
   stage: string;
   progress: number;
 };
 
-export function MedicalDesertRenderer({ data }: { data: MedicalDesertData }) {
+export function MedicalDesertRenderer({
+  data,
+}: {
+  data: MedicalDesertData;
+}) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Center map on first desert zone or Ghana
+  const viewState: MapViewState = useMemo(() => {
+    const center =
+      data.desertZones.length > 0
+        ? {
+            lat: data.desertZones[0].coordinates.lat,
+            lng: data.desertZones[0].coordinates.lng,
+          }
+        : { lat: 7.9465, lng: -1.0232 };
+
+    return {
+      latitude: center.lat,
+      longitude: center.lng,
+      zoom: 7,
+      pitch: 0,
+      bearing: 0,
+    };
+  }, [data.desertZones]);
+
+  const layers = useMemo(() => {
+    // Desert zone radius circles (drawn first, underneath)
+    const desertRadiusLayer = new ScatterplotLayer<DesertZone>({
+      id: "desert-radius",
+      data: data.desertZones,
+      getPosition: (d) => [d.coordinates.lng, d.coordinates.lat],
+      getFillColor: [239, 68, 68, 20],
+      getLineColor: [239, 68, 68, 80],
+      getRadius: (d) => d.distanceKm * 1000,
+      stroked: true,
+      lineWidthMinPixels: 1,
+      filled: true,
+      pickable: false,
+    });
+
+    // Desert zone center markers (red dots)
+    const desertMarkerLayer = new ScatterplotLayer<DesertZone>({
+      id: "desert-markers",
+      data: data.desertZones,
+      getPosition: (d) => [d.coordinates.lng, d.coordinates.lat],
+      getFillColor: [239, 68, 68, 220],
+      getLineColor: [252, 165, 165, 255],
+      getRadius: 600,
+      radiusMinPixels: 6,
+      radiusMaxPixels: 18,
+      stroked: true,
+      lineWidthMinPixels: 2,
+      lineWidthMaxPixels: 3,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255, 255, 255, 80],
+    });
+
+    // Provider markers (green dots)
+    const providerLayer = new ScatterplotLayer<Provider>({
+      id: "providers",
+      data: data.providers,
+      getPosition: (d) => [d.lng, d.lat],
+      getFillColor: [34, 197, 94, 200],
+      getLineColor: [134, 239, 172, 255],
+      getRadius: 400,
+      radiusMinPixels: 4,
+      radiusMaxPixels: 14,
+      stroked: true,
+      lineWidthMinPixels: 1,
+      lineWidthMaxPixels: 2,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255, 255, 255, 80],
+    });
+
+    return [desertRadiusLayer, providerLayer, desertMarkerLayer];
+  }, [data.desertZones, data.providers]);
+
+  const getTooltip = useMemo(
+    () =>
+      ({ object, layer }: PickingInfo) => {
+        if (!object) return null;
+
+        if (layer?.id === "desert-markers") {
+          const zone = object as DesertZone;
+          const lines = [
+            `<div style="font-weight:600;font-size:13px;color:#f87171;margin-bottom:2px">${zone.city}</div>`,
+            `<div style="font-size:11px;color:#a1a1aa">Medical Desert</div>`,
+            `<div style="font-size:11px;color:#a1a1aa">Nearest provider: ${String(zone.distanceKm)} km away</div>`,
+          ];
+          if (zone.nearestProvider) {
+            lines.push(
+              `<div style="font-size:11px;color:#a1a1aa">(${zone.nearestProvider})</div>`,
+            );
+          }
+          return {
+            html: `<div style="font-family:var(--font-geist),system-ui,sans-serif;max-width:220px">${lines.join("")}</div>`,
+            style: {
+              backgroundColor: "rgba(0,0,0,0.85)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "8px",
+              padding: "8px 12px",
+              color: "white",
+            },
+          };
+        }
+
+        if (layer?.id === "providers") {
+          const provider = object as Provider;
+          return {
+            html: `<div style="font-family:var(--font-geist),system-ui,sans-serif;max-width:220px">
+              <div style="font-weight:600;font-size:13px;margin-bottom:2px">${provider.name}</div>
+              <div style="font-size:11px;color:#86efac">Provides ${data.service}</div>
+            </div>`,
+            style: {
+              backgroundColor: "rgba(0,0,0,0.85)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "8px",
+              padding: "8px 12px",
+              color: "white",
+            },
+          };
+        }
+
+        return null;
+      },
+    [data.service],
+  );
 
   if (!isMounted || !data) {
     return (
@@ -79,15 +182,6 @@ export function MedicalDesertRenderer({ data }: { data: MedicalDesertData }) {
     );
   }
 
-  // Center map on Ghana or first desert zone
-  const center: [number, number] =
-    data.desertZones.length > 0
-      ? [
-          data.desertZones[0].coordinates.lat,
-          data.desertZones[0].coordinates.lng,
-        ]
-      : [7.9465, -1.0232];
-
   return (
     <div className="flex size-full flex-col">
       {/* Header */}
@@ -99,9 +193,13 @@ export function MedicalDesertRenderer({ data }: { data: MedicalDesertData }) {
           <p className="text-xs text-zinc-400">
             Service: <span className="text-zinc-300">{data.service}</span>
             {" · "}Threshold:{" "}
-            <span className="text-zinc-300 tabular-nums">{data.thresholdKm} km</span>
+            <span className="text-zinc-300 tabular-nums">
+              {data.thresholdKm} km
+            </span>
             {" · "}Providers:{" "}
-            <span className="text-zinc-300 tabular-nums">{data.totalProviders}</span>
+            <span className="text-zinc-300 tabular-nums">
+              {data.totalProviders}
+            </span>
           </p>
         </div>
         {data.stage !== "complete" && (
@@ -114,72 +212,15 @@ export function MedicalDesertRenderer({ data }: { data: MedicalDesertData }) {
 
       {/* Map */}
       <div className="relative flex-1 z-0">
-        <MapContainer
-          center={center}
-          scrollWheelZoom={true}
-          style={{ height: "100%", width: "100%" }}
-          zoom={7}
+        <DeckGL
+          controller
+          getTooltip={getTooltip}
+          initialViewState={viewState}
+          layers={layers}
+          style={{ position: "relative", width: "100%", height: "100%" }}
         >
-          <TileLayer
-            attribution='&copy; OpenStreetMap &copy; CARTO'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          />
-
-          {/* Desert zones as red markers + radius circles */}
-          {data.desertZones.map((zone) => (
-            <div key={zone.city}>
-              <Circle
-                center={[zone.coordinates.lat, zone.coordinates.lng]}
-                color="#ef4444"
-                fillColor="#ef4444"
-                fillOpacity={0.08}
-                radius={zone.distanceKm * 1000}
-                weight={1}
-              />
-              <LeafletMarker
-                icon={desertIcon}
-                position={[zone.coordinates.lat, zone.coordinates.lng]}
-              >
-                <Popup>
-                  <div className="text-sm">
-                    <strong className="block text-base text-red-600">
-                      {zone.city}
-                    </strong>
-                    <span className="block text-zinc-600">
-                      Medical Desert
-                    </span>
-                    <span className="block text-zinc-500 tabular-nums">
-                      Nearest provider: {zone.distanceKm} km away
-                    </span>
-                    {zone.nearestProvider && (
-                      <span className="block text-zinc-500">
-                        ({zone.nearestProvider})
-                      </span>
-                    )}
-                  </div>
-                </Popup>
-              </LeafletMarker>
-            </div>
-          ))}
-
-          {/* Provider markers (green) */}
-          {data.providers.map((p, i) => (
-            <LeafletMarker
-              icon={providerIcon}
-              key={`provider-${p.name}-${i}`}
-              position={[p.lat, p.lng]}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <strong className="block">{p.name}</strong>
-                  <span className="text-green-600">
-                    Provides {data.service}
-                  </span>
-                </div>
-              </Popup>
-            </LeafletMarker>
-          ))}
-        </MapContainer>
+          <Map mapStyle={DARK_STYLE} />
+        </DeckGL>
 
         {/* Legend */}
         <div className="absolute bottom-4 right-4 z-10 rounded-lg border border-zinc-800 bg-black/70 p-3 text-xs text-zinc-300 backdrop-blur-sm">
@@ -211,7 +252,7 @@ export function MedicalDesertRenderer({ data }: { data: MedicalDesertData }) {
                   </span>
                 </div>
                 {zone.nearestProvider && (
-                  <div className="ml-3.5 text-zinc-500 truncate">
+                  <div className="ml-3.5 truncate text-zinc-500">
                     Nearest: {zone.nearestProvider}
                   </div>
                 )}

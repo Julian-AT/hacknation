@@ -34,7 +34,10 @@ import { MultimodalInput } from './multimodal-input';
 import { getChatHistoryPaginationKey } from './sidebar-history';
 import { toast } from './toast';
 import type { VisibilityType } from './visibility-selector';
+import dynamic from 'next/dynamic';
 import { useVF } from '@/lib/vf-context';
+
+const DeckMap = dynamic(() => import('./vf-ui/DeckMap'), { ssr: false });
 
 export function Chat({
   id,
@@ -288,6 +291,29 @@ export function Chat({
             <ArtifactCanvas
               onClose={() => setCanvasDismissed(true)}
             />
+          </div>
+        )}
+
+        {/* Right Panel: Map (only visible when geographic data is available) */}
+        {isMapVisible && !isCanvasVisible && (
+          <div className="w-[55%] h-full bg-zinc-950 relative">
+            <DeckMap />
+
+            {/* Close button */}
+            <button
+              aria-label="Close map panel"
+              className="absolute top-4 left-4 z-10 flex items-center justify-center size-8 rounded-lg bg-black/70 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700"
+              onClick={() => {
+                setMapVisible(false);
+                setMapFacilities([]);
+              }}
+              type="button"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
           </div>
         )}
       </div>

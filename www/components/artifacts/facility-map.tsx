@@ -1,62 +1,32 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import dynamic from "next/dynamic";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import { useState, useEffect, useMemo } from "react";
+import { DeckGL, ScatterplotLayer } from "deck.gl";
+import type { MapViewState, PickingInfo } from "deck.gl";
+import { Map } from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false },
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false },
-);
-const LeafletMarker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false },
-);
-const Popup = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Popup),
-  { ssr: false },
-);
-const Circle = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Circle),
-  { ssr: false },
-);
-const MapUpdater = dynamic(
-  () => import("../vf-ui/MapUpdater"),
-  { ssr: false },
-);
+const DARK_STYLE =
+  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-const defaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+type FacilityItem = {
+  id: number;
+  name: string;
+  type: string | null;
+  city: string | null;
+  lat: number;
+  lng: number;
+  distanceKm?: number;
+  doctors: number | null;
+  beds: number | null;
+};
 
 type FacilityMapData = {
   title: string;
   center: { lat: number; lng: number };
   zoom: number;
   radiusKm?: number;
-  facilities: Array<{
-    id: number;
-    name: string;
-    type: string | null;
-    city: string | null;
-    lat: number;
-    lng: number;
-    distanceKm?: number;
-    doctors: number | null;
-    beds: number | null;
-  }>;
+  facilities: FacilityItem[];
   stage: string;
   progress: number;
 };
@@ -67,6 +37,110 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const viewState: MapViewState = useMemo(
+    () => ({
+      latitude: data.center.lat,
+      longitude: data.center.lng,
+      zoom: data.zoom,
+      pitch: 0,
+      bearing: 0,
+    }),
+    [data.center.lat, data.center.lng, data.zoom],
+  );
+
+  const layers = useMemo(() => {
+    const facilityLayer = new ScatterplotLayer<FacilityItem>({
+      id: "facilities",
+      data: data.facilities,
+      getPosition: (d) => [d.lng, d.lat],
+      getFillColor: [59, 130, 246, 200],
+      getLineColor: [147, 197, 253, 255],
+      getRadius: 500,
+      radiusMinPixels: 5,
+      radiusMaxPixels: 20,
+      stroked: true,
+      lineWidthMinPixels: 1,
+      lineWidthMaxPixels: 2,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255, 255, 255, 80],
+    });
+
+    const result = [facilityLayer];
+
+    // Radius circle layer (if radiusKm is specified)
+    if (data.radiusKm) {
+      const radiusLayer = new ScatterplotLayer({
+        id: "search-radius",
+        data: [
+          {
+            position: [data.center.lng, data.center.lat] as [number, number],
+          },
+        ],
+        getPosition: (d: { position: [number, number] }) => d.position,
+        getFillColor: [59, 130, 246, 12],
+        getLineColor: [59, 130, 246, 100],
+        getRadius: data.radiusKm * 1000,
+        stroked: true,
+        lineWidthMinPixels: 1,
+        filled: true,
+        pickable: false,
+      });
+      result.unshift(radiusLayer);
+    }
+
+    return result;
+  }, [data.facilities, data.radiusKm, data.center.lat, data.center.lng]);
+
+  const getTooltip = useMemo(
+    () =>
+      ({ object }: PickingInfo<FacilityItem>) => {
+        if (!object) return null;
+
+        const lines = [
+          `<div style="font-weight:600;font-size:13px;margin-bottom:2px">${object.name}</div>`,
+        ];
+        if (object.type) {
+          lines.push(
+            `<div style="font-size:11px;color:#93c5fd">${object.type}</div>`,
+          );
+        }
+        if (object.city) {
+          lines.push(
+            `<div style="font-size:11px;color:#a1a1aa">${object.city}</div>`,
+          );
+        }
+        if (object.doctors !== null && object.doctors > 0) {
+          lines.push(
+            `<div style="font-size:11px;color:#a1a1aa">${String(object.doctors)} doctors</div>`,
+          );
+        }
+        if (object.beds !== null && object.beds > 0) {
+          lines.push(
+            `<div style="font-size:11px;color:#a1a1aa">${String(object.beds)} beds</div>`,
+          );
+        }
+        if (object.distanceKm !== undefined) {
+          lines.push(
+            `<div style="font-size:11px;color:#60a5fa;margin-top:2px">${String(object.distanceKm)} km away</div>`,
+          );
+        }
+
+        return {
+          html: `<div style="font-family:var(--font-geist),system-ui,sans-serif;max-width:220px">${lines.join("")}</div>`,
+          style: {
+            backgroundColor: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: "8px",
+            padding: "8px 12px",
+            color: "white",
+          },
+        };
+      },
+    [],
+  );
 
   if (!isMounted || !data) {
     return (
@@ -79,8 +153,6 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
     );
   }
 
-  const center: [number, number] = [data.center.lat, data.center.lng];
-
   return (
     <div className="flex size-full flex-col">
       {/* Header bar */}
@@ -91,7 +163,7 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
           </h2>
           <p className="text-xs text-zinc-400 tabular-nums">
             {data.facilities.length} facilities
-            {data.radiusKm ? ` within ${data.radiusKm} km` : ""}
+            {data.radiusKm ? ` within ${String(data.radiusKm)} km` : ""}
           </p>
         </div>
         {data.stage !== "complete" && (
@@ -104,64 +176,15 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
 
       {/* Map */}
       <div className="relative flex-1 z-0">
-        <MapContainer
-          center={center}
-          scrollWheelZoom={true}
-          style={{ height: "100%", width: "100%" }}
-          zoom={data.zoom}
+        <DeckGL
+          controller
+          getTooltip={getTooltip}
+          initialViewState={viewState}
+          layers={layers}
+          style={{ position: "relative", width: "100%", height: "100%" }}
         >
-          <MapUpdater center={center} zoom={data.zoom} />
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          />
-
-          {data.radiusKm && (
-            <Circle
-              center={center}
-              color="#3b82f6"
-              fillColor="#3b82f6"
-              fillOpacity={0.05}
-              radius={data.radiusKm * 1000}
-              weight={1}
-            />
-          )}
-
-          {data.facilities.map((f) => (
-            <LeafletMarker
-              icon={defaultIcon}
-              key={f.id}
-              position={[f.lat, f.lng]}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <strong className="mb-1 block text-base">{f.name}</strong>
-                  {f.type && (
-                    <span className="block text-zinc-600">{f.type}</span>
-                  )}
-                  {f.city && (
-                    <span className="block text-zinc-500">{f.city}</span>
-                  )}
-                  {f.doctors !== null && f.doctors > 0 && (
-                    <span className="block text-zinc-500">
-                      {f.doctors} doctors
-                    </span>
-                  )}
-                  {f.beds !== null && f.beds > 0 && (
-                    <span className="block text-zinc-500">
-                      {f.beds} beds
-                    </span>
-                  )}
-                  {f.distanceKm !== undefined && (
-                    <span className="mt-1 block font-medium text-blue-600 tabular-nums">
-                      {f.distanceKm} km away
-                    </span>
-                  )}
-                </div>
-              </Popup>
-            </LeafletMarker>
-          ))}
-        </MapContainer>
+          <Map mapStyle={DARK_STYLE} />
+        </DeckGL>
       </div>
 
       {/* Facility list sidebar */}
