@@ -70,6 +70,10 @@ export const facilities = pgTable(
     embedding: vector("embedding", { dimensions: 1536 }),
 
     createdAt: timestamp("created_at").defaultNow(),
+
+    // === ENRICHMENT TRACKING ===
+    enrichmentStatus: text("enrichment_status").default("pending"),
+    enrichedAt: timestamp("enriched_at"),
   },
   (table) => ({
     regionIdx: index("idx_fac_region").on(table.addressRegion),

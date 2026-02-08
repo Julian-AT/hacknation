@@ -49,7 +49,7 @@ const KNOWN_REGIONS: Record<string, readonly string[]> = {
   ],
 } as const;
 
-const VALID_FACILITY_TYPES = [
+export const VALID_FACILITY_TYPES = [
   "hospital",
   "clinic",
   "doctor",
@@ -57,7 +57,7 @@ const VALID_FACILITY_TYPES = [
   "dentist",
 ] as const;
 
-const VALID_OPERATOR_TYPES = ["public", "private"] as const;
+export const VALID_OPERATOR_TYPES = ["public", "private"] as const;
 
 type EnrichmentCheck = {
   field: string;
@@ -74,7 +74,7 @@ type EnrichmentCheck = {
  * Checks against known regions for the given country code, if available.
  * Unknown regions are flagged (not rejected) since data may cover any country.
  */
-function validateRegion(
+export function validateRegion(
   value: string,
   countryCode?: string
 ): { valid: boolean; reason: string } {
@@ -116,7 +116,7 @@ function validateRegion(
 /**
  * Validate numeric fields are within plausible ranges.
  */
-function validateNumericRange(
+export function validateNumericRange(
   field: string,
   value: number
 ): { valid: boolean; reason: string } {
@@ -147,7 +147,7 @@ function validateNumericRange(
 /**
  * Check if a new value contradicts existing non-null data.
  */
-function detectContradiction(
+export function detectContradiction(
   _field: string,
   existing: string | number | boolean | null,
   proposed: string | number | boolean
