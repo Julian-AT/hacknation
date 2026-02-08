@@ -17,19 +17,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Don't redirect API calls — let route handlers return 401 so the client
-  // can handle auth failures without redirect-chain edge-cases.
-  if (pathname.startsWith("/api/")) {
-    return NextResponse.next();
-  }
-
-  // Public routes: no session required. Stops redirect loops on / and auth pages.
-  const isPublicRoute =
-    pathname === "/" || pathname === "/login" || pathname === "/register";
-  if (isPublicRoute) {
-    return NextResponse.next();
-  }
-
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
@@ -37,32 +24,20 @@ export async function proxy(request: NextRequest) {
   });
 
   if (!token) {
-    // If we already sent the user to guest but the session cookie didn't stick
-    // (e.g. redirect timing, cookie config), pass through to avoid infinite redirect.
-    if (request.cookies.has("_guest_attempt")) {
-      const response = NextResponse.next();
-      response.cookies.delete("_guest_attempt");
-      return response;
-    }
-
     const redirectUrl = encodeURIComponent(request.url);
+
     return NextResponse.redirect(
-      new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url),
+      new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
     );
   }
 
-  const hasMarker = request.cookies.has("_guest_attempt");
   const isGuest = guestRegex.test(token?.email ?? "");
 
-  if (!isGuest && ["/login", "/register"].includes(pathname)) {
-    const response = NextResponse.redirect(new URL("/", request.url));
-    if (hasMarker) response.cookies.delete("_guest_attempt");
-    return response;
+  if (token && !isGuest && ["/login", "/register"].includes(pathname)) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  const response = NextResponse.next();
-  if (hasMarker) response.cookies.delete("_guest_attempt");
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
