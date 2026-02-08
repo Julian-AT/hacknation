@@ -2,31 +2,31 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
 
-/**
- * Auth middleware — every matched route passes through here.
- *
- * Page navigations without a valid session token are redirected to the guest
- * session endpoint so every visitor gets an automatic guest session.
- *
- * API routes are left alone; route handlers return proper 401 responses and
- * the client can react accordingly (this avoids redirect-chain issues with
- * fetch() which can silently drop Set-Cookie headers during 3xx hops).
- */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  /*
+   * Playwright starts the dev server and requires a 200 status to
+   * begin the tests, so this ensures that the tests can start
+   */
   if (pathname.startsWith("/ping")) {
     return new Response("pong", { status: 200 });
   }
 
-  // Always let NextAuth's own routes through.
   if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
   // Don't redirect API calls — let route handlers return 401 so the client
-  // can handle auth failures without hitting redirect-chain edge-cases.
+  // can handle auth failures without redirect-chain edge-cases.
   if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
+  // Public routes: no session required. Stops redirect loops on / and auth pages.
+  const isPublicRoute =
+    pathname === "/" || pathname === "/login" || pathname === "/register";
+  if (isPublicRoute) {
     return NextResponse.next();
   }
 
@@ -37,10 +37,8 @@ export async function proxy(request: NextRequest) {
   });
 
   if (!token) {
-    // A short-lived marker cookie is set by /api/auth/guest after it creates
-    // a session.  If we see it here it means the session cookie didn't
-    // survive the redirect (browser quirk, cookie config mismatch, etc.).
-    // Fall through instead of looping forever.
+    // If we already sent the user to guest but the session cookie didn't stick
+    // (e.g. redirect timing, cookie config), pass through to avoid infinite redirect.
     if (request.cookies.has("_guest_attempt")) {
       const response = NextResponse.next();
       response.cookies.delete("_guest_attempt");
@@ -53,9 +51,7 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  // Clean up the marker cookie once we have a valid session.
   const hasMarker = request.cookies.has("_guest_attempt");
-
   const isGuest = guestRegex.test(token?.email ?? "");
 
   if (!isGuest && ["/login", "/register"].includes(pathname)) {
@@ -71,6 +67,18 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
+    "/chat/:id",
+    "/api/:path*",
+    "/login",
+    "/register",
+
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     */
     "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
