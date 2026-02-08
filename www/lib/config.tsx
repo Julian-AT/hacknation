@@ -5,7 +5,6 @@ import { ThirdBentoAnimation } from "@/components/third-bento-animation";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { Globe } from "@/components/ui/globe";
 import { cn } from "@/lib/utils";
-import { motion } from "motion/react";
 
 export const Highlight = ({
   children,
@@ -29,22 +28,22 @@ export const Highlight = ({
 export const BLUR_FADE_DELAY = 0.15;
 
 export const siteConfig = {
-  name: "Cal AI",
-  description: "Smart scheduling powered by AI.",
+  name: "Meridian",
+  description: "Interactive healthcare facility mapping and AI analysis for Ghana",
   cta: "Get Started",
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   keywords: [
-    "AI Calendar",
-    "Smart Scheduling",
-    "Productivity",
-    "Time Management",
+    "Healthcare Mapping",
+    "Ghana Health",
+    "AI Analysis",
+    "Facility Analysis",
   ],
   links: {
-    email: "support@calai.app",
-    twitter: "https://twitter.com/calaiapp",
-    discord: "https://discord.gg/calaiapp",
-    github: "https://github.com/calaiapp",
-    instagram: "https://instagram.com/calaiapp",
+    email: "support@meridian.app",
+    twitter: "https://twitter.com/meridian",
+    discord: "https://discord.gg/meridian",
+    github: "https://github.com/hacknation/meridian",
+    instagram: "https://instagram.com/meridian",
   },
   nav: {
     links: [
@@ -288,19 +287,19 @@ export const siteConfig = {
   featureSection: {
     title: "Simple. Seamless. Smart.",
     description:
-      "Discover how SkyAgent transforms your commands into action in four easy steps",
+      "Discover how Meridian transforms your commands into action in four easy steps",
     items: [
       {
         id: 1,
         title: "Ask Your AI Agent Directly",
         content:
-          "Speak or type your command—let SkyAgent capture your intent. Your request instantly sets the process in motion.",
+          "Speak or type your command—let Meridian capture your intent. Your request instantly sets the process in motion.",
         image:
           "https://images.unsplash.com/photo-1720371300677-ba4838fa0678?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       },
       {
         id: 2,
-        title: "Let SkyAgent Process It",
+        title: "Let Meridian Process It",
         content:
           "We prioritize the needs and preferences of our users in our design process.",
         image:
@@ -655,10 +654,7 @@ export const siteConfig = {
                 </defs>
               </svg>
             </div>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+            <div
               className="size-full"
             >
               <FlickeringGrid
@@ -667,7 +663,7 @@ export const siteConfig = {
                 squareSize={2}
                 maxOpacity={0.5}
               />
-            </motion.div>
+            </div>
           </div>
         ),
 
@@ -691,7 +687,7 @@ export const siteConfig = {
   },
   quoteSection: {
     quote:
-      "SkyAgent has transformed our daily operations. Tasks that once consumed hours now complete in moments, freeing our team to focus on creativity and strategic growth.",
+      "Meridian has transformed our daily operations. Tasks that once consumed hours now complete in moments, freeing our team to focus on creativity and strategic growth.",
     author: {
       name: "Alex Johnson",
       role: "CTO, Innovatech",
@@ -966,7 +962,7 @@ export const siteConfig = {
   faqSection: {
     title: "Frequently Asked Questions",
     description:
-      "Answers to common questions about SkyAgent and its features. If you have any other questions, please don't hesitate to contact us.",
+      "Answers to common questions about Meridian and its features. If you have any other questions, please don't hesitate to contact us.",
     faQitems: [
       {
         id: 1,
@@ -976,9 +972,9 @@ export const siteConfig = {
       },
       {
         id: 2,
-        question: "How does SkyAgent work?",
-        answer:
-          "SkyAgent works by analyzing your requirements, leveraging advanced AI algorithms to understand context, and executing tasks based on your instructions. It can integrate with your workflow, learn from feedback, and continuously improve its performance.",
+question: "How does Meridian work?",
+          answer:
+            "Meridian works by analyzing your requirements, leveraging advanced AI algorithms to understand context, and executing tasks based on your instructions. It can integrate with your workflow, learn from feedback, and continuously improve its performance.",
       },
       {
         id: 3,
@@ -989,8 +985,8 @@ export const siteConfig = {
       {
         id: 4,
         question: "Can I integrate my existing tools?",
-        answer:
-          "Yes, SkyAgent is designed to be highly compatible with popular tools and platforms. We offer APIs and pre-built integrations for seamless connection with your existing workflow tools and systems.",
+answer:
+            "Yes, Meridian is designed to be highly compatible with popular tools and platforms. We offer APIs and pre-built integrations for seamless connection with your existing workflow tools and systems.",
       },
       {
         id: 5,
@@ -1000,9 +996,9 @@ export const siteConfig = {
       },
       {
         id: 6,
-        question: "How does SkyAgent save me time?",
-        answer:
-          "SkyAgent automates repetitive tasks, streamlines workflows, and provides quick solutions to common challenges. This automation and efficiency can save hours of manual work, allowing you to focus on more strategic activities.",
+question: "How does Meridian save me time?",
+          answer:
+            "Meridian automates repetitive tasks, streamlines workflows, and provides quick solutions to common challenges. This automation and efficiency can save hours of manual work, allowing you to focus on more strategic activities.",
       },
     ],
   },

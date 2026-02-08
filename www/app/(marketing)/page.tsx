@@ -4,16 +4,20 @@ import { FeaturesSection } from "@/components/marketing/features-section";
 import { FooterSection } from "@/components/marketing/footer-section";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { HowItWorksSection } from "@/components/marketing/how-it-works-section";
+import { MarketingNavbar } from "@/components/marketing/navbar";
 
 export default function LandingPage() {
   return (
-    <main className="flex w-full flex-col items-center justify-center">
-      <HeroSection />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <FAQSection />
-      <CTASection />
-      <FooterSection />
-    </main>
+    <>
+      <MarketingNavbar />
+      <main className="flex w-full flex-col items-center justify-center">
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <FAQSection />
+        <CTASection />
+        <FooterSection />
+      </main>
+    </>
   );
 }
