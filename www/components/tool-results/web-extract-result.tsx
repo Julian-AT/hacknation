@@ -14,17 +14,17 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
   const extractedData = result.extractedData;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center gap-2 px-3 py-2.5">
         <Sparkles className="size-3.5 text-emerald-400" />
-        <span className="text-xs font-medium text-zinc-400">
+        <span className="text-xs font-medium text-muted-foreground">
           Extracted Data
         </span>
       </div>
 
       {urls.length > 0 && (
-        <div className="border-t border-zinc-800 px-3 py-2">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        <div className="border-t border-border px-3 py-2">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Sources
           </span>
           <div className="flex flex-col gap-0.5">
@@ -45,18 +45,18 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
       )}
 
       {prompt && (
-        <div className="border-t border-zinc-800 px-3 py-2">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        <div className="border-t border-border px-3 py-2">
+          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Extraction Prompt
           </span>
-          <p className="text-[11px] text-zinc-400">{prompt}</p>
+          <p className="text-[11px] text-muted-foreground">{prompt}</p>
         </div>
       )}
 
       {extractedData !== null && extractedData !== undefined && (
-        <div className="border-t border-zinc-800 px-3 py-2">
+        <div className="border-t border-border px-3 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Result
             </span>
             <button
@@ -68,7 +68,7 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
             </button>
           </div>
           <pre
-            className={`mt-1 overflow-x-auto whitespace-pre-wrap font-mono text-[10px] text-zinc-400 ${isExpanded ? "" : "max-h-32 overflow-y-hidden"}`}
+            className={`mt-1 overflow-x-auto whitespace-pre-wrap font-mono text-[10px] text-muted-foreground ${isExpanded ? "" : "max-h-32 overflow-y-hidden"}`}
           >
             {typeof extractedData === "string"
               ? extractedData

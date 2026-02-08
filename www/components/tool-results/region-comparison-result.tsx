@@ -44,11 +44,11 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
   };
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2">
           <GitCompare className="size-3.5 text-cyan-400" />
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="text-xs font-medium text-muted-foreground">
             Region Comparison
           </span>
         </div>
@@ -62,14 +62,14 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
       <div className="overflow-x-auto px-3 pb-3">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-zinc-800">
-              <th className="px-2 py-1.5 text-[11px] font-semibold text-zinc-500">
+            <tr className="border-b border-border">
+              <th className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">
                 Metric
               </th>
               {comparison.map((r) => (
                 <th
                   key={r.region}
-                  className="px-2 py-1.5 text-[11px] font-semibold text-zinc-300"
+                  className="px-2 py-1.5 text-[11px] font-semibold text-foreground"
                 >
                   {r.region}
                 </th>
@@ -82,9 +82,9 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
               return (
                 <tr
                   key={metric.key}
-                  className="border-b border-zinc-800/50 last:border-0"
+                  className="border-b border-border/50 last:border-0"
                 >
-                  <td className="whitespace-nowrap px-2 py-1.5 text-zinc-500">
+                  <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
                     {metric.label}
                   </td>
                   {comparison.map((r) => {
@@ -96,7 +96,7 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
                         key={`${r.region}-${metric.key}`}
                         className={cn(
                           "whitespace-nowrap px-2 py-1.5 font-mono",
-                          isMax ? "text-cyan-400" : "text-zinc-300",
+                          isMax ? "text-cyan-400" : "text-foreground",
                         )}
                       >
                         {val === null
@@ -110,14 +110,14 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
                 </tr>
               );
             })}
-            <tr className="border-b border-zinc-800/50 last:border-0">
-              <td className="whitespace-nowrap px-2 py-1.5 text-zinc-500">
+            <tr className="border-b border-border/50 last:border-0">
+              <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
                 Top Specialties
               </td>
               {comparison.map((r) => (
                 <td
                   key={`${r.region}-specialties`}
-                  className="px-2 py-1.5 text-zinc-400"
+                  className="px-2 py-1.5 text-muted-foreground"
                 >
                   {r.topSpecialties?.slice(0, 3).join(", ") || "—"}
                 </td>
@@ -128,8 +128,8 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
       </div>
 
       {gaps.length > 0 && (
-        <div className="border-t border-zinc-800 px-3 py-2.5">
-          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        <div className="border-t border-border px-3 py-2.5">
+          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Identified Gaps
           </span>
           <div className="flex flex-col gap-1">

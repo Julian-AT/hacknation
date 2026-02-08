@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { DeckGL, ScatterplotLayer } from "deck.gl";
 import type { MapViewState, PickingInfo } from "deck.gl";
 import { Map } from "react-map-gl/maplibre";
@@ -8,6 +9,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const LIGHT_STYLE =
+  "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 function escapeHtml(str: string): string {
   return str
@@ -42,10 +45,14 @@ type FacilityMapData = {
 
 export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
   const [isMounted, setIsMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const mapStyle = isDark ? DARK_STYLE : LIGHT_STYLE;
 
   const viewState: MapViewState = useMemo(
     () => ({
@@ -153,31 +160,43 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
 
   if (!isMounted || !data) {
     return (
-      <div className="flex size-full items-center justify-center bg-zinc-900 text-zinc-500">
+      <div className="flex size-full items-center justify-center bg-muted text-muted-foreground">
         <div className="flex flex-col items-center gap-2">
-          <div className="size-6 rounded-full border-2 border-zinc-600 border-t-blue-500 animate-spin" />
+          <div className="size-6 rounded-full border-2 border-muted-foreground/30 border-t-blue-500 animate-spin" />
           <span className="text-sm">Loading map...</span>
         </div>
       </div>
     );
   }
 
+  // Count facility types for the header summary
+  const typeCounts = new Map<string, number>();
+  for (const f of data.facilities) {
+    const t = f.type ?? "other";
+    typeCounts.set(t, (typeCounts.get(t) ?? 0) + 1);
+  }
+  const summaryParts = [...typeCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([type, count]) => `${String(count)} ${type}`);
+
   return (
     <div className="flex size-full flex-col">
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3">
         <div>
-          <h2 className="text-sm font-semibold text-white text-balance">
+          <h2 className="text-sm font-semibold text-foreground text-balance">
             {data.title}
           </h2>
-          <p className="text-xs text-zinc-400 tabular-nums">
+          <p className="text-xs text-muted-foreground tabular-nums">
             {data.facilities.length} facilities
             {data.radiusKm ? ` within ${String(data.radiusKm)} km` : ""}
+            {summaryParts.length > 0 ? ` · ${summaryParts.join(", ")}` : ""}
           </p>
         </div>
         {data.stage !== "complete" && (
-          <div className="flex items-center gap-2 text-xs text-zinc-500">
-            <div className="size-3 rounded-full border-2 border-zinc-600 border-t-blue-500 animate-spin" />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="size-3 rounded-full border-2 border-muted-foreground/30 border-t-blue-500 animate-spin" />
             <span className="capitalize">{data.stage}...</span>
           </div>
         )}
@@ -192,23 +211,23 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
           layers={layers}
           style={{ position: "relative", width: "100%", height: "100%" }}
         >
-          <Map mapStyle={DARK_STYLE} />
+          <Map key={mapStyle} mapStyle={mapStyle} />
         </DeckGL>
       </div>
 
       {/* Facility list sidebar */}
       {data.facilities.length > 0 && (
-        <div className="max-h-48 overflow-y-auto border-t border-zinc-800 bg-zinc-950/90">
+        <div className="max-h-48 overflow-y-auto border-t border-border bg-background/90">
           {data.facilities.map((f) => (
             <div
-              className="flex items-center justify-between border-b border-zinc-800/50 px-4 py-2 text-xs"
+              className="flex items-center justify-between border-b border-border/50 px-4 py-2 text-xs"
               key={f.id}
             >
               <div className="min-w-0 flex-1">
-                <div className="truncate font-medium text-zinc-200">
+                <div className="truncate font-medium text-foreground">
                   {f.name}
                 </div>
-                <div className="text-zinc-500">
+                <div className="text-muted-foreground">
                   {f.type}
                   {f.city ? ` · ${f.city}` : ""}
                 </div>

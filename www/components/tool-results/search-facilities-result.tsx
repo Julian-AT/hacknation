@@ -43,13 +43,13 @@ export function SearchFacilitiesResult({
   };
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Search className="size-3.5 text-green-400" />
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="text-xs font-medium text-muted-foreground">
             Facilities matching{" "}
-            <span className="text-zinc-300">{query}</span>
+            <span className="text-foreground">{query}</span>
           </span>
         </div>
         <span className="rounded-full bg-green-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-green-400">
@@ -61,10 +61,10 @@ export function SearchFacilitiesResult({
         {results.map((facility) => (
           <div
             key={facility.id}
-            className="flex flex-col gap-1.5 rounded-md bg-zinc-800/60 p-2.5"
+            className="flex flex-col gap-1.5 rounded-md bg-muted p-2.5"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[13px] font-medium text-zinc-200">
+              <span className="text-[13px] font-medium text-foreground">
                 {facility.name}
               </span>
               <span className="font-mono text-[11px] font-semibold text-green-400">
@@ -77,12 +77,12 @@ export function SearchFacilitiesResult({
                   {facility.type}
                 </span>
               )}
-              <span className="text-[11px] text-zinc-500">
+              <span className="text-[11px] text-muted-foreground">
                 {[facility.region, facility.city].filter(Boolean).join(", ")}
               </span>
             </div>
             {facility.procedures && (
-              <p className="line-clamp-1 text-[11px] text-zinc-500">
+              <p className="line-clamp-1 text-[11px] text-muted-foreground">
                 {facility.procedures}
               </p>
             )}

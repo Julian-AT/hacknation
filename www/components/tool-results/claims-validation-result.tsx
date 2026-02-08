@@ -33,16 +33,16 @@ export function ClaimsValidationResult({
   const summary = result.summary as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Brain className="size-3.5 text-orange-400" />
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="text-xs font-medium text-muted-foreground">
             Claims Validation
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-zinc-500">
+          <span className="text-[11px] text-muted-foreground">
             {facilitiesChecked} checked
           </span>
           <span className="rounded-full bg-orange-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-orange-400">
@@ -81,8 +81,8 @@ export function ClaimsValidationResult({
       </div>
 
       {summary && (
-        <div className="border-t border-zinc-800 px-3 py-2">
-          <p className="text-[11px] text-zinc-500">{summary}</p>
+        <div className="border-t border-border px-3 py-2">
+          <p className="text-[11px] text-muted-foreground">{summary}</p>
         </div>
       )}
     </div>
@@ -94,7 +94,7 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
   const colors = SEVERITY_COLORS[issue.severity] ?? SEVERITY_COLORS.low;
 
   return (
-    <div className="rounded-md bg-zinc-800/60 p-2.5">
+    <div className="rounded-md bg-muted p-2.5">
       <div className="flex items-center gap-2">
         <span
           className={cn(
@@ -105,19 +105,19 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
         >
           {issue.severity}
         </span>
-        <span className="font-mono text-[10px] text-zinc-500">
+        <span className="font-mono text-[10px] text-muted-foreground">
           {issue.validationType}
         </span>
       </div>
-      <p className="mt-1 text-xs font-medium text-zinc-300">
+      <p className="mt-1 text-xs font-medium text-foreground">
         {issue.facilityName}
       </p>
-      <p className="mt-0.5 text-[11px] text-zinc-400">{issue.finding}</p>
+      <p className="mt-0.5 text-[11px] text-muted-foreground">{issue.finding}</p>
 
       <button
         type="button"
         onClick={() => setShowEvidence(!showEvidence)}
-        className="mt-1.5 flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-400"
+        className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-muted-foreground"
       >
         {showEvidence ? (
           <ChevronDown className="size-3" />
@@ -128,7 +128,7 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
       </button>
 
       {showEvidence && (
-        <pre className="mt-1 max-h-24 overflow-y-auto rounded bg-zinc-900/80 p-2 font-mono text-[10px] text-zinc-500">
+        <pre className="mt-1 max-h-24 overflow-y-auto rounded bg-muted/80 p-2 font-mono text-[10px] text-muted-foreground">
           {JSON.stringify(issue.evidence, null, 2)}
         </pre>
       )}

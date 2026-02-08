@@ -54,11 +54,11 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
   };
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       {/* Header */}
       <div className="flex items-start justify-between px-3 py-3">
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-semibold text-zinc-100">{name}</span>
+          <span className="text-sm font-semibold text-foreground">{name}</span>
           <div className="flex items-center gap-1.5">
             {type && (
               <span className="rounded bg-blue-950/50 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
@@ -66,7 +66,7 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
               </span>
             )}
             {(region ?? city) && (
-              <span className="flex items-center gap-1 text-[11px] text-zinc-500">
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <MapPin className="size-3" />
                 {[region, city].filter(Boolean).join(", ")}
               </span>
@@ -80,7 +80,7 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
             >
               {qualityNum}%
             </span>
-            <span className="text-[9px] font-medium text-zinc-500">
+            <span className="text-[9px] font-medium text-muted-foreground">
               quality
             </span>
           </div>
@@ -88,7 +88,7 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
       </div>
 
       {/* Capacity metrics */}
-      <div className="border-t border-zinc-800">
+      <div className="border-t border-border">
         <div className="flex gap-2 px-3 py-3">
           {beds !== null && <CapacityMetric label="BEDS" value={beds} />}
           {doctors !== null && (
@@ -102,21 +102,21 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
 
       {/* Services */}
       {(specialties?.length ?? 0) > 0 && (
-        <div className="border-t border-zinc-800 px-3 py-2.5">
-          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        <div className="border-t border-border px-3 py-2.5">
+          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Specialties
           </span>
           <div className="flex flex-wrap gap-1">
             {specialties?.slice(0, 8).map((s) => (
               <span
                 key={s}
-                className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-[10px] text-zinc-400"
+                className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
               >
                 {s}
               </span>
             ))}
             {(specialties?.length ?? 0) > 8 && (
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-muted-foreground">
                 +{(specialties?.length ?? 0) - 8} more
               </span>
             )}
@@ -125,21 +125,21 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
       )}
 
       {(procedures?.length ?? 0) > 0 && (
-        <div className="border-t border-zinc-800 px-3 py-2.5">
-          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        <div className="border-t border-border px-3 py-2.5">
+          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Procedures
           </span>
           <div className="flex flex-wrap gap-1">
             {procedures?.slice(0, 6).map((p) => (
               <span
                 key={p}
-                className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-[10px] text-zinc-400"
+                className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
               >
                 {p}
               </span>
             ))}
             {(procedures?.length ?? 0) > 6 && (
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-muted-foreground">
                 +{(procedures?.length ?? 0) - 6} more
               </span>
             )}
@@ -149,7 +149,7 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
 
       {/* Missing data warning */}
       {missingCriticalData && (
-        <div className="border-t border-zinc-800 bg-amber-950/20 px-3 py-2">
+        <div className="border-t border-border bg-amber-950/20 px-3 py-2">
           <span className="text-[11px] text-amber-400">
             Missing: {missingCriticalData}
           </span>
@@ -157,8 +157,8 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-zinc-800 px-3 py-2">
-        <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+      <div className="flex items-center justify-between border-t border-border px-3 py-2">
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           {phone && <span>{phone}</span>}
           {email && <span>{email}</span>}
         </div>
@@ -186,11 +186,11 @@ function CapacityMetric({
   value: number | string;
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-0.5 rounded-md bg-zinc-800/60 p-2">
-      <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
+    <div className="flex flex-1 flex-col gap-0.5 rounded-md bg-muted p-2">
+      <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <span className="font-mono text-base font-bold text-zinc-100">
+      <span className="font-mono text-base font-bold text-foreground">
         {typeof value === "number" ? value.toLocaleString() : value}
       </span>
     </div>

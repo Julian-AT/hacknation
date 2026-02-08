@@ -21,17 +21,17 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
     : content?.slice(0, previewLength);
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center gap-2 px-3 py-2.5">
         <FileText className="size-3.5 text-emerald-400" />
-        <span className="text-xs font-medium text-zinc-400">
+        <span className="text-xs font-medium text-muted-foreground">
           Scraped Content
         </span>
       </div>
 
-      <div className="border-t border-zinc-800 px-3 py-2">
+      <div className="border-t border-border px-3 py-2">
         {title && (
-          <p className="text-xs font-medium text-zinc-200">{title}</p>
+          <p className="text-xs font-medium text-foreground">{title}</p>
         )}
         <a
           href={url}
@@ -42,7 +42,7 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
           {url}
           <ExternalLink className="size-3 shrink-0" />
         </a>
-        <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-500">
+        <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
           <span>{contentLength.toLocaleString()} chars</span>
           {truncated && (
             <span className="rounded bg-amber-950/40 px-1 py-0.5 text-amber-400">
@@ -53,8 +53,8 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
       </div>
 
       {content && (
-        <div className="border-t border-zinc-800 px-3 py-2">
-          <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-zinc-400">
+        <div className="border-t border-border px-3 py-2">
+          <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-muted-foreground">
             {displayContent}
             {!isExpanded && content.length > previewLength && "..."}
           </p>

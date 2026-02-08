@@ -10,10 +10,7 @@ import { z } from "zod";
 import type { ChatMessage } from "@/lib/types";
 import { artifactsPrompt } from "../prompts";
 import { getLanguageModel } from "../providers";
-import { createDocument } from "../tools/create-document";
 import { getWeather } from "../tools/get-weather";
-import { requestSuggestions } from "../tools/request-suggestions";
-import { updateDocument } from "../tools/update-document";
 import {
   findNearbyArtifact,
   findMedicalDesertsArtifact,
@@ -132,11 +129,8 @@ export async function createOrchestratorAgent({
     model: getLanguageModel(modelId),
     instructions,
     tools: {
-      // --- Direct tools (need session/dataStream or are simple) ---
+      // --- Direct tools (simple or need session/dataStream) ---
       getWeather,
-      createDocument: createDocument({ session, dataStream }),
-      updateDocument: updateDocument({ session, dataStream }),
-      requestSuggestions: requestSuggestions({ session, dataStream }),
 
       // --- Artifact-enhanced geospatial tools (stream directly to canvas) ---
       findNearby: cached(findNearbyArtifact({ dataStream }), { ttl: 30 * 60 * 1000 }),
@@ -197,6 +191,6 @@ export async function createOrchestratorAgent({
         },
       }),
     },
-    stopWhen: stepCountIs(15),
+    stopWhen: stepCountIs(10),
   });
 }

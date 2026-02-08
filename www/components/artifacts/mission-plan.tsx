@@ -31,7 +31,7 @@ function getPriorityColor(priority: string): string {
     return "border-orange-500/30 bg-orange-500/5";
   if (priority.toLowerCase().includes("medium"))
     return "border-yellow-500/30 bg-yellow-500/5";
-  return "border-zinc-700 bg-zinc-900/50";
+  return "border-border bg-muted/50";
 }
 
 function getPriorityBadgeColor(priority: string): string {
@@ -41,15 +41,15 @@ function getPriorityBadgeColor(priority: string): string {
     return "bg-orange-500/20 text-orange-400";
   if (priority.toLowerCase().includes("medium"))
     return "bg-yellow-500/20 text-yellow-400";
-  return "bg-zinc-700/50 text-zinc-400";
+  return "bg-muted text-muted-foreground";
 }
 
 export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
   if (!data) {
     return (
-      <div className="flex size-full items-center justify-center bg-zinc-900 text-zinc-500">
+      <div className="flex size-full items-center justify-center bg-muted text-muted-foreground">
         <div className="flex flex-col items-center gap-2">
-          <div className="size-6 rounded-full border-2 border-zinc-600 border-t-amber-500 animate-spin" />
+          <div className="size-6 rounded-full border-2 border-muted-foreground/30 border-t-amber-500 animate-spin" />
           <span className="text-sm">Planning mission...</span>
         </div>
       </div>
@@ -57,21 +57,21 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
   }
 
   return (
-    <div className="flex size-full flex-col overflow-y-auto bg-zinc-950">
+    <div className="flex size-full flex-col overflow-y-auto bg-background">
       {/* Header */}
-      <div className="border-b border-zinc-800 px-6 py-4">
-        <h2 className="text-lg font-semibold text-white text-balance">{data.title}</h2>
+      <div className="border-b border-border px-6 py-4">
+        <h2 className="text-lg font-semibold text-foreground text-balance">{data.title}</h2>
         {data.stage !== "complete" && (
-          <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500">
-            <div className="size-3 rounded-full border-2 border-zinc-600 border-t-amber-500 animate-spin" />
+          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="size-3 rounded-full border-2 border-muted-foreground/30 border-t-amber-500 animate-spin" />
             <span className="capitalize">{data.stage}...</span>
           </div>
         )}
       </div>
 
       {/* Volunteer profile */}
-      <div className="border-b border-zinc-800 px-6 py-4">
-        <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+      <div className="border-b border-border px-6 py-4">
+        <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Volunteer Profile
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -79,24 +79,24 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
             {data.volunteerProfile.specialty}
           </span>
           {data.volunteerProfile.duration && (
-            <span className="rounded-md bg-zinc-700/50 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground">
               {data.volunteerProfile.duration}
             </span>
           )}
           {data.volunteerProfile.preference && (
-            <span className="rounded-md bg-zinc-700/50 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground">
               {data.volunteerProfile.preference}
             </span>
           )}
         </div>
         {data.analysis && (
-          <p className="mt-2 text-sm text-zinc-400 text-pretty">{data.analysis}</p>
+          <p className="mt-2 text-sm text-muted-foreground text-pretty">{data.analysis}</p>
         )}
       </div>
 
       {/* Recommendations */}
       <div className="flex-1 px-6 py-4">
-        <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+        <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Deployment Recommendations
         </h3>
         <div className="flex flex-col gap-3">
@@ -111,25 +111,25 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
                 >
                   {rec.priority}
                 </span>
-                <span className="shrink-0 text-xs text-zinc-500">
+                <span className="shrink-0 text-xs text-muted-foreground">
                   {rec.region}
                 </span>
               </div>
-              <p className="text-sm text-zinc-300 text-pretty">{rec.reason}</p>
+              <p className="text-sm text-foreground text-pretty">{rec.reason}</p>
               {rec.suggestedHost && (
-                <div className="mt-2 rounded-md border border-zinc-700/50 bg-zinc-900/50 px-3 py-2 text-xs">
-                  <span className="text-zinc-500">Suggested host: </span>
-                  <span className="font-medium text-zinc-200">
+                <div className="mt-2 rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Suggested host: </span>
+                  <span className="font-medium text-foreground">
                     {rec.suggestedHost.name}
                   </span>
                   {rec.suggestedHost.city && (
-                    <span className="text-zinc-500">
+                    <span className="text-muted-foreground">
                       {" "}
                       · {rec.suggestedHost.city}
                     </span>
                   )}
                   {rec.suggestedHost.distanceKm !== undefined && (
-                    <span className="text-zinc-500 tabular-nums">
+                    <span className="text-muted-foreground tabular-nums">
                       {" "}
                       · {rec.suggestedHost.distanceKm} km
                     </span>
@@ -137,7 +137,7 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
                 </div>
               )}
               {rec.suggestedLocation && !rec.suggestedHost && (
-                <div className="mt-2 text-xs text-zinc-500">
+                <div className="mt-2 text-xs text-muted-foreground">
                   Location: {rec.suggestedLocation}
                 </div>
               )}

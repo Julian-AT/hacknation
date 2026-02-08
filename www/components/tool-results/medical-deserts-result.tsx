@@ -58,7 +58,7 @@ export function MedicalDesertsResult({ result }: MedicalDesertsResultProps) {
   }
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-muted/50">
       <div className="flex items-center justify-between bg-red-950/30 px-3 py-2.5">
         <div className="flex items-center gap-1.5">
           <AlertTriangle className="size-3.5 text-red-400" />
@@ -73,13 +73,13 @@ export function MedicalDesertsResult({ result }: MedicalDesertsResultProps) {
 
       <div className="flex gap-4 px-3 py-2">
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-zinc-500">Threshold:</span>
+          <span className="text-[10px] text-muted-foreground">Threshold:</span>
           <span className="font-mono text-[10px] font-semibold text-zinc-400">
             {thresholdKm}km
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-zinc-500">Providers:</span>
+          <span className="text-[10px] text-muted-foreground">Providers:</span>
           <span className="font-mono text-[10px] font-semibold text-zinc-400">
             {totalProviders} total
           </span>
@@ -90,13 +90,13 @@ export function MedicalDesertsResult({ result }: MedicalDesertsResultProps) {
         {desertZones.map((zone) => (
           <div
             key={zone.city}
-            className="flex items-center justify-between rounded-md bg-zinc-800/60 px-2.5 py-2"
+            className="flex items-center justify-between rounded-md bg-muted/60 px-2.5 py-2"
           >
             <div className="flex flex-col gap-0.5">
               <span className="text-xs font-medium text-zinc-200">
                 {zone.city}
               </span>
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-muted-foreground">
                 {zone.nearestProvider
                   ? `Nearest: ${zone.nearestProvider}`
                   : "No nearby provider"}

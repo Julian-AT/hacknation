@@ -52,11 +52,11 @@ export function NearbyFacilitiesResult({ result }: NearbyFacilitiesResultProps) 
   };
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-1.5">
           <MapPin className="size-3.5 text-amber-400" />
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="text-xs font-medium text-muted-foreground">
             Near {center?.location ?? "location"} ({radiusKm}km)
           </span>
         </div>
@@ -69,19 +69,19 @@ export function NearbyFacilitiesResult({ result }: NearbyFacilitiesResultProps) 
         {facilities.map((f) => (
           <div
             key={f.id}
-            className="flex items-center justify-between rounded-md bg-zinc-800/60 px-2.5 py-2"
+            className="flex items-center justify-between rounded-md bg-muted px-2.5 py-2"
           >
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs font-medium text-zinc-200">
+              <span className="text-xs font-medium text-foreground">
                 {f.name}
               </span>
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-muted-foreground">
                 {[f.type, f.beds ? `${f.beds} beds` : null, f.doctors ? `${f.doctors} doctors` : null]
                   .filter(Boolean)
                   .join("  ·  ")}
               </span>
             </div>
-            <span className="ml-2 shrink-0 rounded bg-zinc-900 px-2 py-0.5 font-mono text-[11px] font-semibold text-amber-400">
+            <span className="ml-2 shrink-0 rounded bg-muted px-2 py-0.5 font-mono text-[11px] font-semibold text-amber-400">
               {f.distanceKm.toFixed(0)} km
             </span>
           </div>
@@ -89,7 +89,7 @@ export function NearbyFacilitiesResult({ result }: NearbyFacilitiesResultProps) 
       </div>
 
       {facilities.length > 0 && (
-        <div className="flex justify-end border-t border-zinc-800 px-3 py-2">
+        <div className="flex justify-end border-t border-border px-3 py-2">
           <button
             type="button"
             aria-label="View all on map"

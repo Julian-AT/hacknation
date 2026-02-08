@@ -17,10 +17,10 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
   const groupBy = result.groupBy as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center gap-2 px-3 py-2.5">
         <BarChart3 className="size-3.5 text-blue-400" />
-        <span className="text-xs font-medium text-zinc-400">
+        <span className="text-xs font-medium text-muted-foreground">
           Facility Statistics
         </span>
       </div>
@@ -48,20 +48,20 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
       )}
 
       {stats.length > 0 && (
-        <div className="overflow-x-auto border-t border-zinc-800 px-3 py-2">
+        <div className="overflow-x-auto border-t border-border px-3 py-2">
           {groupBy && (
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Grouped by {groupBy}
             </span>
           )}
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-zinc-800">
+              <tr className="border-b border-border">
                 {Object.keys(stats.at(0) as Record<string, unknown>).map(
                   (col) => (
                     <th
                       key={col}
-                      className="whitespace-nowrap px-2 py-1 font-mono text-[11px] font-semibold text-zinc-500"
+                      className="whitespace-nowrap px-2 py-1 font-mono text-[11px] font-semibold text-muted-foreground"
                     >
                       {col}
                     </th>
@@ -73,12 +73,12 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
               {stats.slice(0, 10).map((row, i) => (
                 <tr
                   key={`stat-${String(i)}`}
-                  className="border-b border-zinc-800/50 last:border-0"
+                  className="border-b border-border/50 last:border-0"
                 >
                   {Object.values(row).map((val, j) => (
                     <td
                       key={`${String(i)}-${String(j)}`}
-                      className="whitespace-nowrap px-2 py-1 text-zinc-300"
+                      className="whitespace-nowrap px-2 py-1 text-foreground"
                     >
                       {val === null
                         ? "—"
@@ -107,12 +107,12 @@ function MetricCard({
   accent?: boolean;
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-1 rounded-md bg-zinc-800/60 p-3">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+    <div className="flex flex-1 flex-col gap-1 rounded-md bg-muted p-3">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
       <span
-        className={`font-mono text-lg font-bold ${accent ? "text-blue-400" : "text-zinc-100"}`}
+        className={`font-mono text-lg font-bold ${accent ? "text-blue-400" : "text-foreground"}`}
       >
         {value.toLocaleString()}
       </span>

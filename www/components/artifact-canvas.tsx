@@ -19,7 +19,7 @@ export function ArtifactCanvas({ onClose }: { onClose?: () => void }) {
 
   if (!artifact) {
     return (
-      <div className="flex size-full flex-col items-center justify-center bg-zinc-950 text-zinc-600">
+      <div className="flex size-full flex-col items-center justify-center bg-background text-muted-foreground">
         <svg
           className="mb-3 size-12 opacity-30"
           fill="none"
@@ -37,7 +37,7 @@ export function ArtifactCanvas({ onClose }: { onClose?: () => void }) {
         <p className="text-sm text-pretty">
           Ask a question to see results here
         </p>
-        <p className="mt-1 text-xs text-zinc-700 text-pretty">
+        <p className="mt-1 text-xs text-muted-foreground/60 text-pretty">
           Facility maps, desert analysis, and statistics render in this panel
         </p>
       </div>
@@ -50,7 +50,7 @@ export function ArtifactCanvas({ onClose }: { onClose?: () => void }) {
       {onClose && (
         <button
           aria-label="Close canvas panel"
-          className="absolute left-4 top-4 z-20 flex size-8 items-center justify-center rounded-lg border border-zinc-800 bg-black/70 text-zinc-400 backdrop-blur-sm hover:bg-zinc-700 hover:text-white"
+          className="absolute left-4 top-4 z-20 flex size-8 items-center justify-center rounded-lg border border-border bg-background/70 text-muted-foreground backdrop-blur-sm hover:bg-muted hover:text-foreground"
           onClick={onClose}
           type="button"
         >
@@ -73,15 +73,15 @@ export function ArtifactCanvas({ onClose }: { onClose?: () => void }) {
 
       {/* Artifact type tabs (when multiple types have data) */}
       {types.length > 1 && (
-        <div className="flex gap-1 border-b border-zinc-800 bg-zinc-950 px-3 py-1.5">
+        <div className="flex gap-1 border-b border-border bg-background px-3 py-1.5">
           {types.map((type) => {
             const isActive = artifact?.type === type;
             return (
               <span
                 className={`rounded-md px-2 py-1 text-xs ${
                   isActive
-                    ? "bg-zinc-800 text-white"
-                    : "text-zinc-500"
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground"
                 }`}
                 key={type}
               >
@@ -128,7 +128,7 @@ function ArtifactRouter({ artifact }: { artifact: ArtifactData<unknown> }) {
       );
     default:
       return (
-        <div className="flex size-full items-center justify-center bg-zinc-950 text-zinc-500">
+        <div className="flex size-full items-center justify-center bg-background text-muted-foreground">
           <p className="text-sm">Unknown artifact type: {artifact.type}</p>
         </div>
       );

@@ -33,24 +33,24 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
   const getToolIcon = (name: string) => {
     switch (name) {
       // Agent delegation tools
-      case 'investigateData': return <Database className="size-4 text-blue-400" />;
-      case 'analyzeGeography': return <MapIcon className="size-4 text-yellow-400" />;
-      case 'medicalReasoning': return <Stethoscope className="size-4 text-red-400" />;
-      case 'researchWeb': return <Globe className="size-4 text-emerald-400" />;
+      case 'investigateData': return <Database className="size-4 text-blue-500" />;
+      case 'analyzeGeography': return <MapIcon className="size-4 text-amber-500" />;
+      case 'medicalReasoning': return <Stethoscope className="size-4 text-red-500" />;
+      case 'researchWeb': return <Globe className="size-4 text-emerald-500" />;
       // Direct tools (subagent-level)
-      case 'queryDatabase': return <Database className="size-4 text-blue-400" />;
-      case 'searchFacilities': return <Search className="size-4 text-green-400" />;
+      case 'queryDatabase': return <Database className="size-4 text-blue-500" />;
+      case 'searchFacilities': return <Search className="size-4 text-green-500" />;
       case 'findNearby':
-      case 'findMedicalDeserts': return <MapIcon className="size-4 text-yellow-400" />;
-      case 'compareRegions': return <GitCompare className="size-4 text-cyan-400" />;
-      case 'detectAnomalies': return <AlertTriangle className="size-4 text-red-400" />;
-      case 'crossValidateClaims': return <Brain className="size-4 text-orange-400" />;
-      case 'classifyServices': return <Stethoscope className="size-4 text-pink-400" />;
-      case 'planMission': return <Activity className="size-4 text-pink-400" />;
+      case 'findMedicalDeserts': return <MapIcon className="size-4 text-amber-500" />;
+      case 'compareRegions': return <GitCompare className="size-4 text-cyan-500" />;
+      case 'detectAnomalies': return <AlertTriangle className="size-4 text-red-500" />;
+      case 'crossValidateClaims': return <Brain className="size-4 text-orange-500" />;
+      case 'classifyServices': return <Stethoscope className="size-4 text-pink-500" />;
+      case 'planMission': return <Activity className="size-4 text-pink-500" />;
       case 'firecrawlSearch':
       case 'firecrawlScrape':
-      case 'firecrawlExtract': return <Globe className="size-4 text-emerald-400" />;
-      default: return <Wrench className="size-4 text-zinc-400" />;
+      case 'firecrawlExtract': return <Globe className="size-4 text-emerald-500" />;
+      default: return <Wrench className="size-4 text-muted-foreground" />;
     }
   };
 
@@ -134,27 +134,24 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
 
   return (
     <div className={cn(
-      "my-2 rounded-md overflow-hidden text-sm",
-      isAgentTool
-        ? "border border-zinc-700 bg-zinc-900/70"
-        : "border border-zinc-800 bg-zinc-900/50"
+      "my-2 rounded-md overflow-hidden text-sm border border-border bg-muted/50",
     )}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-2 hover:bg-zinc-800/50 transition-colors text-left"
+        className="w-full flex items-center justify-between p-2 hover:bg-muted/80 transition-colors text-left"
       >
         <div className="flex items-center gap-2">
           {getToolIcon(toolName)}
-          <span className="font-medium text-zinc-300 font-mono">
+          <span className="font-medium text-foreground font-mono">
             {isAgentTool ? getToolDisplayName(toolName) : toolName}
           </span>
           {isAgentTool && (
-            <span className="text-[10px] px-1 py-0.5 rounded bg-zinc-800 text-zinc-500 uppercase tracking-wider">
+            <span className="text-[10px] px-1 py-0.5 rounded bg-muted text-muted-foreground uppercase tracking-wider">
               Agent
             </span>
           )}
-          <span className="text-zinc-500 text-xs truncate max-w-[200px]">
+          <span className="text-muted-foreground text-xs truncate max-w-[200px]">
             {formatArgs(args)}
           </span>
         </div>
@@ -164,32 +161,32 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
               type="button"
               aria-label="View on map"
               onClick={handleViewOnMap}
-              className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-900/50 hover:bg-blue-900/50"
+              className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20"
             >
               <Eye className="size-3" />
               Map
             </button>
           )}
           {result ? (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/30 text-green-400 border border-green-900/50">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
               Completed
             </span>
           ) : (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-900/50 animate-pulse">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
               {isAgentTool ? 'Working...' : 'Running...'}
             </span>
           )}
-          {isOpen ? <ChevronDown className="size-4 text-zinc-500" /> : <ChevronRight className="size-4 text-zinc-500" />}
+          {isOpen ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
         </div>
       </button>
 
       {isOpen && (
-        <div className="p-3 border-t border-zinc-800 bg-zinc-950 font-mono text-xs overflow-x-auto">
+        <div className="p-3 border-t border-border bg-background font-mono text-xs overflow-x-auto">
           <div className="mb-2">
-            <div className="text-zinc-500 mb-1 uppercase tracking-wider text-[10px]">
+            <div className="text-muted-foreground mb-1 uppercase tracking-wider text-[10px]">
               {isAgentTool ? 'Task' : 'Input'}
             </div>
-            <pre className="text-zinc-300 whitespace-pre-wrap break-all">
+            <pre className="text-foreground whitespace-pre-wrap break-all">
               {isAgentTool
                 ? String(args?.task ?? JSON.stringify(args, null, 2))
                 : JSON.stringify(args, null, 2)}
@@ -198,8 +195,8 @@ export function ToolTrace({ toolCallId, toolName, args, result }: ToolTraceProps
           
           {result && (
             <div>
-              <div className="text-zinc-500 mb-1 uppercase tracking-wider text-[10px]">Output</div>
-              <pre className="text-zinc-400 whitespace-pre-wrap max-h-60 overflow-y-auto custom-scrollbar">
+              <div className="text-muted-foreground mb-1 uppercase tracking-wider text-[10px]">Output</div>
+              <pre className="text-muted-foreground whitespace-pre-wrap max-h-60 overflow-y-auto custom-scrollbar">
                 {JSON.stringify(result, null, 2)}
               </pre>
             </div>

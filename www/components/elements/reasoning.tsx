@@ -10,6 +10,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Response } from "./response";
 
 type ReasoningContextValue = {
@@ -128,9 +129,9 @@ export const ReasoningTrigger = memo(
           <>
             <BrainIcon className="size-3" />
             {isStreaming || duration === 0 ? (
-              <span>Thinking</span>
+              <Shimmer duration={1}>Thinking</Shimmer>
             ) : (
-              <span>{duration}s</span>
+              <span>Thought for {duration}s</span>
             )}
             <ChevronDownIcon
               className={cn(

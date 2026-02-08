@@ -18,11 +18,11 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
   const results = (result.results as SearchResult[]) ?? [];
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
+    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Globe className="size-3.5 text-emerald-400" />
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="text-xs font-medium text-muted-foreground">
             Web Search
           </span>
         </div>
@@ -32,8 +32,8 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
       </div>
 
       {query && (
-        <div className="border-b border-zinc-800 px-3 py-1.5">
-          <span className="font-mono text-[11px] text-zinc-500">
+        <div className="border-b border-border px-3 py-1.5">
+          <span className="font-mono text-[11px] text-muted-foreground">
             &ldquo;{query}&rdquo;
           </span>
         </div>
@@ -43,7 +43,7 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
         {results.map((item) => (
           <div
             key={item.url}
-            className="flex flex-col gap-1 rounded-md bg-zinc-800/60 p-2.5"
+            className="flex flex-col gap-1 rounded-md bg-muted p-2.5"
           >
             <a
               href={item.url}
@@ -58,7 +58,7 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
               {item.url}
             </span>
             {item.snippet && (
-              <p className="text-[11px] leading-relaxed text-zinc-500">
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
                 {item.snippet}
               </p>
             )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { DeckGL, ScatterplotLayer } from "deck.gl";
 import type { MapViewState, PickingInfo } from "deck.gl";
 import { Map } from "react-map-gl/maplibre";
@@ -8,6 +9,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const LIGHT_STYLE =
+  "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 function escapeHtml(str: string): string {
   return str
@@ -49,10 +52,14 @@ export function MedicalDesertRenderer({
   data: MedicalDesertData;
 }) {
   const [isMounted, setIsMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const mapStyle = isDark ? DARK_STYLE : LIGHT_STYLE;
 
   // Center map on first desert zone or Ghana
   const viewState: MapViewState = useMemo(() => {
@@ -182,9 +189,9 @@ export function MedicalDesertRenderer({
 
   if (!isMounted || !data) {
     return (
-      <div className="flex size-full items-center justify-center bg-zinc-900 text-zinc-500">
+      <div className="flex size-full items-center justify-center bg-muted text-muted-foreground">
         <div className="flex flex-col items-center gap-2">
-          <div className="size-6 rounded-full border-2 border-zinc-600 border-t-red-500 animate-spin" />
+          <div className="size-6 rounded-full border-2 border-muted-foreground/30 border-t-red-500 animate-spin" />
           <span className="text-sm">Analyzing coverage gaps...</span>
         </div>
       </div>
@@ -194,26 +201,26 @@ export function MedicalDesertRenderer({
   return (
     <div className="flex size-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3">
         <div>
-          <h2 className="text-sm font-semibold text-white text-balance">
+          <h2 className="text-sm font-semibold text-foreground text-balance">
             {data.title}
           </h2>
-          <p className="text-xs text-zinc-400">
-            Service: <span className="text-zinc-300">{data.service}</span>
+          <p className="text-xs text-muted-foreground">
+            Service: <span className="text-foreground">{data.service}</span>
             {" · "}Threshold:{" "}
-            <span className="text-zinc-300 tabular-nums">
+            <span className="text-foreground tabular-nums">
               {data.thresholdKm} km
             </span>
             {" · "}Providers:{" "}
-            <span className="text-zinc-300 tabular-nums">
+            <span className="text-foreground tabular-nums">
               {data.totalProviders}
             </span>
           </p>
         </div>
         {data.stage !== "complete" && (
-          <div className="flex items-center gap-2 text-xs text-zinc-500">
-            <div className="size-3 rounded-full border-2 border-zinc-600 border-t-red-500 animate-spin" />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="size-3 rounded-full border-2 border-muted-foreground/30 border-t-red-500 animate-spin" />
             <span className="capitalize">{data.stage}...</span>
           </div>
         )}
@@ -228,12 +235,12 @@ export function MedicalDesertRenderer({
           layers={layers}
           style={{ position: "relative", width: "100%", height: "100%" }}
         >
-          <Map mapStyle={DARK_STYLE} />
+          <Map key={mapStyle} mapStyle={mapStyle} />
         </DeckGL>
 
         {/* Legend */}
-        <div className="absolute bottom-4 right-4 z-10 rounded-lg border border-zinc-800 bg-black/70 p-3 text-xs text-zinc-300 backdrop-blur-sm">
-          <div className="mb-2 font-semibold text-white">Legend</div>
+        <div className="absolute bottom-4 right-4 z-10 rounded-lg border border-border bg-background/70 p-3 text-xs text-foreground backdrop-blur-sm">
+          <div className="mb-2 font-semibold">Legend</div>
           <div className="mb-1 flex items-center gap-2">
             <span className="size-2.5 rounded-full bg-red-500" />
             <span>Desert zone</span>
@@ -247,21 +254,21 @@ export function MedicalDesertRenderer({
 
       {/* Desert zones list */}
       {data.desertZones.length > 0 && (
-        <div className="max-h-40 overflow-y-auto border-t border-zinc-800 bg-zinc-950/90">
+        <div className="max-h-40 overflow-y-auto border-t border-border bg-background/90">
           {data.desertZones.map((zone) => (
             <div
-              className="flex items-center justify-between border-b border-zinc-800/50 px-4 py-2 text-xs"
+              className="flex items-center justify-between border-b border-border/50 px-4 py-2 text-xs"
               key={zone.city}
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="size-2 rounded-full bg-red-500" />
-                  <span className="truncate font-medium text-zinc-200">
+                  <span className="truncate font-medium text-foreground">
                     {zone.city}
                   </span>
                 </div>
                 {zone.nearestProvider && (
-                  <div className="ml-3.5 truncate text-zinc-500">
+                  <div className="ml-3.5 truncate text-muted-foreground">
                     Nearest: {zone.nearestProvider}
                   </div>
                 )}

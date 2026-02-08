@@ -19,14 +19,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useArtifactSelector } from '@/hooks/use-artifact';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
 import type { Vote } from '@/lib/db/schema';
 import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
-import { Artifact } from './artifact';
 import { ArtifactCanvas } from './artifact-canvas';
 import { useDataStream } from './data-stream-provider';
 import { Messages } from './messages';
@@ -221,7 +219,6 @@ export function Chat({
   );
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
   useAutoResume({
     autoResume,
@@ -243,7 +240,7 @@ export function Chat({
         {/* Left Panel: Chat */}
         <div className={cn(
           'flex flex-col h-full',
-          (isCanvasVisible || isMapVisible) ? 'w-[45%] border-r border-zinc-800' : 'w-full'
+          (isCanvasVisible || isMapVisible) ? 'w-[45%] border-r border-border' : 'w-full'
         )}>
           <ChatHeader
             chatId={id}
@@ -254,7 +251,7 @@ export function Chat({
           <Messages
             addToolApprovalResponse={addToolApprovalResponse}
             chatId={id}
-            isArtifactVisible={isArtifactVisible}
+            isArtifactVisible={isCanvasVisible}
             isReadonly={isReadonly}
             messages={messages}
             regenerate={regenerate}
@@ -287,7 +284,7 @@ export function Chat({
 
         {/* Right Panel: Artifact Canvas (streamed visualizations) */}
         {isCanvasVisible && (
-          <div className="w-[55%] h-full bg-zinc-950 relative">
+          <div className="w-[55%] h-full bg-background relative">
             <ArtifactCanvas
               onClose={() => setCanvasDismissed(true)}
             />
@@ -296,13 +293,13 @@ export function Chat({
 
         {/* Right Panel: Map (only visible when geographic data is available) */}
         {isMapVisible && !isCanvasVisible && (
-          <div className="w-[55%] h-full bg-zinc-950 relative">
+          <div className="w-[55%] h-full bg-background relative">
             <DeckMap />
 
             {/* Close button */}
             <button
               aria-label="Close map panel"
-              className="absolute top-4 left-4 z-10 flex items-center justify-center size-8 rounded-lg bg-black/70 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700"
+              className="absolute top-4 left-4 z-10 flex items-center justify-center size-8 rounded-lg bg-background/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={() => {
                 setMapVisible(false);
                 setMapFacilities([]);
@@ -324,25 +321,6 @@ export function Chat({
           </div>
         )}
       </div>
-
-      <Artifact
-        addToolApprovalResponse={addToolApprovalResponse}
-        attachments={attachments}
-        chatId={id}
-        input={input}
-        isReadonly={isReadonly}
-        messages={messages}
-        regenerate={regenerate}
-        selectedModelId={currentModelId}
-        selectedVisibilityType={visibilityType}
-        sendMessage={sendMessage}
-        setAttachments={setAttachments}
-        setInput={setInput}
-        setMessages={setMessages}
-        status={status}
-        stop={stop}
-        votes={votes}
-      />
 
       <AlertDialog
         onOpenChange={setShowCreditCardAlert}
