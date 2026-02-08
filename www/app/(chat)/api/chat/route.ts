@@ -13,6 +13,7 @@ import {
   createStreamId,
   deleteChatById,
   getChatById,
+  getChatDocuments,
   getMessageCountByUserId,
   getMessagesByChatId,
   saveChat,
@@ -118,6 +119,28 @@ export async function POST(request: Request) {
 
     const modelMessages = await convertToModelMessages(uiMessages);
 
+    // Fetch chat-scoped documents and build context for the agent
+    let documentContext = "";
+    try {
+      const chatDocs = await getChatDocuments({ chatId: id });
+      if (chatDocs.length > 0) {
+        const docSections = chatDocs
+          .filter((doc) => doc.textContent)
+          .map(
+            (doc) =>
+              `### ${doc.name} (${doc.contentType})\n${doc.textContent}`
+          );
+        if (docSections.length > 0) {
+          documentContext = `\n\n## Uploaded Documents (shared context for this chat)\nThe user has uploaded the following documents. Use their content to inform your responses.\n\n${docSections.join("\n\n---\n\n")}`;
+        }
+      }
+    } catch (docError) {
+      console.error(
+        "[ChatRoute] Failed to load chat documents:",
+        docError instanceof Error ? docError.message : docError
+      );
+    }
+
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
@@ -134,6 +157,7 @@ export async function POST(request: Request) {
             modelId: selectedChatModel,
             userId: session.user.id,
             chatId: id,
+            documentContext,
           });
 
           // Run the agent and merge its output stream into our data stream

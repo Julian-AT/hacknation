@@ -2,6 +2,13 @@
 
 import { Search } from "lucide-react";
 import { useVF } from "@/lib/vf-context";
+import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
+
+interface FacilityConfidence {
+  level: "green" | "yellow" | "red";
+  score: number;
+  flagCount: number;
+}
 
 interface FacilityResult {
   id: number;
@@ -12,6 +19,7 @@ interface FacilityResult {
   similarity: number;
   procedures: string;
   equipment: string;
+  confidence?: FacilityConfidence;
 }
 
 interface SearchFacilitiesResultProps {
@@ -63,9 +71,24 @@ export function SearchFacilitiesResult({
             key={facility.id}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[13px] font-medium text-foreground">
-                {facility.name}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {facility.confidence && (
+                  <AnomalyConfidenceBadge
+                    compact
+                    confidence={{
+                      level: facility.confidence.level,
+                      score: facility.confidence.score,
+                      summary: facility.confidence.flagCount > 0
+                        ? `${facility.confidence.flagCount} issue${facility.confidence.flagCount === 1 ? "" : "s"} detected`
+                        : "No issues detected",
+                      flags: [],
+                    }}
+                  />
+                )}
+                <span className="text-[13px] font-medium text-foreground">
+                  {facility.name}
+                </span>
+              </div>
               <span className="font-mono text-[11px] font-semibold text-green-400">
                 {Math.round(facility.similarity * 100)}%
               </span>

@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import { and, ilike, isNotNull } from "drizzle-orm";
+import { and, ilike, isNotNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
@@ -71,7 +71,10 @@ export const findMedicalDeserts = tool({
             and(
               isNotNull(facilities.lat),
               isNotNull(facilities.lng),
-              ilike(facilities.proceduresRaw, `%${service}%`)
+              or(
+                ilike(facilities.proceduresRaw, `%${service}%`),
+                ilike(facilities.specialtiesRaw, `%${service}%`)
+              )
             )
           ),
         DB_QUERY_TIMEOUT_MS,

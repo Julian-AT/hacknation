@@ -19,10 +19,14 @@ import { generateUUID } from "../utils";
 import { db } from ".";
 import {
   type Chat,
+  type ChatDocument,
   chat,
+  chatDocument,
   type DBMessage,
   document,
   message,
+  provider,
+  type Provider,
   type Suggestion,
   stream,
   suggestion,
@@ -592,6 +596,189 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+// ─── Chat Document queries ──────────────────────────────────────────────
+
+export async function getChatDocuments({
+  chatId,
+}: {
+  chatId: string;
+}): Promise<ChatDocument[]> {
+  try {
+    return await db
+      .select()
+      .from(chatDocument)
+      .where(eq(chatDocument.chatId, chatId))
+      .orderBy(asc(chatDocument.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get chat documents"
+    );
+  }
+}
+
+export async function saveChatDocument({
+  chatId,
+  userId,
+  name,
+  contentType,
+  url,
+  textContent,
+}: {
+  chatId: string;
+  userId: string;
+  name: string;
+  contentType: string;
+  url: string;
+  textContent: string | null;
+}): Promise<ChatDocument> {
+  try {
+    const [saved] = await db
+      .insert(chatDocument)
+      .values({
+        chatId,
+        userId,
+        name,
+        contentType,
+        url,
+        textContent,
+        createdAt: new Date(),
+      })
+      .returning();
+    return saved;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to save chat document"
+    );
+  }
+}
+
+export async function deleteChatDocument({ id }: { id: string }) {
+  try {
+    return await db
+      .delete(chatDocument)
+      .where(eq(chatDocument.id, id))
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete chat document"
+    );
+  }
+}
+
+// ─── Provider cache queries ─────────────────────────────────────────────
+
+export async function upsertProvider(
+  data: Omit<Provider, "id" | "createdAt" | "updatedAt">
+): Promise<Provider> {
+  try {
+    const [saved] = await db
+      .insert(provider)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: provider.id,
+        set: {
+          ...data,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return saved;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to upsert provider"
+    );
+  }
+}
+
+export async function upsertProviders(
+  providers: Omit<Provider, "id" | "createdAt" | "updatedAt">[]
+): Promise<Provider[]> {
+  if (providers.length === 0) {
+    return [];
+  }
+  try {
+    const now = new Date();
+    const values = providers.map((p) => ({
+      ...p,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    return await db
+      .insert(provider)
+      .values(values)
+      .onConflictDoNothing()
+      .returning();
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to upsert providers"
+    );
+  }
+}
+
+export async function searchCachedProviders({
+  city,
+  specialty,
+  limit = 20,
+}: {
+  city?: string;
+  specialty?: string;
+  limit?: number;
+}): Promise<Provider[]> {
+  try {
+    const conditions = [];
+    if (city) {
+      conditions.push(eq(provider.city, city));
+    }
+    if (specialty) {
+      conditions.push(eq(provider.specialty, specialty));
+    }
+
+    const where =
+      conditions.length > 0 ? and(...conditions) : undefined;
+
+    return await db
+      .select()
+      .from(provider)
+      .where(where)
+      .orderBy(desc(provider.rating))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to search cached providers"
+    );
+  }
+}
+
+export async function getProviderById({
+  id,
+}: {
+  id: string;
+}): Promise<Provider | null> {
+  try {
+    const [found] = await db
+      .select()
+      .from(provider)
+      .where(eq(provider.id, id))
+      .limit(1);
+    return found ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get provider by id"
     );
   }
 }

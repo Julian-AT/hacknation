@@ -1,5 +1,6 @@
 import { stepCountIs, ToolLoopAgent } from "ai";
 import { getLanguageModel } from "../providers";
+import { assessFacilityCredibility } from "../tools/assessFacilityCredibility";
 import { detectAnomalies } from "../tools/detectAnomalies";
 import { analyzeTextEvidence } from "../tools/medical/analyzeTextEvidence";
 import { classifyServices } from "../tools/medical/classifyServices";
@@ -20,6 +21,7 @@ export const medicalReasoningAgent = new ToolLoopAgent({
   model: getLanguageModel("google/gemini-2.5-flash-lite"),
   instructions: medicalReasoningAgentPrompt,
   tools: {
+    assessFacilityCredibility,
     detectAnomalies,
     crossValidateClaims,
     classifyServices,
@@ -31,7 +33,11 @@ export const medicalReasoningAgent = new ToolLoopAgent({
     // Phase 1 (steps 0-1): Detection
     if (stepNumber <= 1) {
       return {
-        activeTools: ["detectAnomalies", "crossValidateClaims"],
+        activeTools: [
+          "assessFacilityCredibility",
+          "detectAnomalies",
+          "crossValidateClaims",
+        ],
       };
     }
 

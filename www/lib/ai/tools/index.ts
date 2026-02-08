@@ -12,6 +12,7 @@ export {
   planMissionArtifact,
 } from "./artifact-tools";
 export { compareRegions } from "./compareRegions";
+export { assessFacilityCredibility } from "./assessFacilityCredibility";
 // Medical reasoning tools
 export { detectAnomalies } from "./detectAnomalies";
 export { findMedicalDeserts } from "./findMedicalDeserts";

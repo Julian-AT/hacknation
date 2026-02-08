@@ -15,10 +15,10 @@ type SuggestedActionsProps = {
 
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const suggestedActions = [
-    "How are hospitals distributed across Ghana's regions?",
-    "Which facilities offer cataract surgery?",
+    "Where should we send an orthopedic surgeon in Ghana?",
     "Where are the medical deserts for emergency care?",
-    "I'm an ophthalmologist — where should I volunteer?",
+    "Which facilities offer cataract surgery?",
+    "How are hospitals distributed across Ghana's regions?",
     "Compare Northern and Ashanti regions for healthcare access",
     "Which regions fall furthest below WHO doctor-to-patient guidelines?",
     "What specialties have only 1-2 facilities in all of Ghana?",

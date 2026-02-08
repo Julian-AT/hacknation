@@ -2,6 +2,7 @@
 
 import { Eye, MapPin } from "lucide-react";
 import { useVF } from "@/lib/vf-context";
+import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
 
 interface FacilityProfileCardProps {
   result: Record<string, unknown>;
@@ -11,6 +12,9 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
   const facility = result.facility as Record<string, unknown> | undefined;
   const dataQualityScore = result.dataQualityScore as string | undefined;
   const missingCriticalData = result.missingCriticalData as string | null;
+  const anomalyConfidence = result.anomalyConfidence as
+    | { level: "green" | "yellow" | "red"; score: number; summary: string; flags: { checkId: string; severity: "critical" | "high" | "medium" | "low"; explanation: string }[] }
+    | undefined;
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
 
   if (!facility) {
@@ -152,8 +156,15 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
         </div>
       )}
 
-      {/* Missing data warning */}
-      {missingCriticalData && (
+      {/* Anomaly confidence badge */}
+      {anomalyConfidence && (
+        <div className="border-t border-border px-3 py-2.5">
+          <AnomalyConfidenceBadge confidence={anomalyConfidence} />
+        </div>
+      )}
+
+      {/* Missing data warning (only if no anomaly badge already covers it) */}
+      {missingCriticalData && !anomalyConfidence && (
         <div className="border-t border-border bg-amber-950/20 px-3 py-2">
           <span className="text-[11px] text-amber-400">
             Missing: {missingCriticalData}

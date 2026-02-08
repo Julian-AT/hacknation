@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import { and, ilike, isNotNull, sql } from "drizzle-orm";
+import { and, ilike, isNotNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
@@ -29,6 +29,19 @@ function haversineKm(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+type HostFacilityProfile = {
+  id?: number;
+  name: string;
+  city?: string | null;
+  region?: string | null;
+  distanceKm?: number;
+  facilityType?: string | null;
+  beds?: number | null;
+  doctors?: number | null;
+  equipment?: string | null;
+  procedures?: string | null;
+};
 
 type Recommendation = {
   priority: string;
@@ -88,7 +101,10 @@ export const planMission = tool({
             and(
               isNotNull(facilities.lat),
               isNotNull(facilities.lng),
-              ilike(facilities.proceduresRaw, `%${specialty}%`)
+              or(
+                ilike(facilities.proceduresRaw, `%${specialty}%`),
+                ilike(facilities.specialtiesRaw, `%${specialty}%`)
+              )
             )
           ),
         DB_QUERY_TIMEOUT_MS,
@@ -97,7 +113,14 @@ export const planMission = tool({
 
       log.step("Providers found for specialty", providers.length);
 
+      const DESERT_THRESHOLD_KM = 50;
       const recommendations: Recommendation[] = [];
+      let desertZones: Array<{
+        city: string;
+        nearestProvider: string | null;
+        distanceKm: number;
+        coordinates: { lat: number; lng: number };
+      }> = [];
 
       if (providers.length === 0) {
         // NATIONAL_GAP: No facilities offer this specialty at all
@@ -146,17 +169,9 @@ export const planMission = tool({
         });
       } else {
         // Step 2: Find cities that are medical deserts for this specialty
-        const DESERT_THRESHOLD_KM = 50;
         const cityEntries = Object.entries(CITY_COORDS);
 
         log.step("Computing desert zones for cities", cityEntries.length);
-
-        const desertZones: Array<{
-          city: string;
-          nearestProvider: string | null;
-          distanceKm: number;
-          coordinates: { lat: number; lng: number };
-        }> = [];
 
         for (const [cityName, coords] of cityEntries) {
           if (abortSignal?.aborted) {
@@ -215,6 +230,12 @@ export const planMission = tool({
                 id: facilities.id,
                 name: facilities.name,
                 city: facilities.addressCity,
+                region: facilities.addressRegion,
+                facilityType: facilities.facilityType,
+                beds: facilities.capacity,
+                doctors: facilities.numDoctors,
+                equipment: facilities.equipmentRaw,
+                procedures: facilities.proceduresRaw,
                 distanceKm: distanceSql,
               })
               .from(facilities)
@@ -332,9 +353,66 @@ export const planMission = tool({
 
       log.step("Generated recommendations", recommendations.length);
 
+      // Build enriched host facility profile from the top recommendation
+      let hostFacilityProfile: HostFacilityProfile | null = null;
+      if (recommendations.length > 0) {
+        const topRec = recommendations[0];
+        if (topRec.suggestedHost?.id) {
+          // Fetch detailed profile for the top suggested host
+          const [hostRow] = await withTimeout(
+            db
+              .select({
+                id: facilities.id,
+                name: facilities.name,
+                city: facilities.addressCity,
+                region: facilities.addressRegion,
+                facilityType: facilities.facilityType,
+                beds: facilities.capacity,
+                doctors: facilities.numDoctors,
+                equipment: facilities.equipmentRaw,
+                procedures: facilities.proceduresRaw,
+              })
+              .from(facilities)
+              .where(sql`id = ${topRec.suggestedHost.id}`)
+              .limit(1),
+            DB_QUERY_TIMEOUT_MS,
+            abortSignal
+          );
+          if (hostRow) {
+            hostFacilityProfile = {
+              id: hostRow.id,
+              name: hostRow.name,
+              city: hostRow.city,
+              region: hostRow.region,
+              facilityType: hostRow.facilityType,
+              beds: hostRow.beds,
+              doctors: hostRow.doctors,
+              equipment: hostRow.equipment,
+              procedures: hostRow.procedures,
+              distanceKm: topRec.suggestedHost.distanceKm,
+            };
+          }
+        }
+      }
+
+      // Compute top desert zone for the briefing
+      const topDesertZone =
+        desertZones.length > 0
+          ? {
+              city: desertZones[0].city,
+              distanceKm: desertZones[0].distanceKm,
+              nearestProvider: desertZones[0].nearestProvider,
+              coordinates: desertZones[0].coordinates,
+            }
+          : null;
+
       const output = {
         volunteerProfile: { specialty, duration, preference },
-        analysis: `Analyzed ${providers.length} existing providers for ${specialty}.`,
+        analysis: `Analyzed ${providers.length} existing providers for ${specialty}. Found ${desertZones.length} desert zone(s) exceeding ${DESERT_THRESHOLD_KM}km threshold.`,
+        totalProvidersFound: providers.length,
+        desertZoneCount: desertZones.length,
+        topDesertZone,
+        hostFacilityProfile,
         recommendations,
       };
       log.success(output, Date.now() - start);

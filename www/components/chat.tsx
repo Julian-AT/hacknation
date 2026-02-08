@@ -28,6 +28,8 @@ import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
 import { ArtifactCanvas } from "./artifact-canvas";
 import { useDataStream } from "./data-stream-provider";
+import { ChatActionsProvider } from "@/lib/chat-actions-context";
+import { ChatDocuments } from "./chat-documents";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
@@ -209,7 +211,7 @@ export function Chat({
     },
   });
 
-  // Fallback: listen for getFacility tool results to show on legacy VF map
+  // Fallback: listen for tool results to show on legacy VF map
   // (findNearby, findMedicalDeserts, getStats, planMission now stream via artifacts)
   useEffect(() => {
     const lastMessage = messages.at(-1);
@@ -218,26 +220,29 @@ export function Chat({
     }
 
     for (const part of lastMessage.parts) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const p = part as any;
       const { type } = p;
 
-      // Match both static "tool-getFacility" and dynamic-tool with toolName
+      // Match tool results by static type or dynamic-tool pattern
       let toolName: string | undefined;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let result: any;
 
-      if (type === "tool-getFacility") {
+      if (type === "tool-getFacility" || (type === "dynamic-tool" && p.toolName === "getFacility")) {
         toolName = "getFacility";
         result = p.state === "output-available" ? p.output : undefined;
-      } else if (type === "dynamic-tool" && p.toolName === "getFacility") {
-        toolName = "getFacility";
+      } else if (type === "tool-searchFacilities" || (type === "dynamic-tool" && p.toolName === "searchFacilities")) {
+        toolName = "searchFacilities";
         result = p.state === "output-available" ? p.output : undefined;
       }
 
-      if (toolName !== "getFacility" || !result) {
+      if (!toolName || !result) {
         continue;
       }
 
-      if (result.facility?.lat && result.facility?.lng) {
+      // getFacility: single facility → show on map
+      if (toolName === "getFacility" && result.facility?.lat && result.facility?.lng) {
         setMapFacilities([
           {
             id: result.facility.id,
@@ -251,6 +256,31 @@ export function Chat({
         setMapCenter([result.facility.lat, result.facility.lng]);
         setMapZoom(12);
         setMapVisible(true);
+      }
+
+      // searchFacilities: multiple facilities → show all on map
+      if (toolName === "searchFacilities" && result.results?.length > 0) {
+        const geoResults = result.results.filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (r: any) => r.lat != null && r.lng != null
+        );
+        if (geoResults.length > 0) {
+          setMapFacilities(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            geoResults.map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              lat: r.lat,
+              lng: r.lng,
+              type: r.type,
+              city: r.city,
+            }))
+          );
+          // Center on the first result
+          setMapCenter([geoResults[0].lat, geoResults[0].lng]);
+          setMapZoom(7);
+          setMapVisible(true);
+        }
       }
     }
   }, [messages, setMapFacilities, setMapCenter, setMapZoom, setMapVisible]);
@@ -295,6 +325,7 @@ export function Chat({
 
   return (
     <>
+    <ChatActionsProvider sendMessage={sendMessage}>
       <div className="flex h-dvh min-w-0 bg-background overflow-hidden">
         {/* Left Panel: Chat */}
         <div
@@ -324,7 +355,8 @@ export function Chat({
             votes={votes}
           />
 
-          <div className="sticky bottom-0 z-1 mx-auto flex w-full gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+          <div className="sticky bottom-0 z-1 mx-auto flex w-full flex-col gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+            {!isReadonly && <ChatDocuments chatId={id} />}
             {!isReadonly && (
               <MultimodalInput
                 attachments={attachments}
@@ -393,6 +425,8 @@ export function Chat({
           </div>
         )}
       </div>
+
+      </ChatActionsProvider>
 
       <AlertDialog
         onOpenChange={setShowCreditCardAlert}

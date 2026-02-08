@@ -44,6 +44,7 @@ import {
 import { getWeather } from "../tools/get-weather";
 import { databaseAgent } from "./database-agent";
 import { geospatialAgent } from "./geospatial-agent";
+import { healthSearchAgent } from "./health-search-agent";
 import { medicalReasoningAgent } from "./medical-reasoning-agent";
 import { missionPlannerAgent } from "./mission-planner-agent";
 import { orchestratorPrompt } from "./prompts";
@@ -55,6 +56,7 @@ type OrchestratorConfig = {
   modelId: string;
   userId?: string;
   chatId?: string;
+  documentContext?: string;
 };
 
 /**
@@ -214,6 +216,7 @@ export async function createOrchestratorAgent({
   modelId,
   userId,
   chatId,
+  documentContext = "",
 }: OrchestratorConfig) {
   // Load working memory for this user
   let memoryContext = "";
@@ -232,8 +235,8 @@ export async function createOrchestratorAgent({
     }
   }
 
-  // Combine orchestrator prompt with artifacts instructions and memory
-  const instructions = `${orchestratorPrompt}\n\n${artifactsPrompt}${memoryContext}`;
+  // Combine orchestrator prompt with artifacts instructions, memory, and document context
+  const instructions = `${orchestratorPrompt}\n\n${artifactsPrompt}${memoryContext}${documentContext}`;
 
   return new ToolLoopAgent({
     model: getLanguageModel(modelId),
@@ -295,6 +298,13 @@ export async function createOrchestratorAgent({
         agent: missionPlannerAgent,
       }),
 
+      // --- Health search delegation (interactive provider discovery) ---
+      searchHealthcare: createDelegationTool({
+        description:
+          "Find healthcare providers (doctors, hospitals, clinics, specialists) for a user's personal health needs. This agent reads uploaded medical documents, asks clarifying questions (location, specialty, insurance, preferences), searches the web for matching providers, and returns rich provider cards. Use for: 'find me a doctor', 'I need a specialist', 'best hospital for X near Y', or any personal healthcare search question. The agent will ask the user targeted questions before searching to ensure the best results.",
+        agent: healthSearchAgent,
+      }),
+
       // --- Memory tool: let the agent update its working memory ---
       updateWorkingMemory: tool({
         description:
@@ -343,6 +353,43 @@ export async function createOrchestratorAgent({
         return {
           messages: [messages[0], ...messages.slice(-15)],
         };
+      }
+
+      // Deployment pipeline guard: detect deployment/volunteer intent
+      // and keep artifact tools available (prevent premature delegation)
+      if (stepNumber <= 4) {
+        const userMessages = messages.filter((m) => m.role === "user");
+        const lastUserMsg = userMessages.at(-1);
+        const userText =
+          lastUserMsg?.parts
+            ?.filter((p): p is { type: "text"; text: string } => p.type === "text")
+            .map((p) => p.text)
+            .join(" ")
+            .toLowerCase() ?? "";
+
+        const isDeploymentQuery =
+          /\b(where\s+should\s+we\s+send|where\s+should\s+.+volunteer|deploy|send\s+.+surgeon|send\s+.+doctor|send\s+.+specialist|where\s+should\s+i\s+(go|volunteer))\b/.test(
+            userText
+          );
+
+        if (isDeploymentQuery) {
+          // For deployment queries, prioritise direct artifact tools
+          // over delegation tools during the first few steps
+          return {
+            activeTools: [
+              "findMedicalDeserts",
+              "planMission",
+              "findNearby",
+              "getStats",
+              "getHeatmap",
+              "getRegionChoropleth",
+              "getAccessibilityMap",
+              "getDataQualityMap",
+              "investigateData",
+              "updateWorkingMemory",
+            ],
+          };
+        }
       }
 
       // Phase 1-2 (steps 0-9): All tools available

@@ -1,8 +1,10 @@
 import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
+  doublePrecision,
   foreignKey,
   index,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -208,3 +210,64 @@ export const conversationMessages = pgTable(
     chatIdx: index("idx_conv_messages_chat").on(table.chatId, table.timestamp),
   })
 );
+
+// ─── Chat-scoped document uploads ───────────────────────────────────────
+
+export const chatDocument = pgTable(
+  "ChatDocument",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    chatId: uuid("chatId")
+      .notNull()
+      .references(() => chat.id),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    name: text("name").notNull(),
+    contentType: text("contentType").notNull(),
+    url: text("url").notNull(),
+    textContent: text("textContent"),
+    createdAt: timestamp("createdAt").notNull(),
+  },
+  (table) => ({
+    chatIdx: index("idx_chat_document_chat").on(table.chatId),
+  })
+);
+
+export type ChatDocument = InferSelectModel<typeof chatDocument>;
+
+// ─── Healthcare provider cache ──────────────────────────────────────────
+
+export const provider = pgTable(
+  "Provider",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    specialty: text("specialty"),
+    address: text("address"),
+    city: text("city"),
+    region: text("region"),
+    country: text("country"),
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    phone: text("phone"),
+    email: text("email"),
+    website: text("website"),
+    rating: doublePrecision("rating"),
+    reviewCount: integer("reviewCount"),
+    hours: text("hours"),
+    insuranceAccepted: json("insuranceAccepted"),
+    imageUrl: text("imageUrl"),
+    sourceUrl: text("sourceUrl"),
+    rawData: json("rawData"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    cityIdx: index("idx_provider_city").on(table.city),
+    specialtyIdx: index("idx_provider_specialty").on(table.specialty),
+  })
+);
+
+export type Provider = InferSelectModel<typeof provider>;

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
 import { embed } from "../../embed";
+import { computeAnomalyConfidence } from "./computeAnomalyConfidence";
 import { createToolLogger } from "./debug";
 import {
   clampNumber,
@@ -66,7 +67,7 @@ export const searchFacilities = tool({
       }
 
       log.step("Executing vector search query");
-      const results = await withTimeout(
+      const rows = await withTimeout(
         db
           .select({
             id: facilities.id,
@@ -74,9 +75,16 @@ export const searchFacilities = tool({
             region: facilities.addressRegion,
             city: facilities.addressCity,
             type: facilities.facilityType,
+            lat: facilities.lat,
+            lng: facilities.lng,
             similarity,
             procedures: facilities.proceduresRaw,
             equipment: facilities.equipmentRaw,
+            // Extra fields for confidence scoring
+            capacity: facilities.capacity,
+            numDoctors: facilities.numDoctors,
+            specialtiesRaw: facilities.specialtiesRaw,
+            proceduresArr: facilities.procedures,
           })
           .from(facilities)
           .where(and(...conditions))
@@ -86,7 +94,37 @@ export const searchFacilities = tool({
         abortSignal
       );
 
-      log.step("Query returned results", results.length);
+      log.step("Query returned results", rows.length);
+
+      // Enrich each result with a lightweight confidence assessment
+      const results = rows.map((row) => {
+        const confidence = computeAnomalyConfidence({
+          facilityType: row.type,
+          capacity: row.capacity,
+          numDoctors: row.numDoctors,
+          specialtiesRaw: row.specialtiesRaw,
+          proceduresRaw: row.procedures,
+          equipmentRaw: row.equipment,
+          procedures: row.proceduresArr,
+        });
+        return {
+          id: row.id,
+          name: row.name,
+          region: row.region,
+          city: row.city,
+          type: row.type,
+          lat: row.lat,
+          lng: row.lng,
+          similarity: row.similarity,
+          procedures: row.procedures,
+          equipment: row.equipment,
+          confidence: {
+            level: confidence.level,
+            score: confidence.score,
+            flagCount: confidence.flags.length,
+          },
+        };
+      });
 
       const output = {
         query,

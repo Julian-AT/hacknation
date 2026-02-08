@@ -3,6 +3,7 @@ import { eq, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
+import { computeAnomalyConfidence } from "./computeAnomalyConfidence";
 import { createToolLogger } from "./debug";
 import { DB_QUERY_TIMEOUT_MS, withTimeout } from "./safeguards";
 
@@ -100,6 +101,9 @@ export const getFacility = tool({
       // Strip embedding vector to save tokens
       const { embedding: _, ...facilityWithoutEmbedding } = facility;
 
+      // Cross-reference claims against medical knowledge
+      const anomalyConfidence = computeAnomalyConfidence(facility);
+
       const output = {
         facility: facilityWithoutEmbedding,
         dataQualityScore: `${dataQuality}%`,
@@ -107,6 +111,7 @@ export const getFacility = tool({
           !facility.numDoctors && !facility.capacity
             ? "Missing Capacity Data"
             : null,
+        anomalyConfidence,
       };
       log.success(output, Date.now() - start);
       return output;

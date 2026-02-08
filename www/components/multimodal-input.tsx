@@ -193,32 +193,56 @@ function PureMultimodalInput({
     resetHeight,
   ]);
 
-  const uploadFile = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+  const DOCUMENT_TYPES = new Set([
+    "application/pdf",
+    "text/plain",
+    "text/csv",
+  ]);
 
-    try {
-      const response = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
-      });
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const isDocument = DOCUMENT_TYPES.has(file.type);
+      const formData = new FormData();
+      formData.append("file", file);
 
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
-        return {
-          url,
-          name: pathname,
-          contentType,
-        };
+      if (isDocument) {
+        formData.append("chatId", chatId);
       }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (_error) {
-      toast.error("Failed to upload file, please try again!");
-    }
-  }, []);
+
+      const endpoint = isDocument
+        ? "/api/documents/upload"
+        : "/api/files/upload";
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (isDocument) {
+            // Document uploaded to chat context — notify via toast, don't add as inline attachment
+            toast.success(`${file.name} uploaded as shared document`);
+            return undefined;
+          }
+
+          const { url, pathname, contentType } = data;
+          return {
+            url,
+            name: pathname,
+            contentType,
+          };
+        }
+        const { error } = await response.json();
+        toast.error(error);
+      } catch (_error) {
+        toast.error("Failed to upload file, please try again!");
+      }
+    },
+    [chatId]
+  );
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
@@ -319,6 +343,7 @@ function PureMultimodalInput({
         )}
 
       <input
+        accept="image/jpeg,image/png,application/pdf,text/plain,text/csv"
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
