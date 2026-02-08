@@ -1,5 +1,5 @@
 // Curated list of top models from Vercel AI Gateway
-export const DEFAULT_CHAT_MODEL = "google/gemini-2.5-flash-lite";
+export const DEFAULT_CHAT_MODEL = "google/gemini-3-flash-preview";
 
 export type ChatModel = {
   id: string;
@@ -42,6 +42,12 @@ export const chatModels: ChatModel[] = [
     description: "Most capable OpenAI model",
   },
   // Google
+  {
+    id: "google/gemini-3-flash-preview",
+    name: "Gemini 3 Flash",
+    provider: "google",
+    description: "Fast and capable, great default choice",
+  },
   {
     id: "google/gemini-2.5-flash-lite",
     name: "Gemini 2.5 Flash Lite",

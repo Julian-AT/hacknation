@@ -1,11 +1,16 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
-import { openai } from "@ai-sdk/openai";
+import { gateway } from "@ai-sdk/gateway";
 import { wrapLanguageModel } from "ai";
 import { chatModels } from "./models";
-import { anthropic } from '@ai-sdk/anthropic';
-import { google } from '@ai-sdk/google';
 
 const isDevMode = process.env.NODE_ENV === "development";
+
+/**
+ * Fallback model used for titles, artifacts, and when no model is specified.
+ * All routing goes through Vercel AI Gateway using the "provider/model" format.
+ * BYOK credentials are configured in the Vercel dashboard under AI Gateway > BYOK.
+ */
+const FALLBACK_MODEL = "google/gemini-3-flash-preview";
 
 /**
  * Validates that a model ID exists in the allowed models list.
@@ -22,6 +27,10 @@ function isAllowedModel(modelId: string): boolean {
 /**
  * Resolves a model ID to a language model instance via the Vercel AI Gateway.
  * Wraps with DevTools middleware in development for debugging.
+ *
+ * BYOK: Provider credentials (Google, OpenAI, Anthropic, etc.) are managed
+ * in the Vercel dashboard. The gateway uses your keys first and falls back
+ * to system credentials if they fail.
  */
 export function getLanguageModel(modelId: string) {
   if (!modelId || !isAllowedModel(modelId)) {
@@ -30,8 +39,7 @@ export function getLanguageModel(modelId: string) {
     );
   }
 
-  // const model = gateway(modelId);
-  const model = google("gemini-3-flash-preview")
+  const model = gateway(modelId);
 
   if (isDevMode) {
     return wrapLanguageModel({ model, middleware: devToolsMiddleware() });
@@ -41,15 +49,15 @@ export function getLanguageModel(modelId: string) {
 }
 
 /**
- * Model used for generating chat titles. Uses a fast, cheap model.
+ * Model used for generating chat titles. Uses a fast, cheap model via gateway.
  */
 export function getTitleModel() {
-  return google("gemini-3-flash-preview")
+  return gateway(FALLBACK_MODEL);
 }
 
 /**
- * Model used for artifact generation and suggestion requests.
+ * Model used for artifact generation and suggestion requests via gateway.
  */
 export function getArtifactModel() {
-  return google("gemini-3-flash-preview")
+  return gateway(FALLBACK_MODEL);
 }

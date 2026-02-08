@@ -54,3 +54,4 @@ www/public/sw.js
 www/public/sw.js.map
 www/public/serwist-worker-*.js
 www/public/serwist-worker-*.js.map
+www/.env.example

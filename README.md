@@ -96,7 +96,8 @@ Every AI decision is traceable. The **ToolTrace** component shows users exactly 
 - **10+ AI model support** — Gemini, Claude, GPT-4.1, GPT-5.2, Grok via AI Gateway
 - **Chat history & persistence** — Full conversation management with Redis-backed resumable streams
 - **Guest & authenticated modes** — Instant access or persistent accounts via NextAuth
-- **PWA support** — Installable on mobile and desktop
+- **Full PWA support** — Installable on mobile and desktop
+- **Fully responsive UI** — Optimized for mobile, tablet, and desktop
 - **Dark & light themes** — Respects system preference
 
 ## Try These Prompts
