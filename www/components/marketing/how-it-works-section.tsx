@@ -1,4 +1,4 @@
-import { MessageSquare, Cpu, Map, FileText } from "lucide-react";
+import { Cpu, FileText, MapIcon, MessageSquare } from "lucide-react";
 
 const STEPS = [
   {
@@ -16,7 +16,7 @@ const STEPS = [
       "The orchestrator delegates to specialized sub-agents — database, geospatial, medical reasoning, and web research — to gather comprehensive answers.",
   },
   {
-    icon: Map,
+    icon: MapIcon,
     step: "03",
     title: "See it on the map",
     description:
@@ -34,8 +34,8 @@ const STEPS = [
 export function HowItWorksSection() {
   return (
     <section
-      id="how-it-works"
       className="w-full border-t border-border py-16 md:py-24"
+      id="how-it-works"
     >
       <div className="mx-auto max-w-5xl px-6">
         <div className="mx-auto mb-12 max-w-xl text-center md:mb-16">
@@ -50,7 +50,7 @@ export function HowItWorksSection() {
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step) => (
-            <div key={step.step} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4" key={step.step}>
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <step.icon className="size-5" />

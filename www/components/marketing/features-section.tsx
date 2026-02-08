@@ -49,8 +49,8 @@ const FEATURES = [
 export function FeaturesSection() {
   return (
     <section
-      id="features"
       className="w-full border-t border-border py-16 md:py-24"
+      id="features"
     >
       <div className="mx-auto max-w-5xl px-6">
         <div className="mx-auto mb-12 max-w-xl text-center md:mb-16">
@@ -66,8 +66,8 @@ export function FeaturesSection() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature) => (
             <div
-              key={feature.title}
               className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6"
+              key={feature.title}
             >
               <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <feature.icon className="size-5" />

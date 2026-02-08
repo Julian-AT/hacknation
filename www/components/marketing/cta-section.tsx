@@ -13,8 +13,8 @@ export function CTASection() {
             multi-agent system in action.
           </p>
           <Link
-            href="/chat"
             className="flex h-10 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
+            href="/chat"
           >
             Open Meridian Chat
           </Link>

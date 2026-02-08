@@ -1,9 +1,9 @@
 "use client";
 
-import { MeridianLogo } from "@/components/icons";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MeridianLogo } from "@/components/icons";
 
 const SUGGESTED_PROMPTS = [
   "How many hospitals offer cardiology in Ghana?",
@@ -18,12 +18,14 @@ export function HeroSection() {
 
   const handleSubmit = (value?: string) => {
     const text = value ?? prompt;
-    if (!text.trim()) return;
+    if (!text.trim()) {
+      return;
+    }
     router.push(`/chat?query=${encodeURIComponent(text.trim())}`);
   };
 
   return (
-    <section id="hero" className="relative w-full">
+    <section className="relative w-full" id="hero">
       <div className="absolute inset-0">
         <div className="absolute inset-0 -z-10 h-[700px] w-full rounded-b-xl [background:radial-gradient(125%_125%_at_50%_10%,var(--background)_40%,var(--primary)_180%)] md:h-[800px]" />
       </div>
@@ -49,9 +51,6 @@ export function HeroSection() {
           <div className="group relative rounded-xl border border-border bg-background shadow-sm transition-shadow focus-within:border-primary/30 focus-within:shadow-md">
             <textarea
               className="w-full resize-none rounded-xl bg-transparent px-4 pb-12 pt-4 text-sm text-primary outline-none placeholder:text-muted-foreground/60 md:text-base"
-              placeholder="Ask about healthcare facilities in Ghana..."
-              rows={3}
-              value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -59,14 +58,17 @@ export function HeroSection() {
                   handleSubmit();
                 }
               }}
+              placeholder="Ask about healthcare facilities in Ghana..."
+              rows={3}
+              value={prompt}
             />
             <div className="absolute bottom-3 right-3">
               <button
-                type="button"
-                onClick={() => handleSubmit()}
-                disabled={!prompt.trim()}
-                className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-40 disabled:hover:bg-primary"
                 aria-label="Send prompt"
+                className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-40 disabled:hover:bg-primary"
+                disabled={!prompt.trim()}
+                onClick={() => handleSubmit()}
+                type="button"
               >
                 <ArrowRight className="size-4" />
               </button>
@@ -76,10 +78,10 @@ export function HeroSection() {
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {SUGGESTED_PROMPTS.map((suggestion) => (
               <button
-                key={suggestion}
-                type="button"
-                onClick={() => handleSubmit(suggestion)}
                 className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/20 hover:bg-muted hover:text-foreground"
+                key={suggestion}
+                onClick={() => handleSubmit(suggestion)}
+                type="button"
               >
                 {suggestion}
               </button>

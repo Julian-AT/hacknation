@@ -1,5 +1,5 @@
-import { MeridianLogo } from "@/components/icons";
 import Link from "next/link";
+import { MeridianLogo } from "@/components/icons";
 
 const FOOTER_LINKS = [
   {
@@ -27,7 +27,7 @@ export function FooterSection() {
       <div className="mx-auto max-w-5xl px-6">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="flex max-w-xs flex-col gap-4">
-            <Link href="/" className="flex items-center gap-2.5">
+            <Link className="flex items-center gap-2.5" href="/">
               <MeridianLogo size={24} />
               <span className="text-lg font-semibold text-primary">
                 Meridian
@@ -41,7 +41,7 @@ export function FooterSection() {
 
           <div className="flex gap-16">
             {FOOTER_LINKS.map((column) => (
-              <div key={column.title} className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3" key={column.title}>
                 <span className="text-sm font-semibold text-primary">
                   {column.title}
                 </span>
@@ -49,8 +49,8 @@ export function FooterSection() {
                   {column.links.map((link) => (
                     <li key={link.label}>
                       <Link
-                        href={link.href}
                         className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                        href={link.href}
                       >
                         {link.label}
                       </Link>

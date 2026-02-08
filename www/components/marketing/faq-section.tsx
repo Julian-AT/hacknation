@@ -41,10 +41,7 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section
-      id="faq"
-      className="w-full border-t border-border py-16 md:py-24"
-    >
+    <section className="w-full border-t border-border py-16 md:py-24" id="faq">
       <div className="mx-auto max-w-3xl px-6">
         <div className="mx-auto mb-12 max-w-xl text-center md:mb-16">
           <h2 className="text-balance text-3xl font-medium tracking-tighter text-primary md:text-4xl">
@@ -58,15 +55,13 @@ export function FAQSection() {
         <div className="flex flex-col gap-2">
           {FAQ_ITEMS.map((item, index) => (
             <div
-              key={item.question}
               className="rounded-lg border border-border bg-card"
+              key={item.question}
             >
               <button
-                type="button"
-                onClick={() =>
-                  setOpenIndex(openIndex === index ? null : index)
-                }
                 className="flex w-full items-center justify-between px-5 py-4 text-left"
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                type="button"
               >
                 <span className="pr-4 text-sm font-medium text-primary">
                   {item.question}
@@ -74,16 +69,14 @@ export function FAQSection() {
                 <ChevronDown
                   className={cn(
                     "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-                    openIndex === index && "rotate-180",
+                    openIndex === index && "rotate-180"
                   )}
                 />
               </button>
               <div
                 className={cn(
                   "grid transition-[grid-template-rows] duration-200",
-                  openIndex === index
-                    ? "grid-rows-[1fr]"
-                    : "grid-rows-[0fr]",
+                  openIndex === index ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                 )}
               >
                 <div className="overflow-hidden">
