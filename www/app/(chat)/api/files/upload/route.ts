@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
+import { rateLimit } from "@/lib/rate-limit";
+
+const uploadLimiter = rateLimit({ windowMs: 60_000, max: 10 });
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -17,11 +20,22 @@ const FileSchema = z.object({
     }),
 });
 
+function sanitizeFilename(raw: string): string {
+  return raw.replace(/[^\w.-]/g, "_").substring(0, 255);
+}
+
 export async function POST(request: Request) {
   const session = await auth();
 
-  if (!session) {
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!uploadLimiter.check(session.user.id)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429 }
+    );
   }
 
   if (request.body === null) {
@@ -47,7 +61,8 @@ export async function POST(request: Request) {
     }
 
     // Get filename from formData since Blob doesn't have name property
-    const filename = (formData.get("file") as File).name;
+    const rawName = (formData.get("file") as File).name;
+    const filename = sanitizeFilename(rawName);
     const fileBuffer = await file.arrayBuffer();
 
     try {

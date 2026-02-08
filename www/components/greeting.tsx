@@ -32,8 +32,8 @@ export const Greeting = () => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
       >
-        Explore Ghana&apos;s 987 healthcare facilities on an interactive globe.
-        Ask about coverage gaps, plan missions, or analyze facility data.
+        Your AI-powered healthcare intelligence assistant. Explore
+        facilities, plan missions, and analyze coverage data.
       </motion.div>
     </div>
   );

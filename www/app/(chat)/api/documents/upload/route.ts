@@ -5,6 +5,9 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getChatById, saveChatDocument } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
+
+const docUploadLimiter = rateLimit({ windowMs: 60_000, max: 10 });
 
 const ACCEPTED_TYPES = new Set([
   "application/pdf",
@@ -23,18 +26,22 @@ const UploadSchema = z.object({
       message: "File size should be less than 10MB",
     })
     .refine((file) => ACCEPTED_TYPES.has(file.type), {
-      message:
-        "File type must be PDF, JPEG, PNG, TXT, or CSV",
+      message: "File type must be PDF, JPEG, PNG, TXT, or CSV",
     }),
   chatId: z.string().uuid(),
 });
 
+function sanitizeFilename(raw: string): string {
+  return raw.replace(/[^\w.-]/g, "_").substring(0, 255);
+}
+
 async function extractTextFromPdf(buffer: ArrayBuffer): Promise<string> {
   // pdf-parse requires a Buffer — use unknown cast for CJS/ESM interop
   const pdfParseModule = await import("pdf-parse");
-  const pdfParse = (
-    (pdfParseModule as unknown as { default?: unknown }).default ?? pdfParseModule
-  ) as unknown as (buf: Buffer) => Promise<{ text: string }>;
+  const pdfParse = ((pdfParseModule as unknown as { default?: unknown })
+    .default ?? pdfParseModule) as unknown as (
+    buf: Buffer
+  ) => Promise<{ text: string }>;
   const nodeBuffer = Buffer.from(buffer);
   const data = await pdfParse(nodeBuffer);
   return data.text;
@@ -50,6 +57,10 @@ export async function POST(request: Request) {
 
   if (!session?.user) {
     return new ChatSDKError("unauthorized:document").toResponse();
+  }
+
+  if (!docUploadLimiter.check(session.user.id)) {
+    return new ChatSDKError("rate_limit:document").toResponse();
   }
 
   if (request.body === null) {
@@ -77,7 +88,10 @@ export async function POST(request: Request) {
       const errorMessage = validated.error.errors
         .map((e) => e.message)
         .join(", ");
-      return new ChatSDKError("bad_request:document", errorMessage).toResponse();
+      return new ChatSDKError(
+        "bad_request:document",
+        errorMessage
+      ).toResponse();
     }
 
     const chat = await getChatById({ id: chatId });
@@ -90,7 +104,8 @@ export async function POST(request: Request) {
       return new ChatSDKError("forbidden:document").toResponse();
     }
 
-    const filename = (formData.get("file") as File).name;
+    const rawName = (formData.get("file") as File).name;
+    const filename = sanitizeFilename(rawName);
     const fileBuffer = await file.arrayBuffer();
 
     // Extract text content based on file type

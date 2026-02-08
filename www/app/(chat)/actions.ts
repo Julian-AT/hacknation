@@ -2,6 +2,7 @@
 
 import { generateText, type UIMessage } from "ai";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { titlePrompt } from "@/lib/ai/prompts";
 import { getTitleModel } from "@/lib/ai/providers";
@@ -11,6 +12,9 @@ import {
   updateChatVisibilityById,
 } from "@/lib/db/queries";
 import { getTextFromMessage } from "@/lib/utils";
+
+const uuidSchema = z.string().uuid();
+const visibilitySchema = z.enum(["public", "private"]);
 
 export async function saveChatModelAsCookie(model: string) {
   const cookieStore = await cookies();
@@ -34,7 +38,8 @@ export async function generateTitleFromUserMessage({
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
-  const [message] = await getMessageById({ id });
+  const validatedId = uuidSchema.parse(id);
+  const [message] = await getMessageById({ id: validatedId });
 
   await deleteMessagesByChatIdAfterTimestamp({
     chatId: message.chatId,
@@ -49,5 +54,12 @@ export async function updateChatVisibility({
   chatId: string;
   visibility: VisibilityType;
 }) {
-  await updateChatVisibilityById({ chatId, visibility });
+  const validatedChatId = uuidSchema.parse(chatId);
+  const validatedVisibility = visibilitySchema.parse(
+    visibility
+  ) as VisibilityType;
+  await updateChatVisibilityById({
+    chatId: validatedChatId,
+    visibility: validatedVisibility,
+  });
 }

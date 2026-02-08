@@ -100,43 +100,161 @@ Every AI decision is traceable. The **ToolTrace** component shows users exactly 
 
 ## Architecture
 
+### System Overview
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend — Next.js 16"]
+        Chat["Chat UI<br/><sub>Messages · Tool Traces · Artifacts</sub>"]
+        Globe["3D Globe — deck.gl<br/><sub>Facility Markers · Desert Zones · Routes</sub>"]
+    end
+
+    Chat <--> API
+    Globe <--> API
+
+    subgraph Backend["Backend — API Layer"]
+        API["Streaming API<br/><sub>Vercel AI SDK v6</sub>"]
+        API --> Orchestrator
+    end
+
+    subgraph Agents["Multi-Agent System"]
+        Orchestrator["Orchestrator Agent<br/><sub>15-step limit · tool routing</sub>"]
+        Orchestrator --> DB_Agent["Database Agent"]
+        Orchestrator --> Geo_Agent["Geospatial Agent"]
+        Orchestrator --> Med_Agent["Medical Reasoning Agent"]
+        Orchestrator --> Web_Agent["Web Research Agent"]
+        Orchestrator --> Stats["Stats Tools"]
+    end
+
+    subgraph Services["Data & Services"]
+        DB_Agent --> Postgres["PostgreSQL + Drizzle"]
+        DB_Agent --> pgvector["pgvector Embeddings"]
+        Geo_Agent --> Postgres
+        Geo_Agent --> ORS["OpenRouteService"]
+        Med_Agent --> Postgres
+        Med_Agent --> pgvector
+        Web_Agent --> Firecrawl["Firecrawl API"]
+        Web_Agent --> WorldBank["World Bank API"]
+        Stats --> Postgres
+    end
+
+    subgraph Infra["Infrastructure"]
+        Redis["Redis<br/><sub>Streams + Cache</sub>"]
+        Blob["Vercel Blob<br/><sub>File Storage</sub>"]
+        Gateway["AI Gateway<br/><sub>Gemini · Claude · GPT · Grok</sub>"]
+    end
+
+    API --> Redis
+    API --> Blob
+    Orchestrator --> Gateway
+
+    style Frontend fill:#0f172a,stroke:#334155,color:#f8fafc
+    style Agents fill:#1e1b4b,stroke:#4338ca,color:#f8fafc
+    style Services fill:#022c22,stroke:#065f46,color:#f8fafc
+    style Infra fill:#1c1917,stroke:#57534e,color:#f8fafc
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     Frontend (Next.js)                   │
-│  ┌──────────────┐  ┌──────────────────────────────────┐ │
-│  │   Chat UI    │  │        3D Globe (deck.gl)        │ │
-│  │              │  │                                  │ │
-│  │  Messages    │  │   Facility Markers               │ │
-│  │  Tool Traces │  │   Medical Desert Zones           │ │
-│  │  Artifacts   │  │   Proximity Radii                │ │
-│  │  Model Picker│  │   Mission Routes                 │ │
-│  └──────┬───────┘  └──────────────┬───────────────────┘ │
-│         │                         │                      │
-│         └────────────┬────────────┘                      │
-│                      │                                   │
-├──────────────────────┼───────────────────────────────────┤
-│              Orchestrator Agent                           │
-│         (15-step limit, tool routing)                    │
-│                      │                                   │
-│    ┌─────────┬───────┼───────┬──────────┐               │
-│    │         │       │       │          │               │
-│    ▼         ▼       ▼       ▼          ▼               │
-│ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐          │
-│ │  DB  │ │ Geo  │ │ Med  │ │ Web  │ │Stats │          │
-│ │Agent │ │Agent │ │Agent │ │Agent │ │Tools │          │
-│ └──┬───┘ └──┬───┘ └──┬───┘ └──┬───┘ └──┬───┘          │
-│    │        │        │        │        │               │
-├────┼────────┼────────┼────────┼────────┼───────────────┤
-│    ▼        ▼        ▼        ▼        ▼               │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐    │
-│ │  PostgreSQL   │ │   pgvector   │ │  Firecrawl   │    │
-│ │  + Drizzle    │ │  Embeddings  │ │  Web Search  │    │
-│ └──────────────┘ └──────────────┘ └──────────────┘    │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐    │
-│ │    Redis      │ │ Vercel Blob  │ │  World Bank  │    │
-│ │   Streams     │ │   Storage    │ │     API      │    │
-│ └──────────────┘ └──────────────┘ └──────────────┘    │
-└─────────────────────────────────────────────────────────┘
+
+### Agent Orchestration Flow
+
+```mermaid
+flowchart LR
+    Q["User Query"] --> O["Orchestrator"]
+
+    O -->|"facility data<br/>needed"| DB["🗄️ Database<br/>Agent"]
+    O -->|"location-based<br/>question"| GEO["🌍 Geospatial<br/>Agent"]
+    O -->|"medical<br/>reasoning"| MED["🏥 Medical<br/>Agent"]
+    O -->|"external<br/>context"| WEB["🔎 Web Research<br/>Agent"]
+
+    DB --> R["Merge Results"]
+    GEO --> R
+    MED --> R
+    WEB --> R
+
+    R --> A["Generate Artifacts<br/><sub>Map · Dashboard · Plan</sub>"]
+    A --> S["Stream Response<br/>to Client"]
+
+    style Q fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style O fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    style DB fill:#06b6d4,stroke:#0891b2,color:#fff
+    style GEO fill:#10b981,stroke:#059669,color:#fff
+    style MED fill:#f59e0b,stroke:#d97706,color:#fff
+    style WEB fill:#ef4444,stroke:#dc2626,color:#fff
+    style R fill:#6366f1,stroke:#4f46e5,color:#fff
+    style A fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    style S fill:#3b82f6,stroke:#1d4ed8,color:#fff
+```
+
+### Request Lifecycle
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Chat + Globe
+    participant API as Streaming API
+    participant Orch as Orchestrator
+    participant Agent as Sub-Agent
+    participant DB as PostgreSQL
+    participant Vec as pgvector
+
+    User->>UI: "Find hospitals with surgery<br/>capability near Tamale"
+    UI->>API: POST /api/chat (stream)
+    API->>Orch: Route message
+
+    Orch->>Orch: Classify intent
+
+    par Database lookup
+        Orch->>Agent: Database Agent
+        Agent->>Vec: Semantic search<br/>"surgery capability"
+        Vec-->>Agent: Top-k facility IDs
+        Agent->>DB: SELECT * WHERE id IN (...)
+        DB-->>Agent: Facility records
+    and Geospatial analysis
+        Orch->>Agent: Geospatial Agent
+        Agent->>DB: findNearby(Tamale, 50km)
+        DB-->>Agent: Nearby facilities
+    end
+
+    Agent-->>Orch: Combined results
+    Orch-->>API: Stream response + artifacts
+
+    API-->>UI: Text chunks (SSE)
+    API-->>UI: FacilityMapArtifact
+    UI-->>User: Chat response +<br/>interactive map with pins
+```
+
+### Data Pipeline
+
+```mermaid
+flowchart LR
+    subgraph Ingest["Data Ingestion"]
+        CSV["ghana-facilities.csv<br/><sub>987 facilities</sub>"]
+        CSV --> Parse["Parse + Validate<br/><sub>Zod schemas</sub>"]
+        Parse --> Migrate["Drizzle Migrations<br/><sub>60+ columns</sub>"]
+    end
+
+    subgraph Store["Storage Layer"]
+        Migrate --> PG["PostgreSQL<br/><sub>Structured data</sub>"]
+        Migrate --> Embed["OpenAI Embeddings<br/><sub>text-embedding-3-small</sub>"]
+        Embed --> PGV["pgvector<br/><sub>1536-dim vectors</sub>"]
+    end
+
+    subgraph Query["Query Layer"]
+        PG --> SQL["SQL Queries<br/><sub>Filters, aggregations</sub>"]
+        PGV --> Sem["Semantic Search<br/><sub>Cosine similarity</sub>"]
+        SQL --> Merge["Result Merge"]
+        Sem --> Merge
+    end
+
+    subgraph Render["Presentation"]
+        Merge --> Cards["Tool Result Cards"]
+        Merge --> Art["Streaming Artifacts<br/><sub>Maps · Dashboards</sub>"]
+        Merge --> NL["Natural Language<br/><sub>AI summary</sub>"]
+    end
+
+    style Ingest fill:#0c4a6e,stroke:#0369a1,color:#f8fafc
+    style Store fill:#1e1b4b,stroke:#4338ca,color:#f8fafc
+    style Query fill:#022c22,stroke:#065f46,color:#f8fafc
+    style Render fill:#431407,stroke:#9a3412,color:#f8fafc
 ```
 
 ## Tech Stack

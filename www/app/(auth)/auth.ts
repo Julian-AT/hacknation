@@ -30,6 +30,8 @@ declare module "next-auth/jwt" {
   }
 }
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const {
   handlers: { GET, POST },
   auth,
@@ -37,6 +39,19 @@ export const {
   signOut,
 } = NextAuth({
   ...authConfig,
+  cookies: {
+    sessionToken: {
+      name: isProduction
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: isProduction,
+      },
+    },
+  },
   providers: [
     Credentials({
       credentials: {},

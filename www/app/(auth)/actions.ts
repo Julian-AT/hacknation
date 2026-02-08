@@ -1,18 +1,28 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 
 import { createUser, getUser } from "@/lib/db/queries";
+import { rateLimit } from "@/lib/rate-limit";
 
 import { signIn } from "./auth";
 
+const authLimiter = rateLimit({ windowMs: 60_000, max: 5 });
+
 const authFormSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(8).max(128),
 });
 
 export type LoginActionState = {
-  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
+  status:
+    | "idle"
+    | "in_progress"
+    | "success"
+    | "failed"
+    | "invalid_data"
+    | "rate_limited";
 };
 
 export const login = async (
@@ -20,6 +30,14 @@ export const login = async (
   formData: FormData
 ): Promise<LoginActionState> => {
   try {
+    const headersList = await headers();
+    const ip =
+      headersList.get("x-forwarded-for")?.split(",").at(0)?.trim() ?? "unknown";
+
+    if (!authLimiter.check(`login:${ip}`)) {
+      return { status: "rate_limited" };
+    }
+
     const validatedData = authFormSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),
@@ -48,7 +66,8 @@ export type RegisterActionState = {
     | "success"
     | "failed"
     | "user_exists"
-    | "invalid_data";
+    | "invalid_data"
+    | "rate_limited";
 };
 
 export const register = async (
@@ -56,6 +75,14 @@ export const register = async (
   formData: FormData
 ): Promise<RegisterActionState> => {
   try {
+    const headersList = await headers();
+    const ip =
+      headersList.get("x-forwarded-for")?.split(",").at(0)?.trim() ?? "unknown";
+
+    if (!authLimiter.check(`register:${ip}`)) {
+      return { status: "rate_limited" };
+    }
+
     const validatedData = authFormSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),

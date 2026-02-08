@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import type { ArtifactKind } from "@/components/artifact";
 import {
@@ -6,6 +7,15 @@ import {
   saveDocument,
 } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
+
+const documentLimiter = rateLimit({ windowMs: 60_000, max: 30 });
+
+const documentPostSchema = z.object({
+  content: z.string().max(1_000_000),
+  title: z.string().min(1).max(500),
+  kind: z.enum(["text", "code", "image", "sheet"]),
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -53,15 +63,24 @@ export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user) {
-    return new ChatSDKError("not_found:document").toResponse();
+    return new ChatSDKError("unauthorized:document").toResponse();
   }
 
-  const {
-    content,
-    title,
-    kind,
-  }: { content: string; title: string; kind: ArtifactKind } =
-    await request.json();
+  if (!documentLimiter.check(session.user.id)) {
+    return new ChatSDKError("rate_limit:document").toResponse();
+  }
+
+  const body = await request.json();
+  const parsed = documentPostSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return new ChatSDKError(
+      "bad_request:document",
+      "Invalid document data. Provide content, title, and a valid kind."
+    ).toResponse();
+  }
+
+  const { content, title, kind } = parsed.data;
 
   const documents = await getDocumentsById({ id });
 
@@ -77,7 +96,7 @@ export async function POST(request: Request) {
     id,
     content,
     title,
-    kind,
+    kind: kind as ArtifactKind,
     userId: session.user.id,
   });
 

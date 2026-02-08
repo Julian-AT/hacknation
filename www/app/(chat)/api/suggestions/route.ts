@@ -1,6 +1,9 @@
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getSuggestionsByDocumentId } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
+
+const uuidSchema = z.string().uuid();
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,6 +13,13 @@ export async function GET(request: Request) {
     return new ChatSDKError(
       "bad_request:api",
       "Parameter documentId is required."
+    ).toResponse();
+  }
+
+  if (!uuidSchema.safeParse(documentId).success) {
+    return new ChatSDKError(
+      "bad_request:api",
+      "Parameter documentId must be a valid UUID."
     ).toResponse();
   }
 

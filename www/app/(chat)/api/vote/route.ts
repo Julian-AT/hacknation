@@ -1,6 +1,16 @@
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getChatById, getVotesByChatId, voteMessage } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
+import { rateLimit } from "@/lib/rate-limit";
+
+const voteLimiter = rateLimit({ windowMs: 60_000, max: 30 });
+
+const voteSchema = z.object({
+  chatId: z.string().uuid(),
+  messageId: z.string().uuid(),
+  type: z.enum(["up", "down"]),
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -35,24 +45,26 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const {
-    chatId,
-    messageId,
-    type,
-  }: { chatId: string; messageId: string; type: "up" | "down" } =
-    await request.json();
+  const body = await request.json();
+  const parsed = voteSchema.safeParse(body);
 
-  if (!chatId || !messageId || !type) {
+  if (!parsed.success) {
     return new ChatSDKError(
       "bad_request:api",
-      "Parameters chatId, messageId, and type are required."
+      "Parameters chatId (uuid), messageId (uuid), and type (up|down) are required."
     ).toResponse();
   }
+
+  const { chatId, messageId, type } = parsed.data;
 
   const session = await auth();
 
   if (!session?.user) {
     return new ChatSDKError("unauthorized:vote").toResponse();
+  }
+
+  if (!voteLimiter.check(session.user.id)) {
+    return new ChatSDKError("rate_limit:vote").toResponse();
   }
 
   const chat = await getChatById({ id: chatId });
