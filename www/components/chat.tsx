@@ -390,10 +390,9 @@ export function Chat({
           <div className="w-[55%] h-full bg-background relative">
             <DeckMap />
 
-            {/* Close button */}
             <button
               aria-label="Close map panel"
-              className="absolute top-4 left-4 z-10 flex items-center justify-center size-8 rounded-lg bg-background/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+              className="absolute top-4 right-4 z-10 flex items-center justify-center size-8 rounded-lg bg-background/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={() => {
                 setMapVisible(false);
                 setMapFacilities([]);
