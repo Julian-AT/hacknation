@@ -64,8 +64,7 @@ export function FooterSection() {
 
         <div className="mt-10 border-t border-border pt-6">
           <p className="text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Meridian. Built for the Virtue
-            Foundation Hackathon.
+            &copy; 2026 Meridian. Built for the Virtue Foundation Hackathon.
           </p>
         </div>
       </div>
