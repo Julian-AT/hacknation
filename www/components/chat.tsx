@@ -33,7 +33,6 @@ import { getChatHistoryPaginationKey } from './sidebar-history';
 import { toast } from './toast';
 import type { VisibilityType } from './visibility-selector';
 import GlobeView from './vf-ui/GlobeView';
-import { SuggestedQueries } from './vf-ui/SuggestedQueries';
 import { useVF } from '@/lib/vf-context';
 
 export function Chat({
@@ -272,8 +271,6 @@ export function Chat({
             status={status}
             votes={votes}
           />
-
-          <SuggestedQueries append={sendMessage} />
 
           <div className="sticky bottom-0 z-1 mx-auto flex w-full gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
             {!isReadonly && (
