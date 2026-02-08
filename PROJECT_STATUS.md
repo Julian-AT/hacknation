@@ -12,7 +12,7 @@
 ### Core Features
 - **987 Healthcare Facilities** across Ghana (hospitals, clinics, pharmacies)
 - **Multi-Agent Orchestrator** with 4 specialized sub-agents (database, geospatial, medical reasoning, web research)
-- **13 Domain Tools** for facility analysis, gap detection, volunteer planning, web research, and medical validation
+- **14 Domain Tools** for facility analysis, gap detection, statistics, volunteer planning, web research, and medical validation
 - **4 Platform Tools** for documents, weather, and suggestions
 - **Typed Artifact System** with streaming progress states (facility map, medical desert, stats dashboard, mission plan)
 - **Semantic Search** via pgvector embeddings (OpenAI `text-embedding-3-small`)
@@ -26,6 +26,55 @@
 
 ---
 
+## Challenge Alignment
+
+### Evaluation Criteria Mapping
+
+| Criteria | Weight | What Judges Want | Our Implementation |
+|----------|--------|-----------------|-------------------|
+| **Technical Accuracy** | 35% | Reliably handle Must-Have queries + detect anomalies | 14 AI tools covering all 15 Must-Have questions. Multi-agent tool chains. Anomaly detection with medical reasoning. Cross-field validation. |
+| **IDP Innovation** | 30% | Extract and synthesize from unstructured free-form text | Three-layer IDP: (1) Structured extraction into Postgres arrays during seeding, (2) pgvector semantic search over raw procedure/equipment/capability text, (3) Cross-signal reasoning via anomaly detection and medical validation tools. |
+| **Social Impact** | 25% | Identify medical deserts for resource allocation | `findMedicalDeserts` tool with geographic gap analysis. Coverage gap quantification (distance + population). `planMission` volunteer deployment planner. |
+| **User Experience** | 10% | Intuitive for non-technical NGO planners using natural language | Chat interface with suggested queries. Interactive 3D globe (deck.gl) highlights results. Tool call transparency via ToolTrace. Artifact streaming with progress states. |
+
+### Core MVP Requirements
+
+| # | MVP Requirement | Status | Implementation |
+|---|----------------|--------|---------------|
+| 1 | **Unstructured Feature Extraction** | Done | `searchFacilities` (pgvector semantic search), parsed arrays for exact matching, cross-field validation in `detectAnomalies` and `crossValidateClaims` |
+| 2 | **Intelligent Synthesis** | Done | Multi-agent orchestrator uses multiple tools per query — SQL for structure, vector search for free-text, then synthesizes. `getStats` combines stats + capabilities + gaps. |
+| 3 | **Planning System** | Done | `planMission` — interactive deployment planner for volunteer doctors. Guided flow: input specialty + availability → ranked locations with reasoning. |
+
+### Stretch Goals
+
+| # | Stretch Goal | Status | Implementation |
+|---|-------------|--------|---------------|
+| 1 | **Citations** | Done | Every tool response includes `facilityId` + `facilityName`. Agent cites these in responses. `ToolTrace` component shows which data was used at each agentic step. |
+| 2 | **Map Visualization** | Done | deck.gl 3D globe with ScatterplotLayer markers, fly-to transitions on query results, color-coded facilities and desert zones. |
+| 3 | **Real-Impact Bonus** (VF Agent Questions) | Done | All 15 Must-Have questions covered. Additional coverage of Should-Have questions via `classifyServices`, `crossValidateClaims`, and web research tools. |
+
+### Must-Have Question Coverage (15 of 15)
+
+| # | Question | Tool(s) Used |
+|---|----------|-------------|
+| 1.1 | How many hospitals have cardiology? | `queryDatabase` |
+| 1.2 | How many hospitals in [region] can perform [procedure]? | `queryDatabase` + `searchFacilities` |
+| 1.3 | What services does [Facility Name] offer? | `getFacility` |
+| 1.4 | Are there any clinics in [Area] that do [Service]? | `searchFacilities` |
+| 1.5 | Which region has the most [Type] hospitals? | `queryDatabase` |
+| 2.1 | How many hospitals treating [condition] within [X] km of [location]? | `findNearby` |
+| 2.3 | Largest geographic cold spots where procedure absent within X km? | `findMedicalDeserts` |
+| 4.4 | Facilities claiming unrealistic procedures relative to size? | `detectAnomalies` |
+| 4.7 | Correlations between facility characteristics that move together? | `detectAnomalies` + `queryDatabase` |
+| 4.8 | High breadth of claimed procedures vs infrastructure? | `detectAnomalies` |
+| 4.9 | "Things that shouldn't move together"? | `detectAnomalies` |
+| 6.1 | Where is the workforce for [subspecialty] in [region]? | `searchFacilities` + `queryDatabase` |
+| 7.5 | Which procedures depend on very few facilities (1-2 only)? | `queryDatabase` |
+| 7.6 | Oversupply of low-complexity vs scarcity of high-complexity? | `queryDatabase` + `searchFacilities` |
+| 8.3 | Gaps where no organizations working despite evident need? | `findMedicalDeserts` + `queryDatabase` |
+
+---
+
 ## Architecture
 
 ### Monorepo Layout
@@ -34,11 +83,11 @@ hacknation/
 ├── www/                    # Next.js 16 application (primary codebase)
 │   ├── app/                # App Router (auth, chat, API routes)
 │   ├── artifacts/          # Artifact renderers (code, image, sheet, text)
-│   ├── components/         # React components (~130 files)
+│   ├── components/         # React components (~134 files)
 │   │   ├── ai-elements/    # AI chat UI (28 files)
 │   │   ├── artifacts/      # Domain artifact renderers (4 files)
 │   │   ├── elements/       # Core rendering elements (15 files)
-│   │   ├── tool-results/   # Tool result card renderers (16 files)
+│   │   ├── tool-results/   # Tool result card renderers (15 files)
 │   │   ├── ui/             # Radix/shadcn primitives (25 files)
 │   │   └── vf-ui/          # CareMap-specific (DeckMap, ToolTrace)
 │   ├── hooks/              # Custom React hooks (6 files)
@@ -46,8 +95,8 @@ hacknation/
 │   │   ├── ai/
 │   │   │   ├── agents/     # Multi-agent system (orchestrator + 4 sub-agents)
 │   │   │   ├── artifacts/  # Typed artifact schemas (@ai-sdk-tools/artifacts)
-│   │   │   ├── tools/      # 13 domain tools + 4 platform tools + utilities
-│   │   │   │   ├── medical/  # classifyServices, crossValidateClaims
+│   │   │   ├── tools/      # 14 domain tools + 4 platform tools + utilities
+│   │   │   │   ├── medical/  # classifyServices, crossValidateClaims, validateEnrichment
 │   │   │   │   └── web/      # firecrawlSearch, firecrawlScrape, firecrawlExtract
 │   │   │   ├── cache.ts    # Tool result caching (@ai-sdk-tools/cache)
 │   │   │   ├── memory.ts   # Working memory provider (@ai-sdk-tools/memory)
@@ -62,7 +111,7 @@ hacknation/
 ├── lib/                    # Standalone logic (original implementations, Ghana data, tool stubs)
 ├── assets/                 # Documentation & raw data
 │   ├── data/               # ghana-facilities.csv (source data)
-│   └── docs/               # Technical blueprint, scheme docs
+│   └── docs/               # Challenge brief, VF questions, blueprint, schema docs
 ├── scripts/                # Python reference models
 └── .github/workflows/      # CI (lint + Playwright)
 ```
@@ -110,7 +159,7 @@ hacknation/
 
 ### Phase 2: AI Tool Implementation (COMPLETE)
 **Deliverables:**
-- [x] 13 domain tools with Zod schemas (database, geospatial, medical, web research)
+- [x] 14 domain tools with Zod schemas (database, geospatial, statistics, medical, web research)
 - [x] 4 artifact-enhanced tool wrappers (stream typed artifacts to client canvas)
 - [x] 4 platform tools (documents, weather, suggestions)
 - [x] Safeguards module (`safeguards.ts`) for timeout, truncation, SQL validation, input clamping
@@ -147,6 +196,11 @@ hacknation/
 | `firecrawlSearch` | `web/firecrawl-search.ts` | Search the web for real-time health data, WHO reports, news |
 | `firecrawlScrape` | `web/firecrawl-scrape.ts` | Read full content from a specific URL |
 | `firecrawlExtract` | `web/firecrawl-extract.ts` | Extract structured data from web pages using AI |
+
+**Statistics Tools (1):**
+| Tool | File | Description |
+|------|------|-------------|
+| `getStats` | `getStats.ts` | Aggregate dashboard statistics: facility counts, regional breakdowns, specialty coverage, capacity summaries, data quality metrics |
 
 **Artifact-Enhanced Tool Wrappers (4):**
 | Tool | File | Description |
@@ -251,7 +305,7 @@ hacknation/
 - [x] Split-pane layout (Chat left, 3D Globe right)
 - [x] deck.gl + MapLibre 3D globe with dark CARTO basemap tiles
 - [x] VF Context for shared state management
-- [x] 16 specialized tool result card renderers
+- [x] 15 specialized tool result card renderers
 - [x] Full artifact system with streaming progress (facility map, medical desert, stats dashboard, mission plan)
 - [x] Traditional artifact types (code editor, image editor, sheet editor, text editor)
 - [x] Sidebar with chat history
@@ -265,7 +319,7 @@ hacknation/
 | Directory | Count | Purpose |
 |-----------|-------|---------|
 | `components/ai-elements/` | 28 | AI chat UI (reasoning, sources, chain-of-thought, tool vis, canvas, nodes, edges, etc.) |
-| `components/tool-results/` | 16 | Specialized tool result cards (nearby, deserts, stats, missions, anomalies, web, regions, etc.) |
+| `components/tool-results/` | 15 | Specialized tool result cards (nearby, deserts, stats, missions, anomalies, web, regions, etc.) |
 | `components/elements/` | 15 | Core rendering elements (message, loader, suggestion, task, etc.) |
 | `components/ui/` | 25 | Radix/shadcn primitives (button, dialog, select, sidebar, etc.) |
 | `components/artifacts/` | 4 | Domain artifact renderers (facility-map, medical-desert, mission-plan, stats-dashboard) |
@@ -276,7 +330,7 @@ hacknation/
 - `DeckMap.tsx` — Interactive deck.gl 3D globe with ScatterplotLayer, fly-to transitions, hover tooltips, desert/facility color coding, and highlighted facility support
 - `ToolTrace.tsx` — Expandable tool call display with per-tool icons, agent delegation awareness, formatted args, JSON output, and "View on Map" integration
 
-**Tool Result Cards (16):**
+**Tool Result Cards (15):**
 - `agent-delegation-card.tsx` — Sub-agent delegation status
 - `anomaly-alerts-result.tsx` — Data anomaly findings
 - `claims-validation-result.tsx` — Cross-validation results
@@ -289,7 +343,9 @@ hacknation/
 - `search-facilities-result.tsx` — Semantic search results
 - `service-classification-result.tsx` — Service type classifications
 - `stats-overview-result.tsx` — Aggregated statistics
-- `web-search-result.tsx` / `web-scrape-result.tsx` / `web-extract-result.tsx` — Web research results
+- `web-search-result.tsx` — Web search results
+- `web-scrape-result.tsx` — Web scrape results
+- `web-extract-result.tsx` — Web extract results
 
 **Typed Artifact Schemas (4):**
 - `FacilityMapArtifact` — Interactive deck.gl map with markers, center, radius, progress
@@ -547,9 +603,13 @@ pnpm test                   # Run Playwright E2E tests
 ### AI Tools & Infrastructure
 | File | Purpose |
 |------|---------|
-| `www/lib/ai/tools/` | 13 domain tools + 4 platform tools + artifact wrappers + utilities |
+| `www/lib/ai/tools/` | 14 domain tools + 4 platform tools + artifact wrappers + utilities |
 | `www/lib/ai/tools/safeguards.ts` | Timeout, truncation, SQL validation, input clamping |
 | `www/lib/ai/tools/artifact-tools.ts` | Artifact-enhanced tool wrappers (stream to canvas) |
+| `www/lib/ai/tools/getStats.ts` | Aggregate statistics tool (facility counts, regional breakdowns, data quality) |
+| `www/lib/ai/tools/getSchema.ts` | Schema introspection utility for agent context |
+| `www/lib/ai/tools/schema-map.ts` | Schema-to-tool mapping helper |
+| `www/lib/ai/tools/medical/validateEnrichment.ts` | Medical data enrichment validation utility |
 | `www/lib/ai/artifacts/schemas.ts` | Typed artifact schemas (4 domain artifacts) |
 | `www/lib/ai/prompts.ts` | System prompts (artifacts, code, sheet, title) |
 | `www/lib/ai/providers.ts` | Model provider functions (gateway routing, devtools) |
@@ -566,7 +626,7 @@ pnpm test                   # Run Playwright E2E tests
 | `www/components/messages.tsx` | Message list with tool trace rendering |
 | `www/components/vf-ui/DeckMap.tsx` | deck.gl 3D globe (ScatterplotLayer, fly-to, tooltips) |
 | `www/components/vf-ui/ToolTrace.tsx` | Expandable tool call display with agent delegation awareness |
-| `www/components/tool-results/` | 16 specialized tool result card renderers |
+| `www/components/tool-results/` | 15 specialized tool result card renderers |
 | `www/components/artifacts/` | 4 domain artifact renderers (facility-map, medical-desert, mission-plan, stats-dashboard) |
 | `www/lib/vf-context.tsx` | React Context for map state (facilities, center, zoom, highlight) |
 | `www/components/ai-elements/` | AI chat UI components (28 files) |
@@ -588,7 +648,10 @@ pnpm test                   # Run Playwright E2E tests
 | File | Purpose |
 |------|---------|
 | `assets/data/ghana-facilities.csv` | Raw facility data (987 rows, 40+ columns) |
-| `assets/docs/technical-blueprint-v2.md` | Architecture blueprint and evaluation criteria |
+| `assets/docs/technical-blueprint-v2.md` | Architecture blueprint, tool designs, and implementation plan |
+| `assets/docs/Virtue Foundation Agent Questions - Hack Nation.md` | 59 questions across 11 categories (15 Must-Have, 14 Should-Have, etc.) |
+| `assets/docs/1. Databricks_ Bridging Medical Deserts...md` | Official Databricks challenge brief (MVP requirements, evaluation criteria, stretch goals) |
+| `assets/docs/Virtue Foundation Scheme Documentation.md` | Schema definitions for facility data (field types, descriptions, enums) |
 | `scripts/python_models/` | 4 Pydantic extraction models (organizations, specialties, facts, fields) |
 
 ---
