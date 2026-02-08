@@ -9,6 +9,7 @@ import {
   Map as MapIcon,
   Stethoscope,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -80,6 +81,15 @@ export function OrchestratorProgress({
   }
 
   const allDone = completedCount === totalCount && !isStreaming;
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Auto-collapse when all agents complete
+  useEffect(() => {
+    if (allDone) {
+      setIsOpen(false);
+    }
+  }, [allDone]);
+
   const progressValue =
     totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
   const title = allDone
@@ -88,7 +98,7 @@ export function OrchestratorProgress({
 
   return (
     <Card className="not-prose my-2 overflow-hidden">
-      <Collapsible defaultOpen={!allDone}>
+      <Collapsible onOpenChange={setIsOpen} open={isOpen}>
         <CollapsibleTrigger className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted/50">
           <BotIcon className="size-4 shrink-0 text-muted-foreground" />
           <div className="flex min-w-0 flex-1 items-center gap-2">

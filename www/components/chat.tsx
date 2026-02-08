@@ -5,7 +5,7 @@ import { DefaultChatTransport } from "ai";
 import { useArtifactStream } from "./artifact-stream-provider";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -63,11 +63,24 @@ export function Chat({
   } = useVF();
 
   // Track whether the artifact canvas should be visible
-  const { state: artifactState, processDataPart, reset: resetArtifacts } =
-    useArtifactStream();
+  const {
+    state: artifactState,
+    processDataPart,
+    selectArtifact,
+    reset: resetArtifacts,
+  } = useArtifactStream();
   const activeArtifact = artifactState.current;
   const [canvasDismissed, setCanvasDismissed] = useState(false);
   const isCanvasVisible = activeArtifact !== null && !canvasDismissed;
+
+  // Helper to open a specific artifact from the history (e.g. inline card click)
+  const openArtifact = useCallback(
+    (id: string) => {
+      selectArtifact(id);
+      setCanvasDismissed(false);
+    },
+    [selectArtifact]
+  );
 
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -348,6 +361,7 @@ export function Chat({
             isArtifactVisible={isCanvasVisible}
             isReadonly={isReadonly}
             messages={messages}
+            onOpenArtifact={openArtifact}
             regenerate={regenerate}
             selectedModelId={initialChatModel}
             setMessages={setMessages}

@@ -42,7 +42,6 @@ self.addEventListener("push", (event) => {
       body: data.body,
       icon: data.icon || "/icons/icon-192x192.svg",
       badge: "/icons/icon-192x192.svg",
-      vibrate: [100, 50, 100],
       data: {
         dateOfArrival: Date.now(),
         primaryKey: "2",
@@ -56,5 +55,5 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow("https://caremap.app"));
+  event.waitUntil(self.clients.openWindow("https://caremap.app"));
 });

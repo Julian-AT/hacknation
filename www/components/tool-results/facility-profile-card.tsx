@@ -1,9 +1,9 @@
 "use client";
 
-import { Eye, MapPin } from "lucide-react";
+import { useState } from "react";
+import { Copy, ExternalLink, Eye, MapPin, Phone, Mail, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
@@ -30,6 +30,7 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
       }
     | undefined;
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
+  const [copied, setCopied] = useState(false);
 
   if (!facility) {
     return null;
@@ -53,6 +54,9 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
     ? Number.parseInt(dataQualityScore, 10)
     : null;
 
+  const addressParts = [city, region].filter(Boolean);
+  const addressLine = addressParts.join(", ");
+
   const handleViewOnMap = () => {
     if (lat && lng) {
       setMapFacilities([
@@ -71,63 +75,153 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
     }
   };
 
+  const handleDirections = () => {
+    if (lat && lng) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${String(lat)},${String(lng)}`,
+        "_blank",
+        "noopener"
+      );
+    }
+  };
+
+  const handleShare = () => {
+    const shareText = lat && lng
+      ? `${name} — ${addressLine}\nhttps://www.google.com/maps?q=${String(lat)},${String(lng)}`
+      : `${name} — ${addressLine}`;
+
+    navigator.clipboard.writeText(shareText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
-      <CardHeader className="flex-row items-start justify-between space-y-0 px-3 py-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-balance text-sm font-semibold text-foreground">
-            {name}
+    <div className="my-2 w-full max-w-md overflow-hidden rounded-xl border border-border bg-background shadow-sm">
+      {/* Map preview header */}
+      <button
+        aria-label="View on map"
+        className="relative flex h-28 w-full items-end bg-muted"
+        disabled={!lat || !lng}
+        onClick={handleViewOnMap}
+        type="button"
+      >
+        {/* Map tile background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <MapPreviewPattern />
+        </div>
+
+        {/* Pin */}
+        {lat && lng && (
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full">
+            <div className="flex flex-col items-center">
+              <div className="flex size-8 items-center justify-center rounded-full bg-red-500 shadow-md">
+                <MapPin className="size-4 text-white" />
+              </div>
+              <div className="size-2 -translate-y-0.5 rounded-full bg-red-500/40" />
+            </div>
+          </div>
+        )}
+
+        {/* Coordinates badge */}
+        {lat && lng && (
+          <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground tabular-nums backdrop-blur-sm">
+            {lat.toFixed(4)}, {lng.toFixed(4)}
           </span>
-          <div className="flex items-center gap-1.5">
-            {type && (
-              <Badge
-                className="border-blue-500/20 bg-blue-500/10 text-[10px] text-blue-400"
-                variant="outline"
-              >
-                {type}
-              </Badge>
-            )}
-            {(region ?? city) && (
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <MapPin className="size-3" />
-                {[region, city].filter(Boolean).join(", ")}
-              </span>
-            )}
+        )}
+      </button>
+
+      {/* Main content */}
+      <div className="px-4 py-3">
+        {/* Name and type */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-balance text-base font-semibold text-foreground leading-tight">
+              {name}
+            </h3>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              {type && (
+                <Badge
+                  className="border-blue-500/20 bg-blue-500/10 text-[10px] text-blue-500 dark:text-blue-400"
+                  variant="outline"
+                >
+                  {type}
+                </Badge>
+              )}
+              {qualityNum !== null && (
+                <Badge
+                  className={cn(
+                    "text-[10px]",
+                    qualityNum >= 70
+                      ? "border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400"
+                      : qualityNum >= 40
+                        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400"
+                  )}
+                  variant="outline"
+                >
+                  {qualityNum}% quality
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
-        {qualityNum !== null && (
-          <div className="flex shrink-0 flex-col items-center gap-0.5">
-            <span
-              className={cn(
-                "font-mono text-base font-bold tabular-nums",
-                getQualityColor(qualityNum)
-              )}
-            >
-              {qualityNum}%
-            </span>
-            <span className="text-[9px] font-medium text-muted-foreground">
-              quality
-            </span>
+
+        {/* Address */}
+        {addressLine && (
+          <div className="mt-2.5 flex items-start gap-2 text-sm text-muted-foreground">
+            <MapPin className="mt-0.5 size-3.5 shrink-0" />
+            <span>{addressLine}</span>
           </div>
         )}
-      </CardHeader>
 
-      <Separator />
-      <CardContent className="flex flex-wrap gap-2 px-3 py-3">
-        {beds !== null && <CapacityMetric label="BEDS" value={beds} />}
-        {doctors !== null && <CapacityMetric label="DOCTORS" value={doctors} />}
-        {areaSqm !== null && (
-          <CapacityMetric
-            label="AREA"
-            value={`${areaSqm.toLocaleString()}m\u00b2`}
-          />
+        {/* Contact info */}
+        {(phone ?? email) && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            {phone && (
+              <a
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                href={`tel:${phone}`}
+              >
+                <Phone className="size-3" />
+                {phone}
+              </a>
+            )}
+            {email && (
+              <a
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                href={`mailto:${email}`}
+              >
+                <Mail className="size-3" />
+                {email}
+              </a>
+            )}
+          </div>
         )}
-      </CardContent>
+      </div>
 
+      {/* Metrics row */}
+      {(beds !== null || doctors !== null || areaSqm !== null) && (
+        <>
+          <Separator />
+          <div className="grid grid-cols-3 divide-x divide-border">
+            {beds !== null && <MetricCell label="Beds" value={beds} />}
+            {doctors !== null && <MetricCell label="Doctors" value={doctors} />}
+            {areaSqm !== null && (
+              <MetricCell
+                label="Area"
+                value={`${areaSqm.toLocaleString()}m\u00b2`}
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Specialties */}
       {(specialties?.length ?? 0) > 0 && (
         <>
           <Separator />
-          <CardContent className="px-3 py-2.5">
+          <div className="px-4 py-2.5">
             <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Specialties
             </span>
@@ -143,14 +237,15 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
                 </span>
               )}
             </div>
-          </CardContent>
+          </div>
         </>
       )}
 
+      {/* Procedures */}
       {(procedures?.length ?? 0) > 0 && (
         <>
           <Separator />
-          <CardContent className="px-3 py-2.5">
+          <div className="px-4 py-2.5">
             <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Procedures
             </span>
@@ -166,55 +261,82 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
                 </span>
               )}
             </div>
-          </CardContent>
+          </div>
         </>
       )}
 
+      {/* Anomaly confidence */}
       {anomalyConfidence && (
         <>
           <Separator />
-          <CardContent className="px-3 py-2.5">
+          <div className="px-4 py-2.5">
             <AnomalyConfidenceBadge confidence={anomalyConfidence} />
-          </CardContent>
+          </div>
         </>
       )}
 
+      {/* Missing data warning */}
       {missingCriticalData && !anomalyConfidence && (
         <>
           <Separator />
-          <CardContent className="bg-amber-500/5 px-3 py-2">
-            <span className="text-[11px] text-amber-400">
+          <div className="bg-amber-500/5 px-4 py-2">
+            <span className="text-[11px] text-amber-600 dark:text-amber-400">
               Missing: {missingCriticalData}
             </span>
-          </CardContent>
+          </div>
         </>
       )}
 
+      {/* Action buttons */}
       <Separator />
-      <CardFooter className="items-center justify-between px-3 py-2">
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          {phone && <span>{phone}</span>}
-          {email && <span>{email}</span>}
-        </div>
+      <div className="flex items-center gap-1.5 px-3 py-2">
         {lat && lng && (
           <Button
             aria-label="View facility on map"
-            className="h-7 gap-1 px-2 text-[11px]"
+            className="h-8 gap-1.5 text-xs"
             onClick={handleViewOnMap}
             size="sm"
             type="button"
             variant="outline"
           >
-            <Eye className="size-3" />
-            Map
+            <Eye className="size-3.5" />
+            View on Map
           </Button>
         )}
-      </CardFooter>
-    </Card>
+        {lat && lng && (
+          <Button
+            aria-label="Get directions to facility"
+            className="h-8 gap-1.5 text-xs"
+            onClick={handleDirections}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <ExternalLink className="size-3.5" />
+            Directions
+          </Button>
+        )}
+        <Button
+          aria-label="Copy facility details"
+          className="h-8 gap-1.5 text-xs"
+          onClick={handleShare}
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          {copied ? (
+            <Check className="size-3.5 text-green-500" />
+          ) : (
+            <Copy className="size-3.5" />
+          )}
+          {copied ? "Copied" : "Share"}
+        </Button>
+      </div>
+    </div>
   );
 }
 
-function CapacityMetric({
+function MetricCell({
   label,
   value,
 }: {
@@ -222,23 +344,45 @@ function CapacityMetric({
   value: number | string;
 }) {
   return (
-    <Card className="flex flex-1 basis-16 flex-col gap-0.5 p-2">
-      <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
+    <div className="flex flex-col items-center gap-0.5 py-2.5">
       <span className="font-mono text-base font-bold tabular-nums text-foreground">
         {typeof value === "number" ? value.toLocaleString() : value}
       </span>
-    </Card>
+      <span className="text-[10px] font-medium text-muted-foreground">
+        {label}
+      </span>
+    </div>
   );
 }
 
-function getQualityColor(score: number): string {
-  if (score >= 70) {
-    return "text-green-400";
-  }
-  if (score >= 40) {
-    return "text-amber-400";
-  }
-  return "text-red-400";
+/** SVG pattern that mimics a subtle map grid for the preview header. */
+function MapPreviewPattern() {
+  return (
+    <svg
+      className="size-full text-muted-foreground/[0.06]"
+      preserveAspectRatio="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <pattern
+          height="20"
+          id="map-grid"
+          patternUnits="userSpaceOnUse"
+          width="20"
+        >
+          <path
+            d="M 20 0 L 0 0 0 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+          />
+        </pattern>
+      </defs>
+      <rect fill="url(#map-grid)" height="100%" width="100%" />
+      {/* Subtle diagonal road lines */}
+      <line stroke="currentColor" strokeWidth="2" x1="0" x2="100%" y1="40%" y2="60%" />
+      <line stroke="currentColor" strokeWidth="2" x1="30%" x2="70%" y1="0" y2="100%" />
+      <line stroke="currentColor" strokeWidth="1.5" x1="60%" x2="100%" y1="100%" y2="20%" />
+    </svg>
+  );
 }

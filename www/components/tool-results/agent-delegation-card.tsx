@@ -10,7 +10,7 @@ import {
   Stethoscope,
   WrenchIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -216,6 +216,15 @@ export function AgentDelegationCard({
   result,
 }: AgentDelegationCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const hasResult = result !== undefined;
+
+  // Auto-collapse when agent completes
+  useEffect(() => {
+    if (hasResult) {
+      setIsOpen(false);
+    }
+  }, [hasResult]);
+
   const config = AGENT_CONFIG[toolName];
   if (!config) {
     return null;

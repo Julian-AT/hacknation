@@ -6,6 +6,9 @@
  * Replaces `@ai-sdk-tools/artifacts/client` — provides a React context +
  * `useArtifactStream()` hook that tracks canvas artifacts (facility-map,
  * medical-desert, stats-dashboard, mission-plan) streamed by the server.
+ *
+ * Maintains a full history of artifacts so each can be re-opened via its
+ * own inline widget in the message stream.
  */
 
 import type React from "react";
@@ -20,14 +23,20 @@ import type { ArtifactData } from "@/lib/ai/artifacts/artifact";
 
 // ── State ────────────────────────────────────────────────────────────
 
-type ArtifactStreamState = {
-  /** The most recent (active) artifact, or `null` if none. */
+export type ArtifactStreamState = {
+  /** The currently selected (active) artifact, or `null` if none. */
   current: ArtifactData | null;
+  /** All artifacts that have been streamed this session, newest last. */
+  history: ArtifactData[];
   /** All artifact types that have been seen this session. */
   types: string[];
 };
 
-const initialState: ArtifactStreamState = { current: null, types: [] };
+const initialState: ArtifactStreamState = {
+  current: null,
+  history: [],
+  types: [],
+};
 
 // ── Actions ──────────────────────────────────────────────────────────
 
@@ -56,62 +65,105 @@ type ArtifactStreamAction =
       artifactType: string;
       error: string;
     }
+  | { kind: "select"; id: string }
   | { kind: "reset" };
+
+function updateInHistory(
+  history: ArtifactData[],
+  id: string,
+  updater: (a: ArtifactData) => ArtifactData
+): ArtifactData[] {
+  return history.map((a) => (a.id === id ? updater(a) : a));
+}
 
 function reducer(
   state: ArtifactStreamState,
   action: ArtifactStreamAction
 ): ArtifactStreamState {
   switch (action.kind) {
-    case "stream":
+    case "stream": {
+      const newArtifact: ArtifactData = {
+        id: action.id,
+        type: action.artifactType,
+        payload: action.payload,
+        status: "streaming",
+      };
       return {
-        current: {
-          id: action.id,
-          type: action.artifactType,
-          payload: action.payload,
-          status: "streaming",
-        },
+        current: newArtifact,
+        history: [...state.history, newArtifact],
         types: state.types.includes(action.artifactType)
           ? state.types
           : [...state.types, action.artifactType],
       };
+    }
 
-    case "update":
-      if (state.current?.id !== action.id) return state;
-      return {
-        ...state,
-        current: {
-          ...state.current,
-          payload:
-            typeof state.current.payload === "object" &&
-            state.current.payload !== null
-              ? { ...state.current.payload, ...(action.payload as object) }
-              : action.payload,
-          status: "streaming",
-        },
+    case "update": {
+      const updater = (a: ArtifactData): ArtifactData => ({
+        ...a,
+        payload:
+          typeof a.payload === "object" && a.payload !== null
+            ? { ...a.payload, ...(action.payload as object) }
+            : action.payload,
+        status: "streaming" as const,
+      });
+
+      const updatedHistory = updateInHistory(
+        state.history,
+        action.id,
+        updater
+      );
+      const updatedCurrent =
+        state.current?.id === action.id
+          ? updater(state.current)
+          : state.current;
+
+      return { ...state, history: updatedHistory, current: updatedCurrent };
+    }
+
+    case "complete": {
+      const completed: ArtifactData = {
+        id: action.id,
+        type: action.artifactType,
+        payload: action.payload,
+        status: "complete",
       };
 
-    case "complete":
-      return {
-        ...state,
-        current: {
-          id: action.id,
-          type: action.artifactType,
-          payload: action.payload,
-          status: "complete",
-        },
-      };
+      const updatedHistory = updateInHistory(
+        state.history,
+        action.id,
+        () => completed
+      );
+      const updatedCurrent =
+        state.current?.id === action.id ? completed : state.current;
 
-    case "error":
-      if (state.current?.id !== action.id) return state;
-      return {
-        ...state,
-        current: {
-          ...state.current,
-          status: "error",
-          error: action.error,
-        },
-      };
+      return { ...state, history: updatedHistory, current: updatedCurrent };
+    }
+
+    case "error": {
+      const updater = (a: ArtifactData): ArtifactData => ({
+        ...a,
+        status: "error" as const,
+        error: action.error,
+      });
+
+      const updatedHistory = updateInHistory(
+        state.history,
+        action.id,
+        updater
+      );
+      const updatedCurrent =
+        state.current?.id === action.id
+          ? updater(state.current)
+          : state.current;
+
+      return { ...state, history: updatedHistory, current: updatedCurrent };
+    }
+
+    case "select": {
+      const selected = state.history.find((a) => a.id === action.id);
+      if (!selected) return state;
+      return { ...state, current: selected };
+    }
 
     case "reset":
       return initialState;
@@ -130,6 +182,8 @@ type ArtifactStreamContextValue = {
    * Returns `true` if the part was an artifact event, `false` otherwise.
    */
   processDataPart: (part: { type: string; data?: unknown }) => boolean;
+  /** Switch the active artifact to the one with the given id. */
+  selectArtifact: (id: string) => void;
   /** Reset all artifact state (useful on chat navigation). */
   reset: () => void;
 };
@@ -195,11 +249,16 @@ export function ArtifactStreamProvider({
     []
   );
 
+  const selectArtifact = useCallback(
+    (id: string) => dispatch({ kind: "select", id }),
+    []
+  );
+
   const reset = useCallback(() => dispatch({ kind: "reset" }), []);
 
   const value = useMemo(
-    () => ({ state, processDataPart, reset }),
-    [state, processDataPart, reset]
+    () => ({ state, processDataPart, selectArtifact, reset }),
+    [state, processDataPart, selectArtifact, reset]
   );
 
   return (
