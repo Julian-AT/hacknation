@@ -9,7 +9,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +83,13 @@ export function ClaimsValidationResult({
       )}
 
       <CardContent className="px-3 pb-3 pt-0">
+        {results.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Brain className="size-5 text-green-500/50" />
+            <p className="text-xs text-muted-foreground">No validation issues found</p>
+            <p className="text-[11px] text-muted-foreground/70">All checked claims passed cross-validation</p>
+          </div>
+        ) : (
         <ul className="flex flex-col gap-1.5">
           {results.map((issue) => (
             <li key={`${issue.facilityId}-${issue.validationType}`}>
@@ -91,6 +97,7 @@ export function ClaimsValidationResult({
             </li>
           ))}
         </ul>
+        )}
       </CardContent>
 
       {summary && (
@@ -130,24 +137,65 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
         {issue.finding}
       </p>
 
-      <Collapsible className="mt-1.5">
-        <CollapsibleTrigger asChild>
-          <Button
-            className="h-auto gap-1 p-0 text-[10px]"
-            type="button"
-            variant="link"
-          >
-            Evidence
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <ScrollArea className="mt-1 max-h-24">
-            <pre className="rounded-md bg-muted p-2 font-mono text-[10px] text-muted-foreground">
-              {JSON.stringify(issue.evidence, null, 2)}
-            </pre>
-          </ScrollArea>
-        </CollapsibleContent>
-      </Collapsible>
+      {Object.keys(issue.evidence).length > 0 && (
+        <Collapsible className="mt-1.5">
+          <CollapsibleTrigger asChild>
+            <Button
+              className="h-auto gap-1 p-0 text-[10px]"
+              type="button"
+              variant="link"
+            >
+              Evidence
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-1.5 flex flex-col gap-1">
+              {Object.entries(issue.evidence).map(([key, val]) => (
+                <EvidenceRow key={key} label={key} value={val} />
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </Card>
+  );
+}
+
+function EvidenceRow({ label, value }: { label: string; value: unknown }) {
+  const displayLabel = label
+    .replaceAll("_", " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/^./, (c) => c.toUpperCase());
+
+  const renderValue = (): string => {
+    if (value === null || value === undefined) {
+      return "\u2014";
+    }
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
+    if (typeof value === "number") {
+      return value.toLocaleString();
+    }
+    if (Array.isArray(value)) {
+      return value.length > 0 ? value.join(", ") : "\u2014";
+    }
+    if (typeof value === "object") {
+      return Object.entries(value as Record<string, unknown>)
+        .map(([k, v]) => `${k}: ${String(v)}`)
+        .join(", ");
+    }
+    return String(value);
+  };
+
+  return (
+    <div className="flex items-baseline gap-2 rounded-md bg-muted/60 px-2.5 py-1.5">
+      <span className="shrink-0 text-[10px] font-medium text-muted-foreground">
+        {displayLabel}:
+      </span>
+      <span className="text-[10px] text-foreground">
+        {renderValue()}
+      </span>
+    </div>
   );
 }

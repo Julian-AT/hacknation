@@ -345,7 +345,7 @@ export function Chat({
           className={cn(
             "flex flex-col h-full",
             isCanvasVisible || isMapVisible
-              ? "w-[45%] border-r border-border"
+              ? "w-full md:w-[45%] md:border-r md:border-border"
               : "w-full"
           )}
         >
@@ -394,14 +394,14 @@ export function Chat({
 
         {/* Right Panel: Artifact Canvas (streamed visualizations) */}
         {isCanvasVisible && (
-          <div className="w-[55%] h-full bg-background relative">
+          <div className="fixed inset-0 z-50 bg-background md:relative md:inset-auto md:z-auto md:w-[55%] md:h-full">
             <ArtifactCanvas onClose={() => setCanvasDismissed(true)} />
           </div>
         )}
 
         {/* Right Panel: Map (only visible when geographic data is available) */}
         {isMapVisible && !isCanvasVisible && (
-          <div className="w-[55%] h-full bg-background relative">
+          <div className="fixed inset-0 z-50 bg-background md:relative md:inset-auto md:z-auto md:w-[55%] md:h-full">
             <DeckMap />
 
             <button

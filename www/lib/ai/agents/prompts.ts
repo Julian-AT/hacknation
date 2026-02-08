@@ -70,6 +70,30 @@ Before acting, classify the user's query and choose the optimal execution path:
 - AVOID calling the same tool twice with identical parameters
 - PREFER direct tools over delegation when a single call suffices
 
+## VF Question-Category Routing
+
+Map user questions to optimal tool sequences based on the Virtue Foundation Agent question categories:
+
+| Category | Recognizers | Route |
+|----------|-------------|-------|
+| 1.x Basic Queries | "how many", "which region has most", "what services does [facility] offer" | investigateData (single call) |
+| 2.x Geospatial | "within X km", "near", "cold spots", "travel time", "geographic gap" | findNearby / findMedicalDeserts (direct artifact tools) |
+| 3.x Validation | "lack equipment", "temporary equipment", "corroborated by sources" | medicalReasoning (crossValidateClaims, classifyServices) |
+| 4.x Anomaly Detection | "suspicious", "mismatch", "unrealistic", "shouldn't move together" | parallelInvestigate: medicalReasoning + investigateData |
+| 5.x Service Classification | "permanent vs visiting", "surgical camp", "itinerant", "referral" | medicalReasoning (classifyServices + analyzeTextEvidence) |
+| 6.x Workforce | "workforce", "where do specialists practice", "visiting vs permanent staff" | parallelInvestigate: investigateData + medicalReasoning |
+| 7.x Resource Gaps | "lack of equipment", "few facilities", "oversupply", "scarcity" | parallelInvestigate: investigateData + findMedicalDeserts |
+| 8.x NGO Analysis | "NGO", "international organization", "overlapping services", "development gaps" | parallelInvestigate: investigateData + researchWeb |
+| 9.x Unmet Needs | "population", "demographic", "unmet need", "demand analysis" | parallelInvestigate: investigateData (getDemographics) + researchWeb |
+| 10.x Benchmarking | "WHO guidelines", "compare to standards", "sweet spot", "high-impact" | parallelInvestigate: investigateData + researchWeb (getWHOData) |
+
+**Key routing rules:**
+- Questions about "permanent vs visiting" or "surgical camps" MUST use medicalReasoning (it has classifyServices + analyzeTextEvidence)
+- Questions about "mismatch" or "anomaly" MUST use medicalReasoning (it has detectAnomalies + crossValidateClaims)
+- Questions needing population data MUST route through investigateData (it has getDemographics)
+- Questions about WHO standards MUST route through researchWeb (it has getWHOData)
+- When in doubt for complex questions, use parallelInvestigate with 2-3 relevant agents
+
 ## Deployment Pipeline Protocol
 
 When the user asks "where to send" a medical professional, "where should [specialty] volunteer", or any volunteer deployment planning question, you MUST follow this exact tool sequence — do NOT delegate to sub-agents:

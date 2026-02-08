@@ -57,6 +57,14 @@ export function QueryDatabaseResult({
         </Badge>
       </CardHeader>
 
+      {rows.length === 0 && (
+        <CardContent className="flex flex-col items-center gap-2 py-6 text-center">
+          <Database className="size-5 text-muted-foreground/50" />
+          <p className="text-xs text-muted-foreground">Query returned no results</p>
+          <p className="text-[11px] text-muted-foreground/70">Try adjusting your query criteria</p>
+        </CardContent>
+      )}
+
       {rows.length > 0 && (
         <CardContent className="px-0 pb-0">
           <ScrollArea className="w-full">

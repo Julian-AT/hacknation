@@ -38,7 +38,21 @@ export function RegionComparisonResult({
   const specialtyFilter = result.specialtyFilter as string | null;
 
   if (comparison.length === 0) {
-    return null;
+    return (
+      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+        <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
+          <GitCompare className="size-3.5 text-cyan-400" />
+          <span className="text-xs font-medium text-muted-foreground">
+            Region Comparison
+          </span>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-2 py-6 text-center">
+          <GitCompare className="size-5 text-muted-foreground/50" />
+          <p className="text-xs text-muted-foreground">No regions to compare</p>
+          <p className="text-[11px] text-muted-foreground/70">Specify 2-5 regions for side-by-side comparison</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   const metrics: { key: keyof RegionData; label: string }[] = [

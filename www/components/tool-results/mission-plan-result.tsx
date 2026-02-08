@@ -54,6 +54,13 @@ export function MissionPlanResult({ result }: MissionPlanResultProps) {
 
       <Separator />
       <CardContent className="px-3 py-3">
+        {recommendations.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Activity className="size-5 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground">No deployment recommendations available</p>
+            <p className="text-[11px] text-muted-foreground/70">Try a different specialty or broaden the search area</p>
+          </div>
+        ) : (
         <ol className="flex flex-col gap-1.5">
           {recommendations.map((rec, i) => (
             <li key={`${rec.region}-${rec.priority}`}>
@@ -100,6 +107,7 @@ export function MissionPlanResult({ result }: MissionPlanResultProps) {
             </li>
           ))}
         </ol>
+        )}
       </CardContent>
     </Card>
   );

@@ -116,6 +116,13 @@ export function ServiceClassificationResult({
       )}
 
       <CardContent className="px-3 pb-3 pt-0">
+        {classifications.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Stethoscope className="size-5 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground">No classifications available</p>
+            <p className="text-[11px] text-muted-foreground/70">Try analyzing a specific region or service type</p>
+          </div>
+        ) : (
         <ul className="flex flex-col gap-1.5">
           {classifications.map((c) => (
             <li key={`${c.facilityId}-${c.serviceType}`}>
@@ -123,6 +130,7 @@ export function ServiceClassificationResult({
             </li>
           ))}
         </ul>
+        )}
       </CardContent>
     </Card>
   );

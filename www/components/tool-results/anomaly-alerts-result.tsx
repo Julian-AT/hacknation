@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AnomalyDetail {
   type: string;
@@ -44,6 +43,13 @@ export function AnomalyAlertsResult({ result }: AnomalyAlertsResultProps) {
       </CardHeader>
 
       <CardContent className="px-3 pb-3 pt-0">
+        {foundAnomalies === 0 || details.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <AlertTriangle className="size-5 text-green-500/50" />
+            <p className="text-xs text-muted-foreground">No anomalies detected</p>
+            <p className="text-[11px] text-muted-foreground/70">All checked facilities passed consistency checks</p>
+          </div>
+        ) : (
         <ul className="flex flex-col gap-1.5">
           {details.map((detail) => (
             <li key={detail.type}>
@@ -51,6 +57,7 @@ export function AnomalyAlertsResult({ result }: AnomalyAlertsResultProps) {
             </li>
           ))}
         </ul>
+        )}
       </CardContent>
     </Card>
   );
@@ -84,14 +91,86 @@ function AnomalyItem({ detail }: { detail: AnomalyDetail }) {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <ScrollArea className="mt-1.5 max-h-32">
-              <pre className="rounded-md bg-muted p-2 font-mono text-[10px] text-muted-foreground">
-                {JSON.stringify(detail.facilities, null, 2)}
-              </pre>
-            </ScrollArea>
+            <ul className="mt-1.5 flex flex-col gap-1">
+              {detail.facilities.map((f, idx) => (
+                <li key={String(f.id ?? f.name ?? idx)}>
+                  <AnomalyFacilityCard facility={f} />
+                </li>
+              ))}
+            </ul>
           </CollapsibleContent>
         </Collapsible>
       )}
     </Card>
+  );
+}
+
+function AnomalyFacilityCard({ facility }: { facility: Record<string, unknown> }) {
+  const name = facility.name as string | undefined;
+  const type = (facility.facilityType ?? facility.facility_type ?? facility.type) as string | undefined;
+  const region = (facility.addressRegion ?? facility.address_region ?? facility.region) as string | undefined;
+  const city = (facility.addressCity ?? facility.address_city ?? facility.city) as string | undefined;
+  const beds = (facility.capacity ?? facility.beds) as number | null | undefined;
+  const doctors = (facility.numDoctors ?? facility.num_doctors ?? facility.doctors) as number | null | undefined;
+  const id = facility.id as number | undefined;
+
+  // Collect any extra keys that aren't standard fields for context
+  const standardKeys = new Set(["id", "name", "facilityType", "facility_type", "type", "addressRegion", "address_region", "region", "addressCity", "address_city", "city", "capacity", "beds", "numDoctors", "num_doctors", "doctors", "lat", "lng", "embedding"]);
+  const extraEntries = Object.entries(facility).filter(
+    ([k, v]) => !standardKeys.has(k) && v !== null && v !== undefined && v !== ""
+  );
+
+  return (
+    <div className="flex items-start gap-2 rounded-md bg-muted/60 px-2.5 py-2">
+      <Building2 className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/60" />
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-[11px] font-medium text-foreground">
+            {name ?? "Unknown facility"}
+          </span>
+          {id !== undefined && (
+            <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
+              #{String(id)}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          {type && (
+            <Badge className="border-blue-500/20 bg-blue-500/10 text-[9px] text-blue-400" variant="outline">
+              {type}
+            </Badge>
+          )}
+          {(region ?? city) && (
+            <span className="text-[10px] text-muted-foreground">
+              {[city, region].filter(Boolean).join(", ")}
+            </span>
+          )}
+        </div>
+        {(beds !== null && beds !== undefined) || (doctors !== null && doctors !== undefined) ? (
+          <div className="flex items-center gap-2">
+            {beds !== null && beds !== undefined && (
+              <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                {beds} beds
+              </span>
+            )}
+            {doctors !== null && doctors !== undefined && (
+              <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                {doctors} doctors
+              </span>
+            )}
+          </div>
+        ) : null}
+        {extraEntries.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+            {extraEntries.slice(0, 4).map(([key, val]) => (
+              <span className="text-[9px] text-muted-foreground" key={key}>
+                <span className="font-medium">{key.replaceAll("_", " ")}:</span>{" "}
+                {typeof val === "number" ? val.toLocaleString() : String(val).slice(0, 60)}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
