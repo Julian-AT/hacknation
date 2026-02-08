@@ -25,22 +25,28 @@ type MissionPlanData = {
 };
 
 function getPriorityColor(priority: string): string {
-  if (priority.toLowerCase().includes("critical"))
+  if (priority.toLowerCase().includes("critical")) {
     return "border-red-500/30 bg-red-500/5";
-  if (priority.toLowerCase().includes("high"))
+  }
+  if (priority.toLowerCase().includes("high")) {
     return "border-orange-500/30 bg-orange-500/5";
-  if (priority.toLowerCase().includes("medium"))
+  }
+  if (priority.toLowerCase().includes("medium")) {
     return "border-yellow-500/30 bg-yellow-500/5";
+  }
   return "border-border bg-muted/50";
 }
 
 function getPriorityBadgeColor(priority: string): string {
-  if (priority.toLowerCase().includes("critical"))
+  if (priority.toLowerCase().includes("critical")) {
     return "bg-red-500/20 text-red-400";
-  if (priority.toLowerCase().includes("high"))
+  }
+  if (priority.toLowerCase().includes("high")) {
     return "bg-orange-500/20 text-orange-400";
-  if (priority.toLowerCase().includes("medium"))
+  }
+  if (priority.toLowerCase().includes("medium")) {
     return "bg-yellow-500/20 text-yellow-400";
+  }
   return "bg-muted text-muted-foreground";
 }
 
@@ -60,7 +66,9 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
     <div className="flex size-full flex-col overflow-y-auto bg-background">
       {/* Header */}
       <div className="border-b border-border px-6 py-4">
-        <h2 className="text-lg font-semibold text-foreground text-balance">{data.title}</h2>
+        <h2 className="text-lg font-semibold text-foreground text-balance">
+          {data.title}
+        </h2>
         {data.stage !== "complete" && (
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
             <div className="size-3 rounded-full border-2 border-muted-foreground/30 border-t-amber-500 animate-spin" />
@@ -90,7 +98,9 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
           )}
         </div>
         {data.analysis && (
-          <p className="mt-2 text-sm text-muted-foreground text-pretty">{data.analysis}</p>
+          <p className="mt-2 text-sm text-muted-foreground text-pretty">
+            {data.analysis}
+          </p>
         )}
       </div>
 
@@ -103,7 +113,7 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
           {data.recommendations.map((rec, i) => (
             <div
               className={`rounded-lg border p-4 ${getPriorityColor(rec.priority)}`}
-              key={i}
+              key={`${rec.region}-${rec.priority}-${i}`}
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <span
@@ -115,10 +125,14 @@ export function MissionPlanRenderer({ data }: { data: MissionPlanData }) {
                   {rec.region}
                 </span>
               </div>
-              <p className="text-sm text-foreground text-pretty">{rec.reason}</p>
+              <p className="text-sm text-foreground text-pretty">
+                {rec.reason}
+              </p>
               {rec.suggestedHost && (
                 <div className="mt-2 rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-xs">
-                  <span className="text-muted-foreground">Suggested host: </span>
+                  <span className="text-muted-foreground">
+                    Suggested host:{" "}
+                  </span>
                   <span className="font-medium text-foreground">
                     {rec.suggestedHost.name}
                   </span>

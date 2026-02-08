@@ -3,21 +3,11 @@
 import { Building2, MapPin } from "lucide-react";
 import {
   InlineCitation,
-  InlineCitationText,
   InlineCitationCard,
-  InlineCitationCardTrigger,
   InlineCitationCardBody,
-  InlineCitationCarousel,
-  InlineCitationCarouselContent,
-  InlineCitationCarouselItem,
-  InlineCitationSource,
 } from "@/components/ai-elements/inline-citation";
 import { Badge } from "@/components/ui/badge";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 
 interface FacilityCitationProps {
@@ -123,8 +113,8 @@ export function FacilityCitation({
               <div className="flex flex-wrap gap-1">
                 {specialties.slice(0, 4).map((s) => (
                   <span
-                    key={s}
                     className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                    key={s}
                   >
                     {s}
                   </span>
@@ -163,10 +153,7 @@ export function SimpleFacilityCitation({
 }) {
   return (
     <Badge
-      className={cn(
-        "ml-0.5 gap-1 rounded-full text-[11px]",
-        className,
-      )}
+      className={cn("ml-0.5 gap-1 rounded-full text-[11px]", className)}
       variant="secondary"
     >
       <Building2 className="size-3" />

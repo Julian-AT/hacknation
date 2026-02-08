@@ -1,6 +1,13 @@
 "use client";
 
-import { Stethoscope, ChevronDown, ChevronRight, User, Tent, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+  Stethoscope,
+  Tent,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -83,17 +90,19 @@ export function ServiceClassificationResult({
       {summary && (
         <div className="flex flex-wrap gap-1.5 px-3 pb-2">
           {Object.entries(summary).map(([type, count]) => {
-            if (count === 0) return null;
+            if (count === 0) {
+              return null;
+            }
             const colors = SUMMARY_COLORS[type] ?? SUMMARY_COLORS.unclear;
             const label = SUMMARY_LABELS[type] ?? type;
             return (
               <span
-                key={type}
                 className={cn(
                   "rounded px-1.5 py-0.5 text-[10px] font-semibold",
                   colors.bg,
-                  colors.text,
+                  colors.text
                 )}
+                key={type}
               >
                 {count} {label}
               </span>
@@ -104,7 +113,10 @@ export function ServiceClassificationResult({
 
       <div className="flex flex-col gap-1.5 px-3 pb-3">
         {classifications.map((c) => (
-          <ClassificationItem key={`${c.facilityId}-${c.serviceType}`} classification={c} />
+          <ClassificationItem
+            classification={c}
+            key={`${c.facilityId}-${c.serviceType}`}
+          />
         ))}
       </div>
     </div>
@@ -134,7 +146,7 @@ function ClassificationItem({
             className={cn(
               "rounded px-1.5 py-0.5 text-[10px] font-semibold",
               typeColors.bg,
-              typeColors.text,
+              typeColors.text
             )}
           >
             {c.serviceType}
@@ -143,9 +155,14 @@ function ClassificationItem({
             {c.facilityName}
           </span>
         </div>
-        <div className="flex items-center gap-1" title={`${c.confidence} confidence`}>
+        <div
+          className="flex items-center gap-1"
+          title={`${c.confidence} confidence`}
+        >
           <span className={cn("size-1.5 rounded-full", confidenceDot)} />
-          <span className="text-[10px] text-muted-foreground">{c.confidence}</span>
+          <span className="text-[10px] text-muted-foreground">
+            {c.confidence}
+          </span>
         </div>
       </div>
 
@@ -173,11 +190,13 @@ function ClassificationItem({
         </div>
       )}
 
-      {(c.evidenceQuotes.length > 0 || c.matchedPatterns.length > 0 || hasExtendedFindings) && (
+      {(c.evidenceQuotes.length > 0 ||
+        c.matchedPatterns.length > 0 ||
+        hasExtendedFindings) && (
         <button
-          type="button"
-          onClick={() => setShowDetails(!showDetails)}
           className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+          onClick={() => setShowDetails(!showDetails)}
+          type="button"
         >
           {showDetails ? (
             <ChevronDown className="size-3" />
@@ -192,8 +211,8 @@ function ClassificationItem({
         <div className="mt-1.5 space-y-1">
           {c.evidenceQuotes.map((q) => (
             <p
-              key={q}
               className="rounded bg-muted/80 px-2 py-1 text-[10px] italic text-muted-foreground"
+              key={q}
             >
               &ldquo;{q}&rdquo;
             </p>
@@ -202,8 +221,8 @@ function ClassificationItem({
             <div className="flex flex-wrap gap-1">
               {c.matchedPatterns.map((p) => (
                 <span
-                  key={p}
                   className="rounded bg-muted/80 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
+                  key={p}
                 >
                   {p}
                 </span>
@@ -214,8 +233,8 @@ function ClassificationItem({
             <div className="flex flex-wrap gap-1">
               {c.individualTiedPatterns.map((p) => (
                 <span
-                  key={p}
                   className="rounded bg-purple-950/40 px-1.5 py-0.5 font-mono text-[9px] text-purple-400"
+                  key={p}
                 >
                   {p}
                 </span>
@@ -226,8 +245,8 @@ function ClassificationItem({
             <div className="flex flex-wrap gap-1">
               {c.weakOperationalSignals.map((p) => (
                 <span
-                  key={p}
                   className="rounded bg-red-950/40 px-1.5 py-0.5 font-mono text-[9px] text-red-400"
+                  key={p}
                 >
                   {p}
                 </span>

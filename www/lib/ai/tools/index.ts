@@ -1,39 +1,35 @@
 // Database tools
-export { queryDatabase } from "./queryDatabase";
-export { searchFacilities } from "./searchFacilities";
-export { getFacility } from "./getFacility";
-export { getDemographics } from "./getDemographics";
-export { getSchema } from "./getSchema";
-
-// Geospatial tools
-export { findNearby } from "./findNearby";
-export { findMedicalDeserts } from "./findMedicalDeserts";
-export { planMission } from "./planMission";
-export { compareRegions } from "./compareRegions";
 
 // Artifact-enhanced geospatial tools (stream visualizations to canvas)
 export {
-  findNearbyArtifact,
   findMedicalDesertsArtifact,
+  findNearbyArtifact,
   getStatsArtifact,
   planMissionArtifact,
 } from "./artifact-tools";
-
+export { compareRegions } from "./compareRegions";
 // Medical reasoning tools
 export { detectAnomalies } from "./detectAnomalies";
-export { crossValidateClaims } from "./medical/crossValidateClaims";
-export { classifyServices } from "./medical/classifyServices";
-export { analyzeTextEvidence } from "./medical/analyzeTextEvidence";
-export { validateEnrichment } from "./medical/validateEnrichment";
-
-// Web research tools
-export { firecrawlSearch } from "./web/firecrawl-search";
-export { firecrawlScrape } from "./web/firecrawl-scrape";
-export { firecrawlExtract } from "./web/firecrawl-extract";
-export { corroborateClaims } from "./web/corroborateClaims";
-export { getWHOData } from "./web/who-gho";
-export { queryOSMFacilities } from "./web/overpass-facilities";
-export { getTravelTime } from "./web/openrouteservice";
-
+export { findMedicalDeserts } from "./findMedicalDeserts";
+// Geospatial tools
+export { findNearby } from "./findNearby";
+export { getDemographics } from "./getDemographics";
+export { getFacility } from "./getFacility";
+export { getSchema } from "./getSchema";
 // Legacy (kept for backwards compat, handled by database agent via SQL)
 export { getStats } from "./getStats";
+export { analyzeTextEvidence } from "./medical/analyzeTextEvidence";
+export { classifyServices } from "./medical/classifyServices";
+export { crossValidateClaims } from "./medical/crossValidateClaims";
+export { validateEnrichment } from "./medical/validateEnrichment";
+export { planMission } from "./planMission";
+export { queryDatabase } from "./queryDatabase";
+export { searchFacilities } from "./searchFacilities";
+export { corroborateClaims } from "./web/corroborateClaims";
+export { firecrawlExtract } from "./web/firecrawl-extract";
+export { firecrawlScrape } from "./web/firecrawl-scrape";
+// Web research tools
+export { firecrawlSearch } from "./web/firecrawl-search";
+export { getTravelTime } from "./web/openrouteservice";
+export { queryOSMFacilities } from "./web/overpass-facilities";
+export { getWHOData } from "./web/who-gho";

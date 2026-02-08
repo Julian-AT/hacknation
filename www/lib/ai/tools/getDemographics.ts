@@ -1,13 +1,13 @@
-import { z } from "zod";
 import { tool } from "ai";
-import { eq, ilike, and, gte, lte, sql } from "drizzle-orm";
-import { createToolLogger } from "./debug";
+import { and, eq, gte, ilike, lte, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "../../db";
 import {
+  demographicsBenchmarks,
   demographicsCountries,
   demographicsRegions,
-  demographicsBenchmarks,
 } from "../../db/schema.demographics";
+import { createToolLogger } from "./debug";
 
 // ---------------------------------------------------------------------------
 // Internal types for DB rows
@@ -23,7 +23,7 @@ type BenchmarkRow = typeof demographicsBenchmarks.$inferSelect;
 
 async function findRegion(
   countryCode: string,
-  name: string,
+  name: string
 ): Promise<RegionRow | undefined> {
   // Try exact match first (case-insensitive)
   const exact = await db
@@ -32,12 +32,14 @@ async function findRegion(
     .where(
       and(
         eq(demographicsRegions.countryCode, countryCode),
-        ilike(demographicsRegions.region, name),
-      ),
+        ilike(demographicsRegions.region, name)
+      )
     )
     .limit(1);
 
-  if (exact.length > 0) return exact[0];
+  if (exact.length > 0) {
+    return exact[0];
+  }
 
   // Fuzzy: region contains search term or vice versa
   const fuzzy = await db
@@ -46,8 +48,8 @@ async function findRegion(
     .where(
       and(
         eq(demographicsRegions.countryCode, countryCode),
-        ilike(demographicsRegions.region, `%${name}%`),
-      ),
+        ilike(demographicsRegions.region, `%${name}%`)
+      )
     )
     .limit(1);
 
@@ -67,10 +69,10 @@ async function fetchCountry(code: string): Promise<CountryRow | undefined> {
   return rows[0];
 }
 
-async function fetchRegions(
+function fetchRegions(
   code: string,
   gdpRange?: { min?: number; max?: number },
-  populationRange?: { min?: number; max?: number },
+  populationRange?: { min?: number; max?: number }
 ): Promise<RegionRow[]> {
   const conditions = [eq(demographicsRegions.countryCode, code)];
 
@@ -82,12 +84,12 @@ async function fetchRegions(
   }
   if (populationRange?.min !== undefined) {
     conditions.push(
-      sql`${demographicsRegions.population} >= ${populationRange.min}`,
+      sql`${demographicsRegions.population} >= ${populationRange.min}`
     );
   }
   if (populationRange?.max !== undefined) {
     conditions.push(
-      sql`${demographicsRegions.population} <= ${populationRange.max}`,
+      sql`${demographicsRegions.population} <= ${populationRange.max}`
     );
   }
 
@@ -97,9 +99,7 @@ async function fetchRegions(
     .where(and(...conditions));
 }
 
-async function fetchBenchmark(
-  name: string,
-): Promise<BenchmarkRow | undefined> {
+async function fetchBenchmark(name: string): Promise<BenchmarkRow | undefined> {
   const rows = await db
     .select()
     .from(demographicsBenchmarks)
@@ -129,14 +129,14 @@ export const getDemographics = tool({
       .max(3)
       .default("GHA")
       .describe(
-        "ISO 3166-1 alpha-3 country code (e.g., GHA, NGA, KEN, USA, GBR). Defaults to GHA.",
+        "ISO 3166-1 alpha-3 country code (e.g., GHA, NGA, KEN, USA, GBR). Defaults to GHA."
       ),
     region: z
       .string()
       .max(100)
       .optional()
       .describe(
-        "Get demographics for a specific region (e.g., 'Northern', 'Greater Accra', 'Lagos')",
+        "Get demographics for a specific region (e.g., 'Northern', 'Greater Accra', 'Lagos')"
       ),
     query: z
       .enum([
@@ -150,7 +150,7 @@ export const getDemographics = tool({
         "high_impact_sites",
       ])
       .describe(
-        "Type of query: region_profile (single region details), all_regions (summary table), underserved_ranking (ranked by healthcare access gaps), age_demographics (age distribution analysis), disease_burden (disease prevalence by region), who_benchmarks (compare to WHO/international standards), urban_rural_gap (urban vs rural service availability), high_impact_sites (population + infrastructure sweet spots)",
+        "Type of query: region_profile (single region details), all_regions (summary table), underserved_ranking (ranked by healthcare access gaps), age_demographics (age distribution analysis), disease_burden (disease prevalence by region), who_benchmarks (compare to WHO/international standards), urban_rural_gap (urban vs rural service availability), high_impact_sites (population + infrastructure sweet spots)"
       ),
     gdpRange: z
       .object({
@@ -193,7 +193,7 @@ export const getDemographics = tool({
       const filteredRegions = await fetchRegions(
         countryCode,
         gdpRange,
-        populationRange,
+        populationRange
       );
 
       let output: Record<string, unknown>;
@@ -315,9 +315,7 @@ export const getDemographics = tool({
                 working,
                 over65: o65,
                 over65Population: Math.round((pop * o65) / 100),
-                estimatedCataractDemand: Math.round(
-                  (pop * o65) / 100 * 0.05,
-                ),
+                estimatedCataractDemand: Math.round(((pop * o65) / 100) * 0.05),
                 estimatedPediatricDemand: Math.round((pop * u15) / 100),
               };
             }),
@@ -370,20 +368,17 @@ export const getDemographics = tool({
         case "who_benchmarks": {
           const whoBenchmark = await fetchBenchmark("WHO Minimum");
           const developedAvg = await fetchBenchmark(
-            "Developed Country Average",
+            "Developed Country Average"
           );
 
           const regionData = region
             ? await findRegion(countryCode, region)
             : undefined;
-          const comparisonRegions = regionData
-            ? [regionData]
-            : filteredRegions;
+          const comparisonRegions = regionData ? [regionData] : filteredRegions;
 
           const whoDoctors = whoBenchmark?.doctorsPer1000 ?? 1;
           const devDoctors = developedAvg?.doctorsPer1000 ?? 1;
-          const devMortality =
-            developedAvg?.maternalMortalityPer100k ?? 1;
+          const devMortality = developedAvg?.maternalMortalityPer100k ?? 1;
 
           output = {
             whoBenchmarks: whoBenchmark,
@@ -406,28 +401,23 @@ export const getDemographics = tool({
         case "urban_rural_gap": {
           const urbanRegions = filteredRegions.filter(
             (r) =>
-              r.classification === "urban-heavy" ||
-              (r.urbanPercent ?? 0) > 50,
+              r.classification === "urban-heavy" || (r.urbanPercent ?? 0) > 50
           );
           const ruralRegions = filteredRegions.filter(
             (r) =>
-              r.classification === "rural-heavy" ||
-              (r.ruralPercent ?? 0) > 60,
+              r.classification === "rural-heavy" || (r.ruralPercent ?? 0) > 60
           );
 
           const avgDoctors = (regions: RegionRow[]) =>
             regions.length > 0
-              ? regions.reduce(
-                  (sum, r) => sum + (r.doctorsPer1000 ?? 0),
-                  0,
-                ) / regions.length
+              ? regions.reduce((sum, r) => sum + (r.doctorsPer1000 ?? 0), 0) /
+                regions.length
               : 0;
           const avgMortality = (regions: RegionRow[]) =>
             regions.length > 0
               ? regions.reduce(
-                  (sum, r) =>
-                    sum + (r.maternalMortalityPer100k ?? 0),
-                  0,
+                  (sum, r) => sum + (r.maternalMortalityPer100k ?? 0),
+                  0
                 ) / regions.length
               : 0;
 
@@ -444,19 +434,15 @@ export const getDemographics = tool({
             })),
             gap: {
               avgDoctorsUrban:
-                Math.round(avgDoctors(urbanRegions) * 1_000) / 1_000,
+                Math.round(avgDoctors(urbanRegions) * 1000) / 1000,
               avgDoctorsRural:
-                Math.round(avgDoctors(ruralRegions) * 1_000) / 1_000,
+                Math.round(avgDoctors(ruralRegions) * 1000) / 1000,
               urbanToRuralRatio:
                 avgDoctors(ruralRegions) > 0
                   ? `${(avgDoctors(urbanRegions) / avgDoctors(ruralRegions)).toFixed(1)}x`
                   : "N/A",
-              avgMaternalMortalityUrban: Math.round(
-                avgMortality(urbanRegions),
-              ),
-              avgMaternalMortalityRural: Math.round(
-                avgMortality(ruralRegions),
-              ),
+              avgMaternalMortalityUrban: Math.round(avgMortality(urbanRegions)),
+              avgMaternalMortalityRural: Math.round(avgMortality(ruralRegions)),
             },
           };
           break;
@@ -468,8 +454,7 @@ export const getDemographics = tool({
 
           const scored = filteredRegions.map((r) => {
             const popScore = (r.population ?? 0) / 1_000_000;
-            const needScore =
-              (whoDoctors - (r.doctorsPer1000 ?? 0)) * 10;
+            const needScore = (whoDoctors - (r.doctorsPer1000 ?? 0)) * 10;
             const accessibilityScore = (r.urbanPercent ?? 0) / 100;
             const impactScore =
               popScore * needScore * (0.5 + accessibilityScore);
@@ -501,9 +486,7 @@ export const getDemographics = tool({
       return output;
     } catch (error: unknown) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Unknown demographics error";
+        error instanceof Error ? error.message : "Unknown demographics error";
       log.error(error, { region, query }, Date.now() - start);
       return { error: `Demographics query failed: ${message}` };
     }

@@ -27,10 +27,10 @@ export function ToolResultRouter({
   if (AGENT_TOOLS.has(toolName)) {
     return (
       <AgentDelegationCard
-        toolCallId={toolCallId}
-        toolName={toolName}
         args={args}
         result={result}
+        toolCallId={toolCallId}
+        toolName={toolName}
       />
     );
   }
@@ -38,10 +38,10 @@ export function ToolResultRouter({
   if (!result) {
     return (
       <ToolTrace
-        toolCallId={toolCallId}
-        toolName={toolName}
         args={args}
         result={result}
+        toolCallId={toolCallId}
+        toolName={toolName}
       />
     );
   }
@@ -49,10 +49,10 @@ export function ToolResultRouter({
   if ("error" in result) {
     return (
       <ToolTrace
-        toolCallId={toolCallId}
-        toolName={toolName}
         args={args}
         result={result}
+        toolCallId={toolCallId}
+        toolName={toolName}
       />
     );
   }
@@ -64,11 +64,10 @@ export function ToolResultRouter({
 
   return (
     <ToolTrace
-      toolCallId={toolCallId}
-      toolName={toolName}
       args={args}
       result={result}
+      toolCallId={toolCallId}
+      toolName={toolName}
     />
   );
 }
-

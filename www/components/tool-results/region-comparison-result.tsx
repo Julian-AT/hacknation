@@ -18,12 +18,16 @@ interface RegionComparisonResultProps {
   result: Record<string, unknown>;
 }
 
-export function RegionComparisonResult({ result }: RegionComparisonResultProps) {
+export function RegionComparisonResult({
+  result,
+}: RegionComparisonResultProps) {
   const comparison = (result.comparison as RegionData[]) ?? [];
   const gaps = (result.gaps as string[]) ?? [];
   const specialtyFilter = result.specialtyFilter as string | null;
 
-  if (comparison.length === 0) return null;
+  if (comparison.length === 0) {
+    return null;
+  }
 
   const metrics: { key: keyof RegionData; label: string; format?: "number" }[] =
     [
@@ -39,7 +43,7 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
       ...comparison.map((r) => {
         const val = r[key];
         return typeof val === "number" ? val : 0;
-      }),
+      })
     );
   };
 
@@ -68,8 +72,8 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
               </th>
               {comparison.map((r) => (
                 <th
-                  key={r.region}
                   className="px-2 py-1.5 text-[11px] font-semibold text-foreground"
+                  key={r.region}
                 >
                   {r.region}
                 </th>
@@ -81,8 +85,8 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
               const max = getMaxForMetric(metric.key);
               return (
                 <tr
-                  key={metric.key}
                   className="border-b border-border/50 last:border-0"
+                  key={metric.key}
                 >
                   <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
                     {metric.label}
@@ -93,11 +97,11 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
                     const isMax = numVal === max && max > 0;
                     return (
                       <td
-                        key={`${r.region}-${metric.key}`}
                         className={cn(
                           "whitespace-nowrap px-2 py-1.5 font-mono",
-                          isMax ? "text-cyan-400" : "text-foreground",
+                          isMax ? "text-cyan-400" : "text-foreground"
                         )}
+                        key={`${r.region}-${metric.key}`}
                       >
                         {val === null
                           ? "—"
@@ -116,8 +120,8 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
               </td>
               {comparison.map((r) => (
                 <td
-                  key={`${r.region}-specialties`}
                   className="px-2 py-1.5 text-muted-foreground"
+                  key={`${r.region}-specialties`}
                 >
                   {r.topSpecialties?.slice(0, 3).join(", ") || "—"}
                 </td>
@@ -134,7 +138,7 @@ export function RegionComparisonResult({ result }: RegionComparisonResultProps) 
           </span>
           <div className="flex flex-col gap-1">
             {gaps.map((gap) => (
-              <span key={gap} className="text-[11px] text-amber-400">
+              <span className="text-[11px] text-amber-400" key={gap}>
                 {gap}
               </span>
             ))}

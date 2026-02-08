@@ -1,11 +1,11 @@
 "use client";
 
-import { Globe, ExternalLink } from "lucide-react";
+import { ExternalLink, Globe } from "lucide-react";
 import {
-  Sources,
-  SourcesTrigger,
-  SourcesContent,
   Source,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
 } from "@/components/ai-elements/sources";
 
 interface SearchResult {
@@ -48,14 +48,14 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
       <div className="flex flex-col gap-1.5 px-3 py-2">
         {results.slice(0, 3).map((item) => (
           <div
-            key={item.url}
             className="flex flex-col gap-1 rounded-md bg-muted p-2.5"
+            key={item.url}
           >
             <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs font-medium text-blue-400 hover:text-blue-300"
+              href={item.url}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {item.title}
               <ExternalLink className="size-3 shrink-0" />
@@ -78,7 +78,7 @@ export function WebSearchResult({ result }: WebSearchResultProps) {
             <SourcesTrigger count={results.length - 3} />
             <SourcesContent>
               {results.slice(3).map((item) => (
-                <Source key={item.url} href={item.url} title={item.title} />
+                <Source href={item.url} key={item.url} title={item.title} />
               ))}
             </SourcesContent>
           </Sources>

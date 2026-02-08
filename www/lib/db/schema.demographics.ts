@@ -1,11 +1,11 @@
 import {
+  bigint,
+  doublePrecision,
+  index,
   pgTable,
   serial,
   text,
-  bigint,
-  doublePrecision,
   timestamp,
-  index,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -14,25 +14,22 @@ import {
 // demographics_countries — one row per country (national-level indicators)
 // ---------------------------------------------------------------------------
 
-export const demographicsCountries = pgTable(
-  "demographics_countries",
-  {
-    countryCode: varchar("country_code", { length: 3 }).primaryKey(),
-    countryName: text("country_name").notNull(),
+export const demographicsCountries = pgTable("demographics_countries", {
+  countryCode: varchar("country_code", { length: 3 }).primaryKey(),
+  countryName: text("country_name").notNull(),
 
-    totalPopulation: bigint("total_population", { mode: "number" }),
-    gdpPerCapitaUsd: doublePrecision("gdp_per_capita_usd"),
-    doctorsPer1000: doublePrecision("doctors_per_1000"),
-    nursesPer1000: doublePrecision("nurses_per_1000"),
-    bedsPer1000: doublePrecision("beds_per_1000"),
-    maternalMortalityPer100k: doublePrecision("maternal_mortality_per_100k"),
-    under5MortalityPer1k: doublePrecision("under5_mortality_per_1k"),
-    lifeExpectancy: doublePrecision("life_expectancy"),
+  totalPopulation: bigint("total_population", { mode: "number" }),
+  gdpPerCapitaUsd: doublePrecision("gdp_per_capita_usd"),
+  doctorsPer1000: doublePrecision("doctors_per_1000"),
+  nursesPer1000: doublePrecision("nurses_per_1000"),
+  bedsPer1000: doublePrecision("beds_per_1000"),
+  maternalMortalityPer100k: doublePrecision("maternal_mortality_per_100k"),
+  under5MortalityPer1k: doublePrecision("under5_mortality_per_1k"),
+  lifeExpectancy: doublePrecision("life_expectancy"),
 
-    dataSource: text("data_source"),
-    updatedAt: timestamp("updated_at").defaultNow(),
-  },
-);
+  dataSource: text("data_source"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // ---------------------------------------------------------------------------
 // demographics_regions — regional data (16 rows for Ghana, extensible)
@@ -75,10 +72,10 @@ export const demographicsRegions = pgTable(
   (table) => ({
     countryRegionUniq: uniqueIndex("idx_demo_region_uniq").on(
       table.countryCode,
-      table.region,
+      table.region
     ),
     countryIdx: index("idx_demo_region_country").on(table.countryCode),
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------

@@ -1,15 +1,15 @@
+import { tool } from "ai";
+import { and, cosineDistance, desc, ilike, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
-import { sql, desc, cosineDistance, and, isNotNull, ilike } from "drizzle-orm";
 import { facilities } from "../../db/schema.facilities";
 import { embed } from "../../embed";
-import { tool } from "ai";
 import { createToolLogger } from "./debug";
 import {
-  withTimeout,
   clampNumber,
   DB_QUERY_TIMEOUT_MS,
   MAX_SEARCH_ROWS,
+  withTimeout,
 } from "./safeguards";
 
 export const searchFacilities = tool({
@@ -35,7 +35,10 @@ export const searchFacilities = tool({
       .describe("Filter by facility type (Hospital, Clinic, etc.)"),
     limit: z.number().min(1).max(50).default(10),
   }),
-  execute: async ({ query, region, facilityType, limit: rawLimit }, { abortSignal }) => {
+  execute: async (
+    { query, region, facilityType, limit: rawLimit },
+    { abortSignal }
+  ) => {
     const limit = clampNumber(rawLimit, 1, MAX_SEARCH_ROWS, 10);
     const log = createToolLogger("searchFacilities");
     const start = Date.now();
@@ -95,7 +98,11 @@ export const searchFacilities = tool({
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown search error";
-      log.error(error, { query, region, facilityType, limit }, Date.now() - start);
+      log.error(
+        error,
+        { query, region, facilityType, limit },
+        Date.now() - start
+      );
       return { error: `Search failed: ${message}` };
     }
   },

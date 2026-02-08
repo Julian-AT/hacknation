@@ -30,13 +30,11 @@ export const FacilityMapArtifact = defineArtifact(
         distanceKm: z.number().optional(),
         doctors: z.number().nullable(),
         beds: z.number().nullable(),
-      }),
+      })
     ),
-    stage: z
-      .enum(["loading", "querying", "complete"])
-      .default("loading"),
+    stage: z.enum(["loading", "querying", "complete"]).default("loading"),
     progress: z.number().min(0).max(1).default(0),
-  }),
+  })
 );
 
 /**
@@ -56,7 +54,7 @@ export const MedicalDesertArtifact = defineArtifact(
         lat: z.number(),
         lng: z.number(),
         city: z.string().nullable(),
-      }),
+      })
     ),
     desertZones: z.array(
       z.object({
@@ -64,13 +62,11 @@ export const MedicalDesertArtifact = defineArtifact(
         nearestProvider: z.string().nullable(),
         distanceKm: z.number(),
         coordinates: z.object({ lat: z.number(), lng: z.number() }),
-      }),
+      })
     ),
-    stage: z
-      .enum(["loading", "analyzing", "complete"])
-      .default("loading"),
+    stage: z.enum(["loading", "analyzing", "complete"]).default("loading"),
     progress: z.number().min(0).max(1).default(0),
-  }),
+  })
 );
 
 /**
@@ -87,7 +83,7 @@ export const StatsDashboardArtifact = defineArtifact(
     stats: z.array(z.record(z.string(), z.unknown())).default([]),
     stage: z.enum(["loading", "complete"]).default("loading"),
     progress: z.number().min(0).max(1).default(0),
-  }),
+  })
 );
 
 /**
@@ -118,11 +114,9 @@ export const MissionPlanArtifact = defineArtifact(
           })
           .optional(),
         suggestedLocation: z.string().optional(),
-      }),
+      })
     ),
-    stage: z
-      .enum(["loading", "planning", "complete"])
-      .default("loading"),
+    stage: z.enum(["loading", "planning", "complete"]).default("loading"),
     progress: z.number().min(0).max(1).default(0),
-  }),
+  })
 );

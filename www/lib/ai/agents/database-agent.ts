@@ -1,10 +1,10 @@
-import { ToolLoopAgent, stepCountIs } from "ai";
+import { stepCountIs, ToolLoopAgent } from "ai";
 import { getLanguageModel } from "../providers";
-import { queryDatabase } from "../tools/queryDatabase";
-import { searchFacilities } from "../tools/searchFacilities";
+import { getDemographics } from "../tools/getDemographics";
 import { getFacility } from "../tools/getFacility";
 import { getSchema } from "../tools/getSchema";
-import { getDemographics } from "../tools/getDemographics";
+import { queryDatabase } from "../tools/queryDatabase";
+import { searchFacilities } from "../tools/searchFacilities";
 import { databaseAgentPrompt } from "./prompts";
 
 /**
@@ -27,7 +27,7 @@ export const databaseAgent = new ToolLoopAgent({
     getDemographics,
   },
   stopWhen: stepCountIs(8),
-  prepareStep: async ({ stepNumber }) => {
+  prepareStep: ({ stepNumber }) => {
     // Phase 1 (steps 0-1): Schema discovery + initial query
     if (stepNumber <= 1) {
       return {

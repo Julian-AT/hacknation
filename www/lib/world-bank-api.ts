@@ -40,11 +40,13 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 
 /** Default cache TTL: 24 hours */
-const CACHE_TTL_MS = 24 * 60 * 60 * 1_000;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function getCached(key: string): number | undefined {
   const entry = cache.get(key);
-  if (!entry) return undefined;
+  if (!entry) {
+    return undefined;
+  }
   if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
     cache.delete(key);
     return undefined;
@@ -71,11 +73,13 @@ interface WorldBankDataPoint {
  */
 export async function fetchIndicator(
   countryCode: string,
-  indicatorId: IndicatorCode,
+  indicatorId: IndicatorCode
 ): Promise<number | undefined> {
   const cacheKey = `${countryCode}:${indicatorId}`;
   const cached = getCached(cacheKey);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    return cached;
+  }
 
   try {
     const url = `https://api.worldbank.org/v2/country/${countryCode}/indicator/${indicatorId}?format=json&date=2018:2026&per_page=20`;
@@ -83,7 +87,9 @@ export async function fetchIndicator(
       signal: AbortSignal.timeout(10_000),
     });
 
-    if (!response.ok) return undefined;
+    if (!response.ok) {
+      return undefined;
+    }
 
     const json = await response.json();
 
@@ -96,7 +102,9 @@ export async function fetchIndicator(
 
     // Find the most recent non-null value (data is sorted newest-first)
     const latest = dataPoints.find((dp) => dp.value !== null);
-    if (!latest || latest.value === null) return undefined;
+    if (!latest || latest.value === null) {
+      return undefined;
+    }
 
     setCache(cacheKey, latest.value);
     return latest.value;
@@ -115,7 +123,7 @@ export async function fetchIndicator(
  * successfully returned data; leaves others unchanged.
  */
 export async function refreshCountryData(
-  countryCode: string,
+  countryCode: string
 ): Promise<{ updated: string[]; failed: string[] }> {
   const indicatorCodes = Object.keys(INDICATOR_MAP) as IndicatorCode[];
 
@@ -123,7 +131,7 @@ export async function refreshCountryData(
     indicatorCodes.map(async (code) => {
       const value = await fetchIndicator(countryCode, code);
       return { code, field: INDICATOR_MAP[code], value };
-    }),
+    })
   );
 
   const updatePayload: Record<string, number> = {};
@@ -136,9 +144,7 @@ export async function refreshCountryData(
       updated.push(result.value.field);
     } else {
       const field =
-        result.status === "fulfilled"
-          ? result.value.field
-          : "unknown";
+        result.status === "fulfilled" ? result.value.field : "unknown";
       failed.push(field);
     }
   }

@@ -7,12 +7,7 @@ import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
 import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
-import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-} from "./elements/tool";
+import { Tool, ToolContent, ToolHeader, ToolInput } from "./elements/tool";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
@@ -44,9 +39,8 @@ const PurePreviewMessage = ({
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
-  const attachmentsFromMessage = message.parts?.filter(
-    (part) => part.type === "file"
-  ) ?? [];
+  const attachmentsFromMessage =
+    message.parts?.filter((part) => part.type === "file") ?? [];
 
   useDataStream();
 
@@ -78,7 +72,10 @@ const PurePreviewMessage = ({
                 (message.parts?.some(
                   (p) => p.type === "text" && p.text?.trim()
                 ) ||
-                  message.parts?.some((p) => p.type.startsWith("tool-") || p.type === "dynamic-tool"))) ||
+                  message.parts?.some(
+                    (p) =>
+                      p.type.startsWith("tool-") || p.type === "dynamic-tool"
+                  ))) ||
               mode === "edit",
             "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
               message.role === "user" && mode !== "edit",
@@ -258,7 +255,7 @@ const PurePreviewMessage = ({
             if (type.startsWith("tool-") || type === "dynamic-tool") {
               const toolName =
                 type === "dynamic-tool"
-                  ? ((part as unknown as { toolName: string }).toolName)
+                  ? (part as unknown as { toolName: string }).toolName
                   : type.slice(5); // Remove "tool-" prefix
 
               const toolPart = part as unknown as {
@@ -270,15 +267,15 @@ const PurePreviewMessage = ({
 
               return (
                 <ToolResultRouter
-                  key={toolPart.toolCallId}
-                  toolCallId={toolPart.toolCallId}
-                  toolName={toolName}
                   args={toolPart.input ?? {}}
+                  key={toolPart.toolCallId}
                   result={
                     toolPart.state === "output-available"
                       ? toolPart.output
                       : undefined
                   }
+                  toolCallId={toolPart.toolCallId}
+                  toolName={toolName}
                 />
               );
             }

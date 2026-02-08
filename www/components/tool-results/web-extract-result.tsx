@@ -3,10 +3,10 @@
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import {
-  Sources,
-  SourcesTrigger,
-  SourcesContent,
   Source,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
 } from "@/components/ai-elements/sources";
 
 interface WebExtractResultProps {
@@ -34,7 +34,7 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
             <SourcesTrigger count={urls.length} />
             <SourcesContent>
               {urls.map((url) => (
-                <Source key={url} href={url} title={url} />
+                <Source href={url} key={url} title={url} />
               ))}
             </SourcesContent>
           </Sources>
@@ -57,9 +57,9 @@ export function WebExtractResult({ result }: WebExtractResultProps) {
               Result
             </span>
             <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
               className="text-[10px] text-blue-400 hover:text-blue-300"
+              onClick={() => setIsExpanded(!isExpanded)}
+              type="button"
             >
               {isExpanded ? "Collapse" : "Expand"}
             </button>

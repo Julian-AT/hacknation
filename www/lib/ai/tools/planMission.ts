@@ -1,11 +1,11 @@
+import { tool } from "ai";
+import { and, ilike, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
-import { and, isNotNull, ilike, sql } from "drizzle-orm";
 import { CITY_COORDS } from "../../ghana";
-import { tool } from "ai";
 import { createToolLogger } from "./debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "./safeguards";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "./safeguards";
 
 // Note: CITY_COORDS used as reference cities for desert zone analysis.
 // Future: augment with cities from other countries for global coverage.
@@ -125,12 +125,14 @@ export const planMission = tool({
           abortSignal
         );
 
-        const hostName = largestHospitals.length > 0
-          ? largestHospitals[0].name
-          : "a major teaching hospital in the region";
-        const hostRegion = largestHospitals.length > 0
-          ? `${largestHospitals[0].city ?? largestHospitals[0].region ?? "Major City"} (Teaching Hospitals)`
-          : "Major City (Teaching Hospitals)";
+        const hostName =
+          largestHospitals.length > 0
+            ? largestHospitals[0].name
+            : "a major teaching hospital in the region";
+        const hostRegion =
+          largestHospitals.length > 0
+            ? `${largestHospitals[0].city ?? largestHospitals[0].region ?? "Major City"} (Teaching Hospitals)`
+            : "Major City (Teaching Hospitals)";
 
         recommendations.push({
           priority: "Critical - National Gap",
@@ -147,10 +149,7 @@ export const planMission = tool({
         const DESERT_THRESHOLD_KM = 50;
         const cityEntries = Object.entries(CITY_COORDS);
 
-        log.step(
-          "Computing desert zones for cities",
-          cityEntries.length
-        );
+        log.step("Computing desert zones for cities", cityEntries.length);
 
         const desertZones: Array<{
           city: string;
@@ -245,8 +244,7 @@ export const planMission = tool({
                 id: host.id,
                 name: host.name,
                 city: host.city,
-                distanceKm:
-                  Math.round(Number(host.distanceKm) * 10) / 10,
+                distanceKm: Math.round(Number(host.distanceKm) * 10) / 10,
               },
             });
           } else {
@@ -303,7 +301,11 @@ export const planMission = tool({
           reason:
             "General need for specialists in underserved rural districts.",
           suggestedHost: fallbackHost
-            ? { id: fallbackHost.id, name: fallbackHost.name, city: fallbackHost.city }
+            ? {
+                id: fallbackHost.id,
+                name: fallbackHost.name,
+                city: fallbackHost.city,
+              }
             : { name: "Contact local health authority for placement" },
         });
       }
@@ -340,11 +342,7 @@ export const planMission = tool({
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown planning error";
-      log.error(
-        error,
-        { specialty, duration, preference },
-        Date.now() - start
-      );
+      log.error(error, { specialty, duration, preference }, Date.now() - start);
       return { error: `Planning failed: ${message}` };
     }
   },

@@ -6,7 +6,11 @@ config({
 });
 
 export default defineConfig({
-  schema: ["./lib/db/schema.ts", "./lib/db/schema.facilities.ts", "./lib/db/schema.demographics.ts"],
+  schema: [
+    "./lib/db/schema.ts",
+    "./lib/db/schema.facilities.ts",
+    "./lib/db/schema.demographics.ts",
+  ],
   out: "./lib/db/migrations",
   dialect: "postgresql",
   dbCredentials: {

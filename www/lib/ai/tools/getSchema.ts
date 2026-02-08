@@ -1,12 +1,12 @@
-import { z } from "zod";
 import { tool } from "ai";
+import { z } from "zod";
+import type { ColumnDef } from "./schema-map";
 import {
-  FACILITIES_SCHEMA,
+  DEMOGRAPHICS_BENCHMARKS_SCHEMA,
   DEMOGRAPHICS_COUNTRIES_SCHEMA,
   DEMOGRAPHICS_REGIONS_SCHEMA,
-  DEMOGRAPHICS_BENCHMARKS_SCHEMA,
+  FACILITIES_SCHEMA,
 } from "./schema-map";
-import type { ColumnDef } from "./schema-map";
 
 const TABLE_SCHEMAS: Record<string, ColumnDef[]> = {
   facilities: FACILITIES_SCHEMA,
@@ -32,20 +32,25 @@ export const getSchema = tool({
     "Retrieve the database schema for any table (facilities, demographics_countries, demographics_regions, demographics_benchmarks). Returns column names, data types, and descriptions. Use before writing SQL if unsure about column names, or after a 'column does not exist' error. All column names use snake_case.",
   inputSchema: z.object({
     table: z
-      .enum(["facilities", "demographics_countries", "demographics_regions", "demographics_benchmarks"])
+      .enum([
+        "facilities",
+        "demographics_countries",
+        "demographics_regions",
+        "demographics_benchmarks",
+      ])
       .default("facilities")
       .describe(
-        "Table to get schema for. Options: facilities, demographics_countries, demographics_regions, demographics_benchmarks",
+        "Table to get schema for. Options: facilities, demographics_countries, demographics_regions, demographics_benchmarks"
       ),
     filter: z
       .string()
       .max(100)
       .optional()
       .describe(
-        'Optional keyword to filter columns (e.g. "address", "mortality", "doctors"). Returns all columns if omitted.',
+        'Optional keyword to filter columns (e.g. "address", "mortality", "doctors"). Returns all columns if omitted.'
       ),
   }),
-  execute: async ({ table, filter }) => {
+  execute: ({ table, filter }) => {
     const schema = TABLE_SCHEMAS[table];
 
     if (!schema) {
@@ -62,7 +67,7 @@ export const getSchema = tool({
         (col) =>
           col.column.includes(lower) ||
           col.type.includes(lower) ||
-          col.description.toLowerCase().includes(lower),
+          col.description.toLowerCase().includes(lower)
       );
     }
 

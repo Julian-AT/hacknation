@@ -1,20 +1,17 @@
 "use client";
 
 import {
-  Database,
-  Map as MapIcon,
-  Stethoscope,
-  Globe,
+  BotIcon,
   ChevronDown,
   ChevronRight,
-  BotIcon,
+  Database,
+  Globe,
+  Map as MapIcon,
+  Stethoscope,
   WrenchIcon,
 } from "lucide-react";
 import { useState } from "react";
-import {
-  Agent,
-  AgentContent,
-} from "@/components/ai-elements/agent";
+import { Agent, AgentContent } from "@/components/ai-elements/agent";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ToolTrace } from "../vf-ui/ToolTrace";
@@ -115,7 +112,9 @@ function extractToolInfo(part: NestedPart): {
     name = type.slice(5);
   }
 
-  if (!name || !part.toolCallId) return null;
+  if (!name || !part.toolCallId) {
+    return null;
+  }
 
   return {
     toolName: name,
@@ -154,11 +153,11 @@ function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
             // Fall back to ToolTrace
             return (
               <ToolTrace
+                args={args}
                 key={toolCallId}
+                result={toolResult}
                 toolCallId={toolCallId}
                 toolName={toolName}
-                args={args}
-                result={toolResult}
               />
             );
           }
@@ -167,8 +166,8 @@ function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
           if (part.type === "text" && part.text?.trim()) {
             return (
               <div
-                key={`text-${idx.toString()}`}
                 className="rounded-md bg-muted p-2.5 text-xs leading-relaxed text-muted-foreground"
+                key={`text-${idx.toString()}`}
               >
                 {part.text}
               </div>
@@ -196,7 +195,7 @@ function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
 }
 
 export function AgentDelegationCard({
-  toolCallId,
+  toolCallId: _toolCallId,
   toolName,
   args,
   result,
@@ -213,9 +212,9 @@ export function AgentDelegationCard({
     <Agent className="my-2 border-border bg-muted/50">
       {/* Agent header */}
       <button
-        type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
         className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-muted/80"
+        onClick={() => setIsExpanded(!isExpanded)}
+        type="button"
       >
         <div className="flex items-center gap-2">
           <Icon className={cn("size-4", config.color)} />
@@ -282,8 +281,8 @@ export function AgentDelegationCard({
             <div className="flex flex-wrap gap-1">
               {config.tools.map((tool) => (
                 <Badge
-                  key={tool}
                   className="gap-1 font-mono text-[10px]"
+                  key={tool}
                   variant="secondary"
                 >
                   <WrenchIcon className="size-2.5" />
@@ -294,9 +293,7 @@ export function AgentDelegationCard({
           </div>
 
           {/* Nested sub-tool results and agent text output */}
-          {result && (
-            <AgentNestedParts result={result} />
-          )}
+          {result && <AgentNestedParts result={result} />}
         </AgentContent>
       )}
     </Agent>

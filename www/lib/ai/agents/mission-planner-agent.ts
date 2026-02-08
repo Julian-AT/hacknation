@@ -12,13 +12,13 @@
  *   Phase 4 (9+):  Final synthesis — no tools, generate text
  */
 
-import { ToolLoopAgent, stepCountIs } from "ai";
+import { stepCountIs, ToolLoopAgent } from "ai";
 import { getLanguageModel } from "../providers";
-import { findNearby } from "../tools/findNearby";
-import { findMedicalDeserts } from "../tools/findMedicalDeserts";
-import { getFacility } from "../tools/getFacility";
 import { detectAnomalies } from "../tools/detectAnomalies";
 import { evaluatePlan } from "../tools/evaluate-plan";
+import { findMedicalDeserts } from "../tools/findMedicalDeserts";
+import { findNearby } from "../tools/findNearby";
+import { getFacility } from "../tools/getFacility";
 import { missionPlannerPrompt } from "./prompts";
 
 export const missionPlannerAgent = new ToolLoopAgent({
@@ -32,7 +32,7 @@ export const missionPlannerAgent = new ToolLoopAgent({
     evaluatePlan,
   },
   stopWhen: stepCountIs(12),
-  prepareStep: async ({ stepNumber }) => {
+  prepareStep: ({ stepNumber }) => {
     // Phase 1 (steps 0-2): Identify gaps
     if (stepNumber <= 2) {
       return {

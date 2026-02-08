@@ -18,7 +18,7 @@ export class ToolTimeoutError extends Error {
  * Wraps an async operation with a timeout and optional abort signal support.
  * Rejects with `ToolTimeoutError` if the operation exceeds `timeoutMs`.
  */
-export async function withTimeout<T>(
+export function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
   abortSignal?: AbortSignal
@@ -204,7 +204,8 @@ export function clampNumber(
   max: number,
   defaultValue: number
 ): number {
-  const num = typeof value === "number" && !Number.isNaN(value) ? value : defaultValue;
+  const num =
+    typeof value === "number" && !Number.isNaN(value) ? value : defaultValue;
   return Math.max(min, Math.min(max, num));
 }
 
@@ -219,7 +220,10 @@ export function isValidCoordinates(
     return { valid: false, reason: "Coordinates contain NaN values" };
   }
   if (lat < -90 || lat > 90) {
-    return { valid: false, reason: `Latitude ${lat} is out of range (-90..90)` };
+    return {
+      valid: false,
+      reason: `Latitude ${lat} is out of range (-90..90)`,
+    };
   }
   if (lng < -180 || lng > 180) {
     return {

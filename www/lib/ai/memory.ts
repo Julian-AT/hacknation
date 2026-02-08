@@ -1,12 +1,19 @@
-import {
+import type {
+  ConversationMessage,
+  MemoryProvider,
+  MemoryScope,
+  WorkingMemory,
+} from "@ai-sdk-tools/memory";
+
+export {
+  DEFAULT_TEMPLATE,
   formatWorkingMemory,
   getWorkingMemoryInstructions,
-  DEFAULT_TEMPLATE,
 } from "@ai-sdk-tools/memory";
-import type { MemoryProvider, WorkingMemory, MemoryScope, ConversationMessage } from "@ai-sdk-tools/memory";
+
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db";
-import { workingMemory, conversationMessages } from "../db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { conversationMessages, workingMemory } from "../db/schema";
 
 /**
  * Working memory template for CareMap healthcare analysis.
@@ -40,7 +47,9 @@ export class CareMapMemoryProvider implements MemoryProvider {
     scope: MemoryScope;
   }): Promise<WorkingMemory | null> {
     const scopeKey = params.scope === "user" ? params.userId : params.chatId;
-    if (!scopeKey) return null;
+    if (!scopeKey) {
+      return null;
+    }
 
     const rows = await db
       .select()
@@ -50,12 +59,14 @@ export class CareMapMemoryProvider implements MemoryProvider {
           eq(workingMemory.scope, params.scope),
           params.scope === "user"
             ? eq(workingMemory.userId, scopeKey)
-            : eq(workingMemory.chatId, scopeKey),
-        ),
+            : eq(workingMemory.chatId, scopeKey)
+        )
       )
       .limit(1);
 
-    if (rows.length === 0) return null;
+    if (rows.length === 0) {
+      return null;
+    }
 
     return {
       content: rows[0].content,
@@ -70,7 +81,9 @@ export class CareMapMemoryProvider implements MemoryProvider {
     content: string;
   }): Promise<void> {
     const scopeKey = params.scope === "user" ? params.userId : params.chatId;
-    if (!scopeKey) return;
+    if (!scopeKey) {
+      return;
+    }
 
     const id = `${params.scope}:${scopeKey}`;
     const now = new Date();
@@ -130,5 +143,3 @@ export class CareMapMemoryProvider implements MemoryProvider {
 }
 
 export const memoryProvider = new CareMapMemoryProvider();
-
-export { formatWorkingMemory, getWorkingMemoryInstructions, DEFAULT_TEMPLATE };

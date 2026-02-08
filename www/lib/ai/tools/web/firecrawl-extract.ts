@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { tool } from "ai";
 import FirecrawlApp from "@mendable/firecrawl-js";
+import { tool } from "ai";
+import { z } from "zod";
 import { createToolLogger } from "../debug";
 
 function getFirecrawlClient() {

@@ -1,7 +1,6 @@
 "use client";
 
-import { MapPin, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ExternalLink, MapPin } from "lucide-react";
 
 interface OSMFacilitiesResultProps {
   result: Record<string, unknown>;
@@ -67,8 +66,8 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
       <div className="flex flex-wrap gap-1.5 px-3 pb-2">
         {Object.entries(amenityCounts).map(([amenity, count]) => (
           <span
-            key={amenity}
             className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+            key={amenity}
           >
             {amenity}: {count}
           </span>
@@ -99,8 +98,8 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
           <tbody>
             {facilities.slice(0, 20).map((f) => (
               <tr
-                key={f.osmId}
                 className="border-b border-border/50 last:border-0"
+                key={f.osmId}
               >
                 <td className="max-w-[180px] truncate px-2 py-1.5 font-medium text-foreground">
                   {f.name}
@@ -132,10 +131,10 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
                 </td>
                 <td className="px-2 py-1.5">
                   <a
-                    href={f.osmUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="text-blue-400 hover:underline"
+                    href={f.osmUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
                   >
                     <ExternalLink className="size-3" />
                   </a>

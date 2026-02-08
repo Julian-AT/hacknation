@@ -1,8 +1,8 @@
-import { ToolLoopAgent, stepCountIs } from "ai";
+import { stepCountIs, ToolLoopAgent } from "ai";
 import { getLanguageModel } from "../providers";
-import { findNearby } from "../tools/findNearby";
-import { findMedicalDeserts } from "../tools/findMedicalDeserts";
 import { compareRegions } from "../tools/compareRegions";
+import { findMedicalDeserts } from "../tools/findMedicalDeserts";
+import { findNearby } from "../tools/findNearby";
 import { planMission } from "../tools/planMission";
 import { getTravelTime } from "../tools/web/openrouteservice";
 import { geospatialAgentPrompt } from "./prompts";
@@ -27,7 +27,7 @@ export const geospatialAgent = new ToolLoopAgent({
     getTravelTime,
   },
   stopWhen: stepCountIs(8),
-  prepareStep: async ({ stepNumber }) => {
+  prepareStep: ({ stepNumber }) => {
     // Phase 1 (steps 0-1): Gap identification
     if (stepNumber <= 1) {
       return {

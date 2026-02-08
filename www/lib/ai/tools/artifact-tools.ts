@@ -11,13 +11,12 @@ import type { ChatMessage } from "@/lib/types";
 import {
   FacilityMapArtifact,
   MedicalDesertArtifact,
-  StatsDashboardArtifact,
   MissionPlanArtifact,
+  StatsDashboardArtifact,
 } from "../artifacts/schemas";
-
+import { findMedicalDeserts as rawFindMedicalDeserts } from "./findMedicalDeserts";
 // Re-use the raw tool logic
 import { findNearby as rawFindNearby } from "./findNearby";
-import { findMedicalDeserts as rawFindMedicalDeserts } from "./findMedicalDeserts";
 import { getStats as rawGetStats } from "./getStats";
 import { planMission as rawPlanMission } from "./planMission";
 
@@ -43,13 +42,16 @@ export const findNearbyArtifact = ({ dataStream }: ArtifactToolDeps) =>
           stage: "loading",
           progress: 0,
         },
-        dataStream,
+        dataStream
       );
 
-      await art.update({ stage: "querying", progress: 0.3 } as Record<string, unknown>);
+      await art.update({ stage: "querying", progress: 0.3 } as Record<
+        string,
+        unknown
+      >);
 
       // Execute the real tool
-      const rawResult = await rawFindNearby.execute!(params, opts);
+      const rawResult = await rawFindNearby.execute?.(params, opts);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = rawResult as any;
 
@@ -64,19 +66,17 @@ export const findNearbyArtifact = ({ dataStream }: ArtifactToolDeps) =>
         center: { lat: result.center.lat, lng: result.center.lng },
         zoom: 10,
         radiusKm: result.radiusKm,
-        facilities: result.facilities.map(
-          (f: Record<string, unknown>) => ({
-            id: f.id as number,
-            name: f.name as string,
-            type: (f.type as string) ?? null,
-            city: (f.city as string) ?? null,
-            lat: f.lat as number,
-            lng: f.lng as number,
-            distanceKm: f.distanceKm as number,
-            doctors: (f.doctors as number) ?? null,
-            beds: (f.beds as number) ?? null,
-          }),
-        ),
+        facilities: result.facilities.map((f: Record<string, unknown>) => ({
+          id: f.id as number,
+          name: f.name as string,
+          type: (f.type as string) ?? null,
+          city: (f.city as string) ?? null,
+          lat: f.lat as number,
+          lng: f.lng as number,
+          distanceKm: f.distanceKm as number,
+          doctors: (f.doctors as number) ?? null,
+          beds: (f.beds as number) ?? null,
+        })),
         stage: "complete",
         progress: 1,
       });
@@ -87,9 +87,7 @@ export const findNearbyArtifact = ({ dataStream }: ArtifactToolDeps) =>
 
 // ── findMedicalDeserts → MedicalDesertArtifact ──────────────────────
 
-export const findMedicalDesertsArtifact = ({
-  dataStream,
-}: ArtifactToolDeps) =>
+export const findMedicalDesertsArtifact = ({ dataStream }: ArtifactToolDeps) =>
   tool({
     description: rawFindMedicalDeserts.description,
     inputSchema: rawFindMedicalDeserts.inputSchema,
@@ -105,12 +103,15 @@ export const findMedicalDesertsArtifact = ({
           stage: "loading",
           progress: 0,
         },
-        dataStream,
+        dataStream
       );
 
-      await art.update({ stage: "analyzing", progress: 0.3 } as Record<string, unknown>);
+      await art.update({ stage: "analyzing", progress: 0.3 } as Record<
+        string,
+        unknown
+      >);
 
-      const rawResult = await rawFindMedicalDeserts.execute!(params, opts);
+      const rawResult = await rawFindMedicalDeserts.execute?.(params, opts);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = rawResult as any;
 
@@ -139,17 +140,15 @@ export const findMedicalDesertsArtifact = ({
         thresholdKm: result.thresholdKm,
         totalProviders: result.totalProviders,
         providers: [],
-        desertZones: result.desertZones.map(
-          (z: Record<string, unknown>) => ({
-            city: z.city as string,
-            nearestProvider: (z.nearestProvider as string) ?? null,
-            distanceKm: z.distanceKm as number,
-            coordinates: z.coordinates as {
-              lat: number;
-              lng: number;
-            },
-          }),
-        ),
+        desertZones: result.desertZones.map((z: Record<string, unknown>) => ({
+          city: z.city as string,
+          nearestProvider: (z.nearestProvider as string) ?? null,
+          distanceKm: z.distanceKm as number,
+          coordinates: z.coordinates as {
+            lat: number;
+            lng: number;
+          },
+        })),
         stage: "complete",
         progress: 1,
       });
@@ -173,10 +172,10 @@ export const getStatsArtifact = ({ dataStream }: ArtifactToolDeps) =>
           stage: "loading",
           progress: 0,
         },
-        dataStream,
+        dataStream
       );
 
-      const rawResult = await rawGetStats.execute!(params, opts);
+      const rawResult = await rawGetStats.execute?.(params, opts);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = rawResult as any;
 
@@ -224,12 +223,15 @@ export const planMissionArtifact = ({ dataStream }: ArtifactToolDeps) =>
           stage: "loading",
           progress: 0,
         },
-        dataStream,
+        dataStream
       );
 
-      await art.update({ stage: "planning", progress: 0.3 } as Record<string, unknown>);
+      await art.update({ stage: "planning", progress: 0.3 } as Record<
+        string,
+        unknown
+      >);
 
-      const rawResult = await rawPlanMission.execute!(params, opts);
+      const rawResult = await rawPlanMission.execute?.(params, opts);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = rawResult as any;
 
@@ -249,7 +251,7 @@ export const planMissionArtifact = ({ dataStream }: ArtifactToolDeps) =>
             reason: r.reason as string,
             suggestedHost: r.suggestedHost,
             suggestedLocation: r.suggestedLocation,
-          }),
+          })
         ),
         stage: "complete",
         progress: 1,

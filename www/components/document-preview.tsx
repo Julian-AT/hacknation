@@ -211,16 +211,28 @@ const HitboxLayer = memo(PureHitboxLayer, (prevProps, nextProps) => {
 });
 
 function getArtifactIcon(kind: ArtifactKind) {
-  if (kind === "image") return <ImageIcon />;
-  if (kind === "code") return <CodeIcon />;
-  if (kind === "sheet") return <LineChartIcon />;
+  if (kind === "image") {
+    return <ImageIcon />;
+  }
+  if (kind === "code") {
+    return <CodeIcon />;
+  }
+  if (kind === "sheet") {
+    return <LineChartIcon />;
+  }
   return <FileIcon />;
 }
 
 function getArtifactLabel(kind: ArtifactKind) {
-  if (kind === "image") return "Image";
-  if (kind === "code") return "Code";
-  if (kind === "sheet") return "Spreadsheet";
+  if (kind === "image") {
+    return "Image";
+  }
+  if (kind === "code") {
+    return "Code";
+  }
+  if (kind === "sheet") {
+    return "Spreadsheet";
+  }
   return "Document";
 }
 

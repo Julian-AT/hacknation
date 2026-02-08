@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Eye } from "lucide-react";
+import { Search } from "lucide-react";
 import { useVF } from "@/lib/vf-context";
 
 interface FacilityResult {
@@ -26,9 +26,9 @@ export function SearchFacilitiesResult({
   const query = (result.query as string) ?? (args.query as string) ?? "";
   const count = (result.count as number) ?? 0;
   const results = (result.results as FacilityResult[]) ?? [];
-  const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
+  const { setMapFacilities, setMapVisible } = useVF();
 
-  const handleViewOnMap = (facility: FacilityResult) => {
+  const _handleViewOnMap = (facility: FacilityResult) => {
     setMapFacilities([
       {
         id: facility.id,
@@ -48,8 +48,7 @@ export function SearchFacilitiesResult({
         <div className="flex items-center gap-2">
           <Search className="size-3.5 text-green-400" />
           <span className="text-xs font-medium text-muted-foreground">
-            Facilities matching{" "}
-            <span className="text-foreground">{query}</span>
+            Facilities matching <span className="text-foreground">{query}</span>
           </span>
         </div>
         <span className="rounded-full bg-green-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-green-400">
@@ -60,8 +59,8 @@ export function SearchFacilitiesResult({
       <div className="flex flex-col gap-1.5 px-3 pb-3">
         {results.map((facility) => (
           <div
-            key={facility.id}
             className="flex flex-col gap-1.5 rounded-md bg-muted p-2.5"
+            key={facility.id}
           >
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-medium text-foreground">

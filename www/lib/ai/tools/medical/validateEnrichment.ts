@@ -1,10 +1,10 @@
+import { tool } from "ai";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../../db";
 import { facilities } from "../../../db/schema.facilities";
-import { eq } from "drizzle-orm";
-import { tool } from "ai";
 import { createToolLogger } from "../debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "../safeguards";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "../safeguards";
 
 /**
  * Enrichment validation — prevents false data injection.
@@ -74,9 +74,14 @@ type EnrichmentCheck = {
  * Checks against known regions for the given country code, if available.
  * Unknown regions are flagged (not rejected) since data may cover any country.
  */
-function validateRegion(value: string, countryCode?: string): { valid: boolean; reason: string } {
+function validateRegion(
+  value: string,
+  countryCode?: string
+): { valid: boolean; reason: string } {
   const normalized = value.trim();
-  const regions = countryCode ? KNOWN_REGIONS[countryCode.toUpperCase()] : undefined;
+  const regions = countryCode
+    ? KNOWN_REGIONS[countryCode.toUpperCase()]
+    : undefined;
 
   if (!regions) {
     // No known region list for this country — accept but flag
@@ -117,8 +122,8 @@ function validateNumericRange(
 ): { valid: boolean; reason: string } {
   const RANGES: Record<string, { min: number; max: number; label: string }> = {
     num_doctors: { min: 0, max: 5000, label: "doctor count" },
-    capacity: { min: 0, max: 10000, label: "bed count" },
-    area_sqm: { min: 10, max: 500000, label: "area (sqm)" },
+    capacity: { min: 0, max: 10_000, label: "bed count" },
+    area_sqm: { min: 10, max: 500_000, label: "area (sqm)" },
     year_established: { min: 1800, max: 2026, label: "year established" },
   };
 
@@ -133,14 +138,17 @@ function validateNumericRange(
       reason: `${range.label} value ${value} is outside plausible range (${range.min}-${range.max})`,
     };
   }
-  return { valid: true, reason: `${range.label} value ${value} is within plausible range` };
+  return {
+    valid: true,
+    reason: `${range.label} value ${value} is within plausible range`,
+  };
 }
 
 /**
  * Check if a new value contradicts existing non-null data.
  */
 function detectContradiction(
-  field: string,
+  _field: string,
   existing: string | number | boolean | null,
   proposed: string | number | boolean
 ): { contradicts: boolean; severity: "low" | "medium" | "high" } {
@@ -212,19 +220,18 @@ export const validateEnrichment = tool({
             ),
           confidence: z
             .enum(["high", "medium", "low"])
-            .describe(
-              "How confident the research agent is in this value"
-            ),
+            .describe("How confident the research agent is in this value"),
         })
       )
       .min(1)
       .max(20)
       .describe("Array of proposed field changes with source attribution"),
-    reasoning: z
-      .string()
-      .describe("Why these enrichments are being proposed"),
+    reasoning: z.string().describe("Why these enrichments are being proposed"),
   }),
-  execute: async ({ facilityId, proposedChanges, reasoning }, { abortSignal }) => {
+  execute: async (
+    { facilityId, proposedChanges, reasoning },
+    { abortSignal }
+  ) => {
     const log = createToolLogger("validateEnrichment");
     const start = Date.now();
     log.start({ facilityId, changeCount: proposedChanges.length, reasoning });
@@ -269,7 +276,8 @@ export const validateEnrichment = tool({
         // 1. Source validation — reject changes without proper source
         if (!source || source.trim().length < 5) {
           status = "rejected";
-          reason = "No valid source citation provided. All enrichments must be traceable.";
+          reason =
+            "No valid source citation provided. All enrichments must be traceable.";
           rejectedCount++;
           checks.push({
             field,
@@ -327,9 +335,7 @@ export const validateEnrichment = tool({
 
         if (field === "operator_type" && typeof value === "string") {
           const normalizedOp = value.toLowerCase().trim();
-          const isValid = VALID_OPERATOR_TYPES.some(
-            (t) => t === normalizedOp
-          );
+          const isValid = VALID_OPERATOR_TYPES.some((t) => t === normalizedOp);
           if (!isValid) {
             status = "rejected";
             reason = `Operator type "${value}" is not valid. Must be: ${VALID_OPERATOR_TYPES.join(", ")}`;
@@ -389,17 +395,15 @@ export const validateEnrichment = tool({
             reason = `Minor update from existing "${String(existingValue)}" to "${String(value)}". Source: ${source}`;
             acceptedCount++;
           }
-        } else {
+        } else if (existingValue === null || existingValue === "") {
           // No contradiction — filling in missing data or confirming existing
-          if (existingValue === null || existingValue === "") {
-            status = "accepted";
-            reason = `Fills missing ${field} value. Source: ${source}`;
-            acceptedCount++;
-          } else {
-            status = "accepted";
-            reason = `Confirms existing value. No change needed.`;
-            acceptedCount++;
-          }
+          status = "accepted";
+          reason = `Fills missing ${field} value. Source: ${source}`;
+          acceptedCount++;
+        } else {
+          status = "accepted";
+          reason = "Confirms existing value. No change needed.";
+          acceptedCount++;
         }
 
         checks.push({

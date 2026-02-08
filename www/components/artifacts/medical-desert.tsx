@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useTheme } from "next-themes";
-import { DeckGL, ScatterplotLayer } from "deck.gl";
 import type { MapViewState, PickingInfo } from "deck.gl";
-import { Map } from "react-map-gl/maplibre";
+import { DeckGL, ScatterplotLayer } from "deck.gl";
+import { useTheme } from "next-themes";
+import { useEffect, useMemo, useState } from "react";
+import { Map as MapGL } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const DARK_STYLE =
@@ -46,11 +46,7 @@ type MedicalDesertData = {
   progress: number;
 };
 
-export function MedicalDesertRenderer({
-  data,
-}: {
-  data: MedicalDesertData;
-}) {
+export function MedicalDesertRenderer({ data }: { data: MedicalDesertData }) {
   const [isMounted, setIsMounted] = useState(false);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -137,7 +133,9 @@ export function MedicalDesertRenderer({
   const getTooltip = useMemo(
     () =>
       ({ object, layer }: PickingInfo) => {
-        if (!object) return null;
+        if (!object) {
+          return null;
+        }
 
         if (layer?.id === "desert-markers") {
           const zone = object as DesertZone;
@@ -148,7 +146,7 @@ export function MedicalDesertRenderer({
           ];
           if (zone.nearestProvider) {
             lines.push(
-              `<div style="font-size:11px;color:#a1a1aa">(${escapeHtml(zone.nearestProvider)})</div>`,
+              `<div style="font-size:11px;color:#a1a1aa">(${escapeHtml(zone.nearestProvider)})</div>`
             );
           }
           return {
@@ -184,7 +182,7 @@ export function MedicalDesertRenderer({
 
         return null;
       },
-    [data.service],
+    [data.service]
   );
 
   if (!isMounted || !data) {
@@ -235,7 +233,7 @@ export function MedicalDesertRenderer({
           layers={layers}
           style={{ position: "relative", width: "100%", height: "100%" }}
         >
-          <Map key={mapStyle} mapStyle={mapStyle} />
+          <MapGL key={mapStyle} mapStyle={mapStyle} />
         </DeckGL>
 
         {/* Legend */}

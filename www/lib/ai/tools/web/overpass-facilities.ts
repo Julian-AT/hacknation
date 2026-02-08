@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { tool } from "ai";
+import { z } from "zod";
 import { createToolLogger } from "../debug";
 
 /**
@@ -34,7 +34,7 @@ export const queryOSMFacilities = tool({
       .number()
       .min(500)
       .max(50_000)
-      .default(5_000)
+      .default(5000)
       .describe("Search radius in meters (default: 5000)"),
     facilityType: z
       .enum(["all", "hospital", "clinic", "pharmacy", "doctors", "dentist"])
@@ -86,17 +86,15 @@ export const queryOSMFacilities = tool({
           amenity: tags.amenity ?? "unknown",
           lat: elLat,
           lng: elLng,
-          address: [
-            tags["addr:street"],
-            tags["addr:city"],
-            tags["addr:state"],
-          ]
-            .filter(Boolean)
-            .join(", ") || null,
+          address:
+            [tags["addr:street"], tags["addr:city"], tags["addr:state"]]
+              .filter(Boolean)
+              .join(", ") || null,
           phone: tags.phone ?? tags["contact:phone"] ?? null,
           website: tags.website ?? tags["contact:website"] ?? null,
           operator: tags.operator ?? null,
-          healthcareSpecialty: tags["healthcare:speciality"] ?? tags.healthcare ?? null,
+          healthcareSpecialty:
+            tags["healthcare:speciality"] ?? tags.healthcare ?? null,
           beds: tags.beds ? Number.parseInt(tags.beds, 10) : null,
           emergency: tags.emergency ?? null,
           openingHours: tags.opening_hours ?? null,

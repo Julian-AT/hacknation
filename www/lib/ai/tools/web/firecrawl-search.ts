@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { tool } from "ai";
 import FirecrawlApp from "@mendable/firecrawl-js";
+import { tool } from "ai";
+import { z } from "zod";
 import { createToolLogger } from "../debug";
 
 function getFirecrawlClient() {
@@ -48,7 +48,10 @@ export const firecrawlSearch = tool({
           title: String(r.title ?? "No title"),
           url: String(r.url ?? ""),
           snippet: String(
-            r.description ?? r.summary ?? r.markdown ?? "No description available"
+            r.description ??
+              r.summary ??
+              r.markdown ??
+              "No description available"
           ).slice(0, 300),
         };
       });

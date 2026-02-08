@@ -1,14 +1,14 @@
+import { tool } from "ai";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
-import { sql } from "drizzle-orm";
-import { tool } from "ai";
 import { createToolLogger } from "./debug";
 import {
-  validateReadOnlySQL,
-  withTimeout,
-  truncateResults,
   DB_QUERY_TIMEOUT_MS,
   MAX_RESULT_ROWS,
+  truncateResults,
+  validateReadOnlySQL,
+  withTimeout,
 } from "./safeguards";
 import { FACILITIES_COLUMN_MAP, FACILITIES_COLUMNS_HINT } from "./schema-map";
 
@@ -17,7 +17,10 @@ import { FACILITIES_COLUMN_MAP, FACILITIES_COLUMNS_HINT } from "./schema-map";
  * This is a safety net for when the LLM uses Drizzle-style camelCase names
  * (e.g. facilityType) instead of the actual PostgreSQL column names (facility_type).
  */
-function normalizeColumnNames(query: string): { normalized: string; corrected: boolean } {
+function normalizeColumnNames(query: string): {
+  normalized: string;
+  corrected: boolean;
+} {
   let normalized = query;
   let corrected = false;
 
@@ -65,7 +68,8 @@ export const queryDatabase = tool({
     log.start({ query, reasoning });
 
     // Auto-correct camelCase column names to snake_case
-    const { normalized: correctedQuery, corrected } = normalizeColumnNames(query);
+    const { normalized: correctedQuery, corrected } =
+      normalizeColumnNames(query);
     if (corrected) {
       log.step("Column names auto-corrected from camelCase to snake_case");
     }
@@ -100,14 +104,22 @@ export const queryDatabase = tool({
         count: totalCount,
         rows,
         truncated,
-        ...(corrected ? { note: "Column names were auto-corrected from camelCase to snake_case." } : {}),
+        ...(corrected
+          ? {
+              note: "Column names were auto-corrected from camelCase to snake_case.",
+            }
+          : {}),
       };
       log.success(output, Date.now() - start);
       return output;
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown query error";
-      log.error(error, { query: correctedQuery, reasoning }, Date.now() - start);
+      log.error(
+        error,
+        { query: correctedQuery, reasoning },
+        Date.now() - start
+      );
       return { error: `Query failed: ${enhanceColumnError(message)}` };
     }
   },

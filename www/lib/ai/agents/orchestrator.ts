@@ -13,31 +13,31 @@
  */
 
 import {
-  ToolLoopAgent,
   readUIMessageStream,
   stepCountIs,
+  ToolLoopAgent,
   tool,
   type UIMessageStreamWriter,
 } from "ai";
-import { z } from "zod";
 import type { Session } from "next-auth";
+import { z } from "zod";
 import type { ChatMessage } from "@/lib/types";
-import { artifactsPrompt } from "../prompts";
-import { getLanguageModel } from "../providers";
-import { getWeather } from "../tools/get-weather";
-import {
-  findNearbyArtifact,
-  findMedicalDesertsArtifact,
-  getStatsArtifact,
-  planMissionArtifact,
-} from "../tools/artifact-tools";
 import { cached } from "../cache";
 import {
-  memoryProvider,
   CAREMAP_MEMORY_TEMPLATE,
   formatWorkingMemory,
   getWorkingMemoryInstructions,
+  memoryProvider,
 } from "../memory";
+import { artifactsPrompt } from "../prompts";
+import { getLanguageModel } from "../providers";
+import {
+  findMedicalDesertsArtifact,
+  findNearbyArtifact,
+  getStatsArtifact,
+  planMissionArtifact,
+} from "../tools/artifact-tools";
+import { getWeather } from "../tools/get-weather";
 import { databaseAgent } from "./database-agent";
 import { geospatialAgent } from "./geospatial-agent";
 import { medicalReasoningAgent } from "./medical-reasoning-agent";
@@ -75,7 +75,7 @@ function createDelegationTool({
           "A detailed description of the task for the specialized agent to perform."
         ),
     }),
-    execute: async function* ({ task }, { abortSignal }) {
+    async *execute({ task }, { abortSignal }) {
       const result = await agent.stream(
         // Use the prompt + abortSignal pattern for subagent streaming
         { prompt: task, abortSignal } as Parameters<typeof agent.stream>[0]
@@ -152,11 +152,10 @@ function createParallelInvestigateTool() {
         tasks.map(async ({ agent, task }) => {
           const agentInstance = agentMap[agent as AgentName];
           try {
-            const result = await agentInstance.generate(
-              { prompt: task, abortSignal } as Parameters<
-                typeof agentInstance.generate
-              >[0]
-            );
+            const result = await agentInstance.generate({
+              prompt: task,
+              abortSignal,
+            } as Parameters<typeof agentInstance.generate>[0]);
             return {
               agent,
               task,
@@ -206,7 +205,7 @@ function createParallelInvestigateTool() {
  *   - Increased step limit: 15 (from 10) for complex multi-tool workflows
  */
 export async function createOrchestratorAgent({
-  session,
+  session: _session,
   dataStream,
   modelId,
   userId,
@@ -298,7 +297,9 @@ export async function createOrchestratorAgent({
             ),
         }),
         execute: async ({ content }) => {
-          if (!userId) return { success: false, reason: "No user context" };
+          if (!userId) {
+            return { success: false, reason: "No user context" };
+          }
           try {
             await memoryProvider.updateWorkingMemory({
               userId,
@@ -317,7 +318,7 @@ export async function createOrchestratorAgent({
     stopWhen: stepCountIs(15),
 
     // --- Phased execution control ---
-    prepareStep: async ({ stepNumber, messages }) => {
+    prepareStep: ({ stepNumber, messages }) => {
       // Phase 3 (steps 10+): Synthesis — nudge toward completion
       // Only keep memory tool so the agent writes a final response
       if (stepNumber >= 10) {
@@ -339,8 +340,9 @@ export async function createOrchestratorAgent({
     },
 
     // --- Step tracking for debugging ---
-    onStepFinish: async ({ usage, finishReason, toolCalls }) => {
-      const toolNames = toolCalls?.map((tc) => tc.toolName).join(", ") ?? "none";
+    onStepFinish: ({ usage, finishReason, toolCalls }) => {
+      const toolNames =
+        toolCalls?.map((tc) => tc.toolName).join(", ") ?? "none";
       console.log(
         `[Orchestrator] Step finished | reason=${finishReason} | tools=[${toolNames}] | tokens=${usage?.totalTokens ?? "?"}`
       );

@@ -35,8 +35,8 @@ export function WHODataResult({ result }: WHODataResultProps) {
               <tr className="border-b border-border">
                 {cols.map((col) => (
                   <th
-                    key={col}
                     className="whitespace-nowrap px-2 py-1 font-mono text-[11px] font-semibold text-muted-foreground"
+                    key={col}
                   >
                     {col === "indicator" ? "Indicator" : col}
                   </th>
@@ -46,18 +46,18 @@ export function WHODataResult({ result }: WHODataResultProps) {
             <tbody>
               {comparisonTable.map((row, i) => (
                 <tr
-                  key={`cmp-${String(i)}`}
                   className="border-b border-border/50 last:border-0"
+                  key={`cmp-${String(i)}`}
                 >
                   {cols.map((col) => (
                     <td
-                      key={`${String(i)}-${col}`}
                       className={cn(
                         "whitespace-nowrap px-2 py-1",
                         col === "indicator"
                           ? "max-w-[200px] truncate text-muted-foreground"
-                          : "font-mono text-foreground",
+                          : "font-mono text-foreground"
                       )}
+                      key={`${String(i)}-${col}`}
                     >
                       {String(row[col] ?? "—")}
                     </td>
@@ -77,7 +77,9 @@ export function WHODataResult({ result }: WHODataResultProps) {
   }
 
   // Single country mode
-  if (!indicators) return null;
+  if (!indicators) {
+    return null;
+  }
 
   const entries = Object.entries(indicators);
 
@@ -98,7 +100,7 @@ export function WHODataResult({ result }: WHODataResultProps) {
       {summary.length > 0 && (
         <div className="px-3 pb-2">
           {summary.map((line) => (
-            <p key={line} className="text-[11px] text-foreground">
+            <p className="text-[11px] text-foreground" key={line}>
               {line}
             </p>
           ))}
@@ -125,10 +127,7 @@ export function WHODataResult({ result }: WHODataResultProps) {
           </thead>
           <tbody>
             {entries.map(([key, data]) => (
-              <tr
-                key={key}
-                className="border-b border-border/50 last:border-0"
-              >
+              <tr className="border-b border-border/50 last:border-0" key={key}>
                 <td className="max-w-[220px] truncate px-2 py-1.5 text-muted-foreground">
                   {data.label}
                 </td>
@@ -180,9 +179,11 @@ function MiniTrend({
   points: { year: number; value: number | null }[];
 }) {
   const valid = points.filter(
-    (p): p is { year: number; value: number } => p.value !== null,
+    (p): p is { year: number; value: number } => p.value !== null
   );
-  if (valid.length < 2) return null;
+  if (valid.length < 2) {
+    return null;
+  }
 
   const latest = valid.at(0)?.value ?? 0;
   const previous = valid.at(1)?.value ?? 0;
@@ -194,13 +195,13 @@ function MiniTrend({
       <TrendingUp
         className={cn(
           "size-3",
-          isUp ? "text-emerald-400" : "rotate-180 text-rose-400",
+          isUp ? "text-emerald-400" : "rotate-180 text-rose-400"
         )}
       />
       <span
         className={cn(
           "text-[10px]",
-          isUp ? "text-emerald-400" : "text-rose-400",
+          isUp ? "text-emerald-400" : "text-rose-400"
         )}
       >
         {isUp ? "+" : ""}

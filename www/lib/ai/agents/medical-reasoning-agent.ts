@@ -1,10 +1,10 @@
-import { ToolLoopAgent, stepCountIs } from "ai";
+import { stepCountIs, ToolLoopAgent } from "ai";
 import { getLanguageModel } from "../providers";
 import { detectAnomalies } from "../tools/detectAnomalies";
-import { crossValidateClaims } from "../tools/medical/crossValidateClaims";
-import { classifyServices } from "../tools/medical/classifyServices";
-import { validateEnrichment } from "../tools/medical/validateEnrichment";
 import { analyzeTextEvidence } from "../tools/medical/analyzeTextEvidence";
+import { classifyServices } from "../tools/medical/classifyServices";
+import { crossValidateClaims } from "../tools/medical/crossValidateClaims";
+import { validateEnrichment } from "../tools/medical/validateEnrichment";
 import { medicalReasoningAgentPrompt } from "./prompts";
 
 /**
@@ -27,7 +27,7 @@ export const medicalReasoningAgent = new ToolLoopAgent({
     analyzeTextEvidence,
   },
   stopWhen: stepCountIs(8),
-  prepareStep: async ({ stepNumber }) => {
+  prepareStep: ({ stepNumber }) => {
     // Phase 1 (steps 0-1): Detection
     if (stepNumber <= 1) {
       return {

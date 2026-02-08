@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { tool } from "ai";
+import { z } from "zod";
 import { createToolLogger } from "../debug";
 
 /**
@@ -43,7 +43,7 @@ export const getTravelTime = tool({
       .enum(["route", "matrix"])
       .default("route")
       .describe(
-        "route: single A→B travel time. matrix: many-to-many distance/time matrix.",
+        "route: single A→B travel time. matrix: many-to-many distance/time matrix."
       ),
     profile: z
       .enum(["driving-car", "foot-walking", "cycling-regular"])
@@ -71,12 +71,12 @@ export const getTravelTime = tool({
           lat: z.number().min(-90).max(90),
           lng: z.number().min(-180).max(180),
           label: z.string().optional(),
-        }),
+        })
       )
       .max(25)
       .optional()
       .describe(
-        "Locations for matrix mode (max 25). First N are origins, rest are destinations.",
+        "Locations for matrix mode (max 25). First N are origins, rest are destinations."
       ),
     sourceCount: z
       .number()
@@ -84,10 +84,17 @@ export const getTravelTime = tool({
       .max(10)
       .optional()
       .describe(
-        "How many of the locations array are origins (matrix mode). Rest are destinations.",
+        "How many of the locations array are origins (matrix mode). Rest are destinations."
       ),
   }),
-  execute: async ({ mode, profile, origin, destination, locations, sourceCount }) => {
+  execute: async ({
+    mode,
+    profile,
+    origin,
+    destination,
+    locations,
+    sourceCount,
+  }) => {
     const log = createToolLogger("getTravelTime");
     const start = Date.now();
     log.start({ mode, profile });
@@ -115,12 +122,16 @@ export const getTravelTime = tool({
         if (!response.ok) {
           const text = await response.text();
           throw new Error(
-            `ORS API returned ${String(response.status)}: ${text.slice(0, 200)}`,
+            `ORS API returned ${String(response.status)}: ${text.slice(0, 200)}`
           );
         }
 
         const json = (await response.json()) as {
-          features?: { properties: ORSDirectionsResponse["routes"] extends (infer T)[] ? T : never }[];
+          features?: {
+            properties: ORSDirectionsResponse["routes"] extends (infer T)[]
+              ? T
+              : never;
+          }[];
         };
 
         const route = json.features?.at(0)?.properties;
@@ -128,7 +139,7 @@ export const getTravelTime = tool({
           return { error: "No route found between the two points" };
         }
 
-        const distanceKm = route.summary.distance / 1_000;
+        const distanceKm = route.summary.distance / 1000;
         const durationMin = route.summary.duration / 60;
 
         const output = {
@@ -158,7 +169,7 @@ export const getTravelTime = tool({
       const destinations = sourceCount
         ? Array.from(
             { length: locations.length - sourceCount },
-            (_, i) => i + sourceCount,
+            (_, i) => i + sourceCount
           )
         : undefined;
 
@@ -166,26 +177,27 @@ export const getTravelTime = tool({
         locations: coords,
         metrics: ["distance", "duration"],
       };
-      if (sources) body.sources = sources;
-      if (destinations) body.destinations = destinations;
+      if (sources) {
+        body.sources = sources;
+      }
+      if (destinations) {
+        body.destinations = destinations;
+      }
 
-      const response = await fetch(
-        `${ORS_BASE}/v2/matrix/${profile}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: apiKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(20_000),
+      const response = await fetch(`${ORS_BASE}/v2/matrix/${profile}`, {
+        method: "POST",
+        headers: {
+          Authorization: apiKey,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20_000),
+      });
 
       if (!response.ok) {
         const text = await response.text();
         throw new Error(
-          `ORS Matrix API returned ${String(response.status)}: ${text.slice(0, 200)}`,
+          `ORS Matrix API returned ${String(response.status)}: ${text.slice(0, 200)}`
         );
       }
 
@@ -195,9 +207,9 @@ export const getTravelTime = tool({
       const distances = json.distances ?? [];
 
       // Build readable results
-      const sourceLabels = (sources ?? Array.from({ length: locations.length }, (_, i) => i)).map(
-        (i) => locations[i]?.label ?? `Location ${String(i)}`,
-      );
+      const sourceLabels = (
+        sources ?? Array.from({ length: locations.length }, (_, i) => i)
+      ).map((i) => locations[i]?.label ?? `Location ${String(i)}`);
       const destLabels = (
         destinations ?? Array.from({ length: locations.length }, (_, i) => i)
       ).map((i) => locations[i]?.label ?? `Location ${String(i)}`);
@@ -207,9 +219,10 @@ export const getTravelTime = tool({
         destLabels.forEach((destLabel, di) => {
           const dur = durations[si]?.[di];
           const dist = distances[si]?.[di];
-          row[destLabel] = dur !== null && dur !== undefined
-            ? `${formatDuration(dur / 60)} (${String(Math.round((dist ?? 0) / 100) / 10)}km)`
-            : "N/A";
+          row[destLabel] =
+            dur !== null && dur !== undefined
+              ? `${formatDuration(dur / 60)} (${String(Math.round((dist ?? 0) / 100) / 10)}km)`
+              : "N/A";
         });
         return row;
       });
@@ -235,6 +248,8 @@ export const getTravelTime = tool({
 function formatDuration(minutes: number): string {
   const hrs = Math.floor(minutes / 60);
   const mins = Math.round(minutes % 60);
-  if (hrs === 0) return `${String(mins)}min`;
+  if (hrs === 0) {
+    return `${String(mins)}min`;
+  }
   return `${String(hrs)}h ${String(mins)}min`;
 }

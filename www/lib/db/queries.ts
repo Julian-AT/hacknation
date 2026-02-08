@@ -12,12 +12,11 @@ import {
   lt,
   type SQL,
 } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import { generateUUID } from "../utils";
+import { db } from ".";
 import {
   type Chat,
   chat,
@@ -32,12 +31,10 @@ import {
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
-import { db } from ".";
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
-
 
 export async function getUser(email: string): Promise<User[]> {
   try {

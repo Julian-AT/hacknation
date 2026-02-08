@@ -44,7 +44,7 @@ for (const [name, coords] of Object.entries(CITY_COORDS)) {
  * @returns GeoResult on success, GeoError on failure
  */
 export async function resolveLocation(
-  location: string,
+  location: string
 ): Promise<GeoResult | GeoError> {
   // 1. Try parsing as "lat,lng" coordinate pair
   if (location.includes(",")) {
@@ -114,8 +114,6 @@ export async function resolveLocation(
 /**
  * Type guard to check if a geocoding result is an error.
  */
-export function isGeoError(
-  result: GeoResult | GeoError,
-): result is GeoError {
+export function isGeoError(result: GeoResult | GeoError): result is GeoError {
   return "error" in result;
 }

@@ -1,7 +1,6 @@
 "use client";
 
-import { Activity, MapPin, Eye } from "lucide-react";
-import { useVF } from "@/lib/vf-context";
+import { Activity, MapPin } from "lucide-react";
 
 interface Recommendation {
   priority: string;
@@ -27,8 +26,6 @@ export function MissionPlanResult({ result }: MissionPlanResultProps) {
   > | null;
   const analysis = result.analysis as string | undefined;
   const recommendations = (result.recommendations as Recommendation[]) ?? [];
-  const { setMapVisible } = useVF();
-
   return (
     <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
       {/* Profile header */}
@@ -36,10 +33,8 @@ export function MissionPlanResult({ result }: MissionPlanResultProps) {
         <Activity className="size-3.5 text-pink-400" />
         <span className="text-xs font-medium text-muted-foreground">
           Mission Plan
-          {volunteerProfile?.specialty &&
-            `: ${volunteerProfile.specialty}`}
-          {volunteerProfile?.duration &&
-            `, ${volunteerProfile.duration}`}
+          {volunteerProfile?.specialty && `: ${volunteerProfile.specialty}`}
+          {volunteerProfile?.duration && `, ${volunteerProfile.duration}`}
         </span>
       </div>
 
@@ -56,8 +51,8 @@ export function MissionPlanResult({ result }: MissionPlanResultProps) {
       <div className="flex flex-col gap-1.5 px-3 py-3">
         {recommendations.map((rec, i) => (
           <div
-            key={`${rec.region}-${rec.priority}`}
             className="flex gap-2.5 rounded-md bg-muted p-2.5"
+            key={`${rec.region}-${rec.priority}`}
           >
             <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-cyan-400 font-mono text-xs font-bold text-foreground">
               {i + 1}
@@ -70,7 +65,9 @@ export function MissionPlanResult({ result }: MissionPlanResultProps) {
               {rec.suggestedHost && (
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">Host:</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Host:
+                  </span>
                   <span className="text-[10px] font-medium text-cyan-400">
                     {rec.suggestedHost.name}
                   </span>
@@ -84,7 +81,9 @@ export function MissionPlanResult({ result }: MissionPlanResultProps) {
               {rec.suggestedLocation && !rec.suggestedHost && (
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">Location:</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Location:
+                  </span>
                   <span className="text-[10px] font-medium text-cyan-400">
                     {rec.suggestedLocation}
                   </span>

@@ -1,5 +1,5 @@
-import { embed as aiEmbed } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { embed as aiEmbed } from "ai";
 
 /**
  * Generate a vector embedding for the given text using gateway-routed OpenAI embeddings.
@@ -12,7 +12,7 @@ export async function embed(text: string): Promise<number[]> {
 
   try {
     const { embedding } = await aiEmbed({
-      model: openai.embedding('text-embedding-3-small'),
+      model: openai.embedding("text-embedding-3-small"),
       value: text.replace(/\n/g, " ").trim(),
     });
     return embedding;

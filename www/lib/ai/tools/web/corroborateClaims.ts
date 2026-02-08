@@ -1,11 +1,11 @@
-import { z } from "zod";
-import { tool } from "ai";
 import FirecrawlApp from "@mendable/firecrawl-js";
+import { tool } from "ai";
+import { and, eq, ilike, isNotNull } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "../../../db";
 import { facilities } from "../../../db/schema.facilities";
-import { eq, ilike, and, isNotNull } from "drizzle-orm";
 import { createToolLogger } from "../debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "../safeguards";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "../safeguards";
 
 /**
  * Multi-Source Corroboration Tool — verifies facility claims across independent web sources.
@@ -79,7 +79,9 @@ export const corroborateClaims = tool({
       .string()
       .max(100)
       .optional()
-      .describe("Corroborate facilities in a region (picks top 3 with most claims)"),
+      .describe(
+        "Corroborate facilities in a region (picks top 3 with most claims)"
+      ),
     maxWebSearches: z
       .number()
       .min(1)
@@ -87,7 +89,10 @@ export const corroborateClaims = tool({
       .default(3)
       .describe("Maximum number of web searches to perform per facility"),
   }),
-  execute: async ({ facilityId, facilityName, region, maxWebSearches }, { abortSignal }) => {
+  execute: async (
+    { facilityId, facilityName, region, maxWebSearches },
+    { abortSignal }
+  ) => {
     const log = createToolLogger("corroborateClaims");
     const start = Date.now();
     log.start({ facilityId, facilityName, region, maxWebSearches });
@@ -166,7 +171,11 @@ export const corroborateClaims = tool({
               hasOfficialWebsite: hasWebsite,
               hasSocialMedia: hasSocial,
               webSourceCount: 0,
-              qualityScore: hasWebsite ? (hasSocial ? "medium" : "low") : "none",
+              qualityScore: hasWebsite
+                ? hasSocial
+                  ? "medium"
+                  : "low"
+                : "none",
             },
             corroborationRate: 0,
           };
@@ -210,10 +219,16 @@ export const corroborateClaims = tool({
         }
 
         // Execute web searches
-        const webSources: Array<{ title: string; url: string; snippet: string }> = [];
+        const webSources: Array<{
+          title: string;
+          url: string;
+          snippet: string;
+        }> = [];
 
         for (const query of searchQueries.slice(0, maxWebSearches)) {
-          if (abortSignal?.aborted) break;
+          if (abortSignal?.aborted) {
+            break;
+          }
           try {
             const searchData = await client.search(query, { limit: 3 });
             const webResults = searchData.web ?? [];
@@ -222,14 +237,16 @@ export const corroborateClaims = tool({
               const source = {
                 title: String(r.title ?? "No title"),
                 url: String(r.url ?? ""),
-                snippet: String(r.description ?? r.summary ?? r.markdown ?? "").slice(0, 300),
+                snippet: String(
+                  r.description ?? r.summary ?? r.markdown ?? ""
+                ).slice(0, 300),
               };
               // Avoid duplicates by URL
               if (!webSources.some((s) => s.url === source.url)) {
                 webSources.push(source);
               }
             }
-          } catch (e) {
+          } catch (_e) {
             log.step("Web search failed for query", query);
           }
         }
@@ -237,8 +254,12 @@ export const corroborateClaims = tool({
         log.step(`Web sources found for ${fac.name}`, webSources.length);
 
         // 3. Check which claims are corroborated
-        const allSnippets = webSources.map((s) => s.snippet.toLowerCase()).join(" ");
-        const allTitles = webSources.map((s) => s.title.toLowerCase()).join(" ");
+        const allSnippets = webSources
+          .map((s) => s.snippet.toLowerCase())
+          .join(" ");
+        const allTitles = webSources
+          .map((s) => s.title.toLowerCase())
+          .join(" ");
         const combinedWebText = `${allSnippets} ${allTitles}`;
 
         const corroboratedClaims: string[] = [];
@@ -252,7 +273,9 @@ export const corroborateClaims = tool({
           } else {
             // Try partial matching (e.g., "cataract" matching "cataract surgery")
             const words = claimLower.split(" ").filter((w) => w.length > 3);
-            const hasPartialMatch = words.some((word) => combinedWebText.includes(word));
+            const hasPartialMatch = words.some((word) =>
+              combinedWebText.includes(word)
+            );
             if (hasPartialMatch) {
               corroboratedClaims.push(claim);
             } else {
@@ -262,9 +285,10 @@ export const corroborateClaims = tool({
         }
 
         const totalClaims = allClaims.length;
-        const corroborationRate = totalClaims > 0
-          ? Math.round((corroboratedClaims.length / totalClaims) * 100) / 100
-          : 0;
+        const corroborationRate =
+          totalClaims > 0
+            ? Math.round((corroboratedClaims.length / totalClaims) * 100) / 100
+            : 0;
 
         // Quality score
         let qualityScore: "high" | "medium" | "low" | "none" = "none";
@@ -300,11 +324,20 @@ export const corroborateClaims = tool({
         facilitiesChecked: results.length,
         results,
         summary: {
-          avgCorroborationRate: results.length > 0
-            ? Math.round(results.reduce((sum, r) => sum + r.corroborationRate, 0) / results.length * 100)
-            : 0,
-          facilitiesWithHighQuality: results.filter((r) => r.websiteQuality.qualityScore === "high").length,
-          facilitiesWithNoWebPresence: results.filter((r) => r.websiteQuality.qualityScore === "none").length,
+          avgCorroborationRate:
+            results.length > 0
+              ? Math.round(
+                  (results.reduce((sum, r) => sum + r.corroborationRate, 0) /
+                    results.length) *
+                    100
+                )
+              : 0,
+          facilitiesWithHighQuality: results.filter(
+            (r) => r.websiteQuality.qualityScore === "high"
+          ).length,
+          facilitiesWithNoWebPresence: results.filter(
+            (r) => r.websiteQuality.qualityScore === "none"
+          ).length,
         },
       };
 
@@ -313,7 +346,11 @@ export const corroborateClaims = tool({
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown corroboration error";
-      log.error(error, { facilityId, facilityName, region }, Date.now() - start);
+      log.error(
+        error,
+        { facilityId, facilityName, region },
+        Date.now() - start
+      );
       return { error: `Claim corroboration failed: ${message}` };
     }
   },

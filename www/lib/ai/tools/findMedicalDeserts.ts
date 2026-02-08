@@ -1,11 +1,11 @@
+import { tool } from "ai";
+import { and, ilike, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
-import { and, isNotNull, ilike } from "drizzle-orm";
 import { CITY_COORDS } from "../../ghana";
-import { tool } from "ai";
 import { createToolLogger } from "./debug";
-import { withTimeout, clampNumber, DB_QUERY_TIMEOUT_MS } from "./safeguards";
+import { clampNumber, DB_QUERY_TIMEOUT_MS, withTimeout } from "./safeguards";
 
 // Note: CITY_COORDS is still used as reference points for desert analysis.
 // These are the cities checked against provider locations to find gaps.
@@ -149,7 +149,9 @@ export const findMedicalDeserts = tool({
       return output;
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Unknown desert analysis error";
+        error instanceof Error
+          ? error.message
+          : "Unknown desert analysis error";
       log.error(error, { service, thresholdKm }, Date.now() - start);
       return { error: `Desert analysis failed: ${message}` };
     }

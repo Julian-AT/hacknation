@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useTheme } from "next-themes";
-import { DeckGL, ScatterplotLayer } from "deck.gl";
 import type { MapViewState, PickingInfo } from "deck.gl";
-import { Map } from "react-map-gl/maplibre";
+import { DeckGL, ScatterplotLayer } from "deck.gl";
+import { useTheme } from "next-themes";
+import { useEffect, useMemo, useState } from "react";
+import { Map as MapGL } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const DARK_STYLE =
@@ -62,7 +62,7 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
       pitch: 0,
       bearing: 0,
     }),
-    [data.center.lat, data.center.lng, data.zoom],
+    [data.center.lat, data.center.lng, data.zoom]
   );
 
   const layers = useMemo(() => {
@@ -112,34 +112,36 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
   const getTooltip = useMemo(
     () =>
       ({ object }: PickingInfo<FacilityItem>) => {
-        if (!object) return null;
+        if (!object) {
+          return null;
+        }
 
         const lines = [
           `<div style="font-weight:600;font-size:13px;margin-bottom:2px">${escapeHtml(object.name)}</div>`,
         ];
         if (object.type) {
           lines.push(
-            `<div style="font-size:11px;color:#93c5fd">${escapeHtml(object.type)}</div>`,
+            `<div style="font-size:11px;color:#93c5fd">${escapeHtml(object.type)}</div>`
           );
         }
         if (object.city) {
           lines.push(
-            `<div style="font-size:11px;color:#a1a1aa">${escapeHtml(object.city)}</div>`,
+            `<div style="font-size:11px;color:#a1a1aa">${escapeHtml(object.city)}</div>`
           );
         }
         if (object.doctors !== null && object.doctors > 0) {
           lines.push(
-            `<div style="font-size:11px;color:#a1a1aa">${String(object.doctors)} doctors</div>`,
+            `<div style="font-size:11px;color:#a1a1aa">${String(object.doctors)} doctors</div>`
           );
         }
         if (object.beds !== null && object.beds > 0) {
           lines.push(
-            `<div style="font-size:11px;color:#a1a1aa">${String(object.beds)} beds</div>`,
+            `<div style="font-size:11px;color:#a1a1aa">${String(object.beds)} beds</div>`
           );
         }
         if (object.distanceKm !== undefined) {
           lines.push(
-            `<div style="font-size:11px;color:#60a5fa;margin-top:2px">${String(object.distanceKm)} km away</div>`,
+            `<div style="font-size:11px;color:#60a5fa;margin-top:2px">${String(object.distanceKm)} km away</div>`
           );
         }
 
@@ -155,7 +157,7 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
           },
         };
       },
-    [],
+    []
   );
 
   if (!isMounted || !data) {
@@ -211,7 +213,7 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
           layers={layers}
           style={{ position: "relative", width: "100%", height: "100%" }}
         >
-          <Map key={mapStyle} mapStyle={mapStyle} />
+          <MapGL key={mapStyle} mapStyle={mapStyle} />
         </DeckGL>
       </div>
 

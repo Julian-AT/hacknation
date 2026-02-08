@@ -1,16 +1,16 @@
+import { tool } from "ai";
+import { and, ilike, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
-import { sql, and, isNotNull, ilike } from "drizzle-orm";
-import { resolveLocation, isGeoError } from "../../geocode";
-import { tool } from "ai";
+import { isGeoError, resolveLocation } from "../../geocode";
 import { createToolLogger } from "./debug";
 import {
-  withTimeout,
-  isValidCoordinates,
   clampNumber,
   DB_QUERY_TIMEOUT_MS,
+  isValidCoordinates,
   MAX_SEARCH_ROWS,
+  withTimeout,
 } from "./safeguards";
 
 export const findNearby = tool({
@@ -41,7 +41,13 @@ export const findNearby = tool({
     limit: z.number().min(1).max(50).default(20),
   }),
   execute: async (
-    { location, radiusKm: rawRadiusKm, specialty, facilityType, limit: rawLimit },
+    {
+      location,
+      radiusKm: rawRadiusKm,
+      specialty,
+      facilityType,
+      limit: rawLimit,
+    },
     { abortSignal }
   ) => {
     const radiusKm = clampNumber(rawRadiusKm, 1, 500, 50);
@@ -57,7 +63,10 @@ export const findNearby = tool({
       return { error: geo.error };
     }
     const { lat, lng } = geo;
-    log.step(`Resolved location "${location}" -> "${geo.resolvedName}"`, { lat, lng });
+    log.step(`Resolved location "${location}" -> "${geo.resolvedName}"`, {
+      lat,
+      lng,
+    });
 
     // Validate coordinates
     const coordCheck = isValidCoordinates(lat, lng);

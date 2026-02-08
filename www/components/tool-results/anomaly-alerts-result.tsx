@@ -2,7 +2,6 @@
 
 import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface AnomalyDetail {
   type: string;
@@ -35,7 +34,7 @@ export function AnomalyAlertsResult({ result }: AnomalyAlertsResultProps) {
 
       <div className="flex flex-col gap-1.5 px-3 pb-3">
         {details.map((detail) => (
-          <AnomalyItem key={detail.type} detail={detail} />
+          <AnomalyItem detail={detail} key={detail.type} />
         ))}
       </div>
     </div>
@@ -58,9 +57,9 @@ function AnomalyItem({ detail }: { detail: AnomalyDetail }) {
 
       {detail.facilities.length > 0 && (
         <button
-          type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
           className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+          onClick={() => setIsExpanded(!isExpanded)}
+          type="button"
         >
           {isExpanded ? (
             <ChevronDown className="size-3" />

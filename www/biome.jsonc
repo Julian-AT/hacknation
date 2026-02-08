@@ -5,6 +5,12 @@
     "ultracite/biome/next",
     "ultracite/biome/react"
   ],
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": false,
+    "defaultBranch": "main"
+  },
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2
@@ -34,7 +40,14 @@
       "style": {
         "noMagicNumbers": "off",
         "noNestedTernary": "off",
-        "useConsistentTypeDefinitions": "off"
+        "useConsistentTypeDefinitions": "off",
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": {
+            "requireAscii": true,
+            "filenameCases": ["kebab-case", "camelCase", "PascalCase"]
+          }
+        }
       },
       "nursery": {
         "noUnnecessaryConditions": "off",

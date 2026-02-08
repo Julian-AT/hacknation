@@ -32,16 +32,18 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
           )}
           {facilitiesByType.slice(0, 4).map((item) => {
             const label = String(
-              item.facility_type ?? item.type ?? "Unknown",
+              item.facility_type ?? item.type ?? "Unknown"
             ).toUpperCase();
             const value = Number(item.count ?? 0);
-            return <MetricCard key={label} label={label} value={value} accent />;
+            return (
+              <MetricCard accent key={label} label={label} value={value} />
+            );
           })}
           {facilitiesWithCoordinates !== undefined && (
             <MetricCard
+              accent
               label="GEO-CODED"
               value={facilitiesWithCoordinates}
-              accent
             />
           )}
         </div>
@@ -60,25 +62,25 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
                 {Object.keys(stats.at(0) as Record<string, unknown>).map(
                   (col) => (
                     <th
-                      key={col}
                       className="whitespace-nowrap px-2 py-1 font-mono text-[11px] font-semibold text-muted-foreground"
+                      key={col}
                     >
                       {col}
                     </th>
-                  ),
+                  )
                 )}
               </tr>
             </thead>
             <tbody>
               {stats.slice(0, 10).map((row, i) => (
                 <tr
-                  key={`stat-${String(i)}`}
                   className="border-b border-border/50 last:border-0"
+                  key={`stat-${String(i)}`}
                 >
                   {Object.values(row).map((val, j) => (
                     <td
-                      key={`${String(i)}-${String(j)}`}
                       className="whitespace-nowrap px-2 py-1 text-foreground"
+                      key={`${String(i)}-${String(j)}`}
                     >
                       {val === null
                         ? "—"

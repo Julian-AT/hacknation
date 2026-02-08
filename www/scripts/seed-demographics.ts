@@ -13,15 +13,15 @@ import dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
+  demographicsBenchmarks,
   demographicsCountries,
   demographicsRegions,
-  demographicsBenchmarks,
 } from "../lib/db/schema.demographics";
 import {
-  GHANA_REGIONS,
-  GHANA_NATIONAL,
-  WHO_BENCHMARKS,
   DEVELOPED_COUNTRY_AVERAGES,
+  GHANA_NATIONAL,
+  GHANA_REGIONS,
+  WHO_BENCHMARKS,
 } from "../lib/ghana-demographics";
 
 dotenv.config({ path: ".env.local" });
@@ -48,9 +48,9 @@ async function seed() {
       countryName: "Ghana",
       totalPopulation: GHANA_NATIONAL.totalPopulation,
       gdpPerCapitaUsd: GHANA_NATIONAL.gdpPerCapitaUsd,
-      doctorsPer1000: GHANA_NATIONAL.doctorsPerCapita * 1_000,
-      nursesPer1000: GHANA_NATIONAL.nursesPerCapita * 1_000,
-      bedsPer1000: GHANA_NATIONAL.bedsPerCapita * 1_000,
+      doctorsPer1000: GHANA_NATIONAL.doctorsPerCapita * 1000,
+      nursesPer1000: GHANA_NATIONAL.nursesPerCapita * 1000,
+      bedsPer1000: GHANA_NATIONAL.bedsPerCapita * 1000,
       maternalMortalityPer100k: GHANA_NATIONAL.maternalMortalityPer100k,
       under5MortalityPer1k: GHANA_NATIONAL.under5MortalityPer1k,
       lifeExpectancy: GHANA_NATIONAL.lifeExpectancy,
@@ -62,9 +62,9 @@ async function seed() {
         countryName: "Ghana",
         totalPopulation: GHANA_NATIONAL.totalPopulation,
         gdpPerCapitaUsd: GHANA_NATIONAL.gdpPerCapitaUsd,
-        doctorsPer1000: GHANA_NATIONAL.doctorsPerCapita * 1_000,
-        nursesPer1000: GHANA_NATIONAL.nursesPerCapita * 1_000,
-        bedsPer1000: GHANA_NATIONAL.bedsPerCapita * 1_000,
+        doctorsPer1000: GHANA_NATIONAL.doctorsPerCapita * 1000,
+        nursesPer1000: GHANA_NATIONAL.nursesPerCapita * 1000,
+        bedsPer1000: GHANA_NATIONAL.bedsPerCapita * 1000,
         maternalMortalityPer100k: GHANA_NATIONAL.maternalMortalityPer100k,
         under5MortalityPer1k: GHANA_NATIONAL.under5MortalityPer1k,
         lifeExpectancy: GHANA_NATIONAL.lifeExpectancy,
@@ -97,8 +97,8 @@ async function seed() {
         ageOver65Pct: r.ageDistribution.over65,
         maternalMortalityPer100k: r.healthIndicators.maternalMortalityPer100k,
         under5MortalityPer1k: r.healthIndicators.under5MortalityPer1k,
-        doctorsPer1000: r.healthIndicators.doctorsPerCapita * 1_000,
-        nursesPer1000: r.healthIndicators.nursesPerCapita * 1_000,
+        doctorsPer1000: r.healthIndicators.doctorsPerCapita * 1000,
+        nursesPer1000: r.healthIndicators.nursesPerCapita * 1000,
         diseaseBurden: r.diseaseBurden,
         dataSource: "Ghana Statistical Service 2021 Census, WHO",
       })
@@ -118,8 +118,8 @@ async function seed() {
           ageOver65Pct: r.ageDistribution.over65,
           maternalMortalityPer100k: r.healthIndicators.maternalMortalityPer100k,
           under5MortalityPer1k: r.healthIndicators.under5MortalityPer1k,
-          doctorsPer1000: r.healthIndicators.doctorsPerCapita * 1_000,
-          nursesPer1000: r.healthIndicators.nursesPerCapita * 1_000,
+          doctorsPer1000: r.healthIndicators.doctorsPerCapita * 1000,
+          nursesPer1000: r.healthIndicators.nursesPerCapita * 1000,
           diseaseBurden: r.diseaseBurden,
           dataSource: "Ghana Statistical Service 2021 Census, WHO",
           updatedAt: new Date(),
@@ -137,9 +137,9 @@ async function seed() {
     .insert(demographicsBenchmarks)
     .values({
       benchmarkName: "WHO Minimum",
-      doctorsPer1000: WHO_BENCHMARKS.doctorsPerCapita * 1_000,
-      nursesPer1000: WHO_BENCHMARKS.nursesPerCapita * 1_000,
-      bedsPer1000: WHO_BENCHMARKS.bedsPerCapita * 1_000,
+      doctorsPer1000: WHO_BENCHMARKS.doctorsPerCapita * 1000,
+      nursesPer1000: WHO_BENCHMARKS.nursesPerCapita * 1000,
+      bedsPer1000: WHO_BENCHMARKS.bedsPerCapita * 1000,
       ophthalmologistsPerCapita: WHO_BENCHMARKS.ophthalmologistsPerCapita,
       surgeonsPerCapita: WHO_BENCHMARKS.surgeonsPerCapita,
       operatingRoomsPer100k: WHO_BENCHMARKS.operatingRoomsPer100k,
@@ -148,9 +148,9 @@ async function seed() {
     .onConflictDoUpdate({
       target: demographicsBenchmarks.benchmarkName,
       set: {
-        doctorsPer1000: WHO_BENCHMARKS.doctorsPerCapita * 1_000,
-        nursesPer1000: WHO_BENCHMARKS.nursesPerCapita * 1_000,
-        bedsPer1000: WHO_BENCHMARKS.bedsPerCapita * 1_000,
+        doctorsPer1000: WHO_BENCHMARKS.doctorsPerCapita * 1000,
+        nursesPer1000: WHO_BENCHMARKS.nursesPerCapita * 1000,
+        bedsPer1000: WHO_BENCHMARKS.bedsPerCapita * 1000,
         ophthalmologistsPerCapita: WHO_BENCHMARKS.ophthalmologistsPerCapita,
         surgeonsPerCapita: WHO_BENCHMARKS.surgeonsPerCapita,
         operatingRoomsPer100k: WHO_BENCHMARKS.operatingRoomsPer100k,
@@ -164,9 +164,9 @@ async function seed() {
     .insert(demographicsBenchmarks)
     .values({
       benchmarkName: "Developed Country Average",
-      doctorsPer1000: DEVELOPED_COUNTRY_AVERAGES.doctorsPerCapita * 1_000,
-      nursesPer1000: DEVELOPED_COUNTRY_AVERAGES.nursesPerCapita * 1_000,
-      bedsPer1000: DEVELOPED_COUNTRY_AVERAGES.bedsPerCapita * 1_000,
+      doctorsPer1000: DEVELOPED_COUNTRY_AVERAGES.doctorsPerCapita * 1000,
+      nursesPer1000: DEVELOPED_COUNTRY_AVERAGES.nursesPerCapita * 1000,
+      bedsPer1000: DEVELOPED_COUNTRY_AVERAGES.bedsPerCapita * 1000,
       maternalMortalityPer100k:
         DEVELOPED_COUNTRY_AVERAGES.maternalMortalityPer100k,
       under5MortalityPer1k: DEVELOPED_COUNTRY_AVERAGES.under5MortalityPer1k,
@@ -175,9 +175,9 @@ async function seed() {
     .onConflictDoUpdate({
       target: demographicsBenchmarks.benchmarkName,
       set: {
-        doctorsPer1000: DEVELOPED_COUNTRY_AVERAGES.doctorsPerCapita * 1_000,
-        nursesPer1000: DEVELOPED_COUNTRY_AVERAGES.nursesPerCapita * 1_000,
-        bedsPer1000: DEVELOPED_COUNTRY_AVERAGES.bedsPerCapita * 1_000,
+        doctorsPer1000: DEVELOPED_COUNTRY_AVERAGES.doctorsPerCapita * 1000,
+        nursesPer1000: DEVELOPED_COUNTRY_AVERAGES.nursesPerCapita * 1000,
+        bedsPer1000: DEVELOPED_COUNTRY_AVERAGES.bedsPerCapita * 1000,
         maternalMortalityPer100k:
           DEVELOPED_COUNTRY_AVERAGES.maternalMortalityPer100k,
         under5MortalityPer1k: DEVELOPED_COUNTRY_AVERAGES.under5MortalityPer1k,

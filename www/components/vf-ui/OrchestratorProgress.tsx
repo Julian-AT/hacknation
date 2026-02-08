@@ -1,20 +1,19 @@
 "use client";
 
 import {
-  Database,
-  Map as MapIcon,
-  Stethoscope,
-  Globe,
+  BotIcon,
   CheckCircleIcon,
   ClockIcon,
-  BotIcon,
+  Database,
+  Globe,
+  Map as MapIcon,
+  Stethoscope,
 } from "lucide-react";
-import type { ReactNode } from "react";
 import {
   Task,
-  TaskTrigger,
   TaskContent,
   TaskItem,
+  TaskTrigger,
 } from "@/components/ai-elements/task";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -64,8 +63,6 @@ interface OrchestratorProgressProps {
   steps: ToolStep[];
   /** Whether the orchestrator is still streaming */
   isStreaming?: boolean;
-  /** Child elements to render for each step (e.g. ToolResultRouter output) */
-  children?: ReactNode;
 }
 
 /**
@@ -76,14 +73,17 @@ interface OrchestratorProgressProps {
 export function OrchestratorProgress({
   steps,
   isStreaming = false,
-  children,
 }: OrchestratorProgressProps) {
   const agentSteps = steps.filter((s) => AGENT_TOOLS.has(s.toolName));
-  const completedCount = agentSteps.filter((s) => s.result !== undefined).length;
+  const completedCount = agentSteps.filter(
+    (s) => s.result !== undefined
+  ).length;
   const totalCount = agentSteps.length;
 
   // Don't render if no agent delegation steps
-  if (totalCount === 0) return null;
+  if (totalCount === 0) {
+    return null;
+  }
 
   const allDone = completedCount === totalCount && !isStreaming;
   const title = allDone
@@ -118,7 +118,9 @@ export function OrchestratorProgress({
       <TaskContent>
         {agentSteps.map((step) => {
           const config = AGENT_CONFIG[step.toolName];
-          if (!config) return null;
+          if (!config) {
+            return null;
+          }
           const Icon = config.icon;
           const task = step.args.task as string | undefined;
           const isDone = step.result !== undefined;
@@ -126,7 +128,9 @@ export function OrchestratorProgress({
           return (
             <TaskItem key={step.toolCallId}>
               <div className="flex items-start gap-2">
-                <Icon className={cn("mt-0.5 size-3.5 shrink-0", config.color)} />
+                <Icon
+                  className={cn("mt-0.5 size-3.5 shrink-0", config.color)}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium text-foreground">

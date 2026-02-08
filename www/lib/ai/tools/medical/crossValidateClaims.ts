@@ -1,12 +1,11 @@
+import { tool } from "ai";
+import { and, eq, ilike, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../../db";
 import { facilities } from "../../../db/schema.facilities";
-import { eq, ilike, and, isNotNull } from "drizzle-orm";
-import { tool } from "ai";
-import { createToolLogger } from "../debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "../safeguards";
-
 import { MEDICAL_KNOWLEDGE } from "../../../medical-knowledge";
+import { createToolLogger } from "../debug";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "../safeguards";
 
 /**
  * Procedure → Equipment map drawn from the centralized medical knowledge base.
@@ -49,10 +48,7 @@ export const crossValidateClaims = tool({
       .default("all")
       .describe("Type of validation to perform"),
   }),
-  execute: async (
-    { facilityId, region, validationType },
-    { abortSignal }
-  ) => {
+  execute: async ({ facilityId, region, validationType }, { abortSignal }) => {
     const log = createToolLogger("crossValidateClaims");
     const start = Date.now();
     log.start({ facilityId, region, validationType });
@@ -161,7 +157,10 @@ export const crossValidateClaims = tool({
                 const missingEquipment = thresholds.requiredEquipment.filter(
                   (eq) => !equipText.includes(eq.toLowerCase())
                 );
-                if (missingEquipment.length === thresholds.requiredEquipment.length) {
+                if (
+                  missingEquipment.length ===
+                  thresholds.requiredEquipment.length
+                ) {
                   issues.push(
                     `none of the required equipment found (${thresholds.requiredEquipment.join(", ")})`
                   );
@@ -173,8 +172,7 @@ export const crossValidateClaims = tool({
                   facilityId: fac.id,
                   facilityName: fac.name,
                   validationType: "specialty_infrastructure_gap",
-                  severity:
-                    issues.length > 1 ? "critical" : "high",
+                  severity: issues.length > 1 ? "critical" : "high",
                   finding: `Claims "${specialty}" but has insufficient infrastructure: ${issues.join("; ")}.`,
                   evidence: {
                     claimedSpecialty: specialty,
@@ -193,9 +191,10 @@ export const crossValidateClaims = tool({
         facilitiesChecked: rows.length,
         issuesFound: results.length,
         results: results.slice(0, 15),
-        summary: results.length > 0
-          ? `Found ${results.length} validation issues across ${rows.length} facilities.`
-          : `All ${rows.length} facilities passed validation checks.`,
+        summary:
+          results.length > 0
+            ? `Found ${results.length} validation issues across ${rows.length} facilities.`
+            : `All ${rows.length} facilities passed validation checks.`,
       };
       log.success(output, Date.now() - start);
       return output;

@@ -5,16 +5,12 @@ type StatsDashboardData = {
   groupBy?: string;
   totalFacilities?: number;
   facilitiesWithCoordinates?: number;
-  stats: Array<Record<string, unknown>>;
+  stats: Record<string, unknown>[];
   stage: string;
   progress: number;
 };
 
-export function StatsDashboardRenderer({
-  data,
-}: {
-  data: StatsDashboardData;
-}) {
+export function StatsDashboardRenderer({ data }: { data: StatsDashboardData }) {
   if (!data) {
     return (
       <div className="flex size-full items-center justify-center bg-muted text-muted-foreground">
@@ -30,7 +26,9 @@ export function StatsDashboardRenderer({
     <div className="flex size-full flex-col overflow-y-auto bg-background">
       {/* Header */}
       <div className="border-b border-border px-6 py-4">
-        <h2 className="text-lg font-semibold text-foreground text-balance">{data.title}</h2>
+        <h2 className="text-lg font-semibold text-foreground text-balance">
+          {data.title}
+        </h2>
         {data.stage !== "complete" && (
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
             <div className="size-3 rounded-full border-2 border-muted-foreground/30 border-t-emerald-500 animate-spin" />
@@ -45,7 +43,9 @@ export function StatsDashboardRenderer({
         <div className="grid grid-cols-2 gap-4 border-b border-border p-6">
           {data.totalFacilities !== undefined && (
             <div className="rounded-lg border border-border bg-muted/50 p-4">
-              <div className="text-xs text-muted-foreground">Total Facilities</div>
+              <div className="text-xs text-muted-foreground">
+                Total Facilities
+              </div>
               <div className="mt-1 text-2xl font-bold text-foreground tabular-nums">
                 {data.totalFacilities.toLocaleString()}
               </div>
@@ -82,10 +82,10 @@ export function StatsDashboardRenderer({
                 </tr>
               </thead>
               <tbody>
-                {data.stats.map((row, i) => (
+                {data.stats.map((row) => (
                   <tr
                     className="border-b border-border/50 transition-colors hover:bg-muted/30"
-                    key={i}
+                    key={JSON.stringify(row)}
                   >
                     {Object.entries(row).map(([key, val]) => (
                       <td className="px-4 py-2 text-foreground" key={key}>

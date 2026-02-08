@@ -44,12 +44,8 @@ const evaluationSchema = z.object({
     ),
   improvementSuggestions: z
     .array(z.string())
-    .describe(
-      "Specific, actionable suggestions to improve the plan quality"
-    ),
-  strengths: z
-    .array(z.string())
-    .describe("What the plan does well"),
+    .describe("Specific, actionable suggestions to improve the plan quality"),
+  strengths: z.array(z.string()).describe("What the plan does well"),
 });
 
 export const evaluatePlan = tool({

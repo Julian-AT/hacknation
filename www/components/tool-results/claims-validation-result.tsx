@@ -56,16 +56,18 @@ export function ClaimsValidationResult({
         <div className="flex gap-2 px-3 pb-2">
           {(["critical", "high", "medium", "low"] as const).map((sev) => {
             const sevCount = results.filter((r) => r.severity === sev).length;
-            if (sevCount === 0) return null;
+            if (sevCount === 0) {
+              return null;
+            }
             const colors = SEVERITY_COLORS[sev];
             return (
               <span
-                key={sev}
                 className={cn(
                   "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase",
                   colors.bg,
-                  colors.text,
+                  colors.text
                 )}
+                key={sev}
               >
                 {sevCount} {sev}
               </span>
@@ -76,7 +78,10 @@ export function ClaimsValidationResult({
 
       <div className="flex flex-col gap-1.5 px-3 pb-3">
         {results.map((issue) => (
-          <ValidationIssueItem key={`${issue.facilityId}-${issue.validationType}`} issue={issue} />
+          <ValidationIssueItem
+            issue={issue}
+            key={`${issue.facilityId}-${issue.validationType}`}
+          />
         ))}
       </div>
 
@@ -100,7 +105,7 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
           className={cn(
             "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
             colors.bg,
-            colors.text,
+            colors.text
           )}
         >
           {issue.severity}
@@ -112,12 +117,14 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
       <p className="mt-1 text-xs font-medium text-foreground">
         {issue.facilityName}
       </p>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">{issue.finding}</p>
+      <p className="mt-0.5 text-[11px] text-muted-foreground">
+        {issue.finding}
+      </p>
 
       <button
-        type="button"
-        onClick={() => setShowEvidence(!showEvidence)}
         className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-muted-foreground"
+        onClick={() => setShowEvidence(!showEvidence)}
+        type="button"
       >
         {showEvidence ? (
           <ChevronDown className="size-3" />

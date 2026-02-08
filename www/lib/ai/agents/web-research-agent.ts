@@ -1,11 +1,11 @@
-import { ToolLoopAgent, stepCountIs } from "ai";
+import { stepCountIs, ToolLoopAgent } from "ai";
 import { getLanguageModel } from "../providers";
-import { firecrawlSearch } from "../tools/web/firecrawl-search";
-import { firecrawlScrape } from "../tools/web/firecrawl-scrape";
-import { firecrawlExtract } from "../tools/web/firecrawl-extract";
 import { corroborateClaims } from "../tools/web/corroborateClaims";
-import { getWHOData } from "../tools/web/who-gho";
+import { firecrawlExtract } from "../tools/web/firecrawl-extract";
+import { firecrawlScrape } from "../tools/web/firecrawl-scrape";
+import { firecrawlSearch } from "../tools/web/firecrawl-search";
 import { queryOSMFacilities } from "../tools/web/overpass-facilities";
+import { getWHOData } from "../tools/web/who-gho";
 import { webResearchAgentPrompt } from "./prompts";
 
 /**
@@ -29,15 +29,11 @@ export const webResearchAgent = new ToolLoopAgent({
     queryOSMFacilities,
   },
   stopWhen: stepCountIs(8),
-  prepareStep: async ({ stepNumber }) => {
+  prepareStep: ({ stepNumber }) => {
     // Phase 1 (steps 0-1): Search — cast a wide net
     if (stepNumber <= 1) {
       return {
-        activeTools: [
-          "getWHOData",
-          "firecrawlSearch",
-          "queryOSMFacilities",
-        ],
+        activeTools: ["getWHOData", "firecrawlSearch", "queryOSMFacilities"],
       };
     }
 

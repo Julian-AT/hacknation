@@ -1,16 +1,16 @@
 "use client";
 
-import { Database, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Database } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import {
   CodeBlock,
+  CodeBlockActions,
+  CodeBlockContent,
+  CodeBlockCopyButton,
   CodeBlockHeader,
   CodeBlockTitle,
-  CodeBlockActions,
-  CodeBlockCopyButton,
-  CodeBlockContent,
 } from "@/components/ai-elements/code-block";
+import { cn } from "@/lib/utils";
 
 interface QueryDatabaseResultProps {
   args: Record<string, unknown>;
@@ -35,7 +35,9 @@ export function QueryDatabaseResult({
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Database className="size-3.5 text-blue-400" />
-          <span className="text-xs font-medium text-muted-foreground">SQL Query</span>
+          <span className="text-xs font-medium text-muted-foreground">
+            SQL Query
+          </span>
         </div>
         <span className="rounded-full bg-blue-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-blue-400">
           {count} {count === 1 ? "row" : "rows"}
@@ -49,8 +51,8 @@ export function QueryDatabaseResult({
               <tr className="border-b border-border">
                 {columns.map((col) => (
                   <th
-                    key={col}
                     className="whitespace-nowrap px-2 py-1.5 font-mono text-[11px] font-semibold text-muted-foreground"
+                    key={col}
                   >
                     {col}
                   </th>
@@ -60,16 +62,16 @@ export function QueryDatabaseResult({
             <tbody>
               {rows.slice(0, 10).map((row, i) => (
                 <tr
-                  key={`row-${String(i)}`}
                   className={cn(
                     "border-b border-border/50 last:border-0",
-                    i % 2 === 1 && "bg-muted/30",
+                    i % 2 === 1 && "bg-muted/30"
                   )}
+                  key={`row-${String(i)}`}
                 >
                   {columns.map((col) => (
                     <td
-                      key={`${String(i)}-${col}`}
                       className="whitespace-nowrap px-2 py-1.5 text-foreground"
+                      key={`${String(i)}-${col}`}
                     >
                       {formatCellValue(row[col])}
                     </td>
@@ -92,9 +94,9 @@ export function QueryDatabaseResult({
           </span>
         )}
         <button
-          type="button"
-          onClick={() => setShowSql(!showSql)}
           className="flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300"
+          onClick={() => setShowSql(!showSql)}
+          type="button"
         >
           {showSql ? (
             <ChevronDown className="size-3" />
@@ -107,7 +109,11 @@ export function QueryDatabaseResult({
 
       {showSql && query && (
         <div className="border-t border-border">
-          <CodeBlock code={query} language="sql" className="border-0 rounded-none">
+          <CodeBlock
+            className="border-0 rounded-none"
+            code={query}
+            language="sql"
+          >
             <CodeBlockHeader className="border-b-0 bg-transparent px-3 py-1.5">
               <CodeBlockTitle>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -115,9 +121,7 @@ export function QueryDatabaseResult({
                 </span>
               </CodeBlockTitle>
               <CodeBlockActions>
-                <CodeBlockCopyButton
-                  className="size-6 text-muted-foreground hover:text-foreground"
-                />
+                <CodeBlockCopyButton className="size-6 text-muted-foreground hover:text-foreground" />
               </CodeBlockActions>
             </CodeBlockHeader>
             <CodeBlockContent code={query} language="sql" />
@@ -129,8 +133,14 @@ export function QueryDatabaseResult({
 }
 
 function formatCellValue(value: unknown): string {
-  if (value === null || value === undefined) return "—";
-  if (typeof value === "number") return value.toLocaleString();
-  if (Array.isArray(value)) return value.join(", ");
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  if (typeof value === "number") {
+    return value.toLocaleString();
+  }
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
   return String(value);
 }

@@ -1,10 +1,10 @@
+import { tool } from "ai";
+import { and, ilike, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
-import { sql, and, ilike, isNotNull } from "drizzle-orm";
-import { tool } from "ai";
 import { createToolLogger } from "./debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "./safeguards";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "./safeguards";
 
 export const compareRegions = tool({
   description:
@@ -16,13 +16,7 @@ export const compareRegions = tool({
       .max(5)
       .describe("List of region names to compare (2-5 regions)"),
     metric: z
-      .enum([
-        "facilities",
-        "capacity",
-        "specialties",
-        "procedures",
-        "all",
-      ])
+      .enum(["facilities", "capacity", "specialties", "procedures", "all"])
       .default("all")
       .describe("Specific metric to compare, or 'all' for full comparison"),
     specialtyFilter: z
@@ -87,8 +81,8 @@ export const compareRegions = tool({
         );
 
         const topSpecialties = Array.isArray(specialtiesResult)
-          ? specialtiesResult.map(
-              (r: Record<string, unknown>) => String(r.specialty)
+          ? specialtiesResult.map((r: Record<string, unknown>) =>
+              String(r.specialty)
             )
           : [];
 
@@ -98,9 +92,7 @@ export const compareRegions = tool({
           hospitals: Number(stats.hospitals),
           clinics: Number(stats.clinics),
           totalBeds: stats.totalBeds ? Number(stats.totalBeds) : null,
-          totalDoctors: stats.totalDoctors
-            ? Number(stats.totalDoctors)
-            : null,
+          totalDoctors: stats.totalDoctors ? Number(stats.totalDoctors) : null,
           topSpecialties,
         };
 
@@ -170,7 +162,11 @@ export const compareRegions = tool({
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown comparison error";
-      log.error(error, { regions, metric, specialtyFilter }, Date.now() - start);
+      log.error(
+        error,
+        { regions, metric, specialtyFilter },
+        Date.now() - start
+      );
       return { error: `Region comparison failed: ${message}` };
     }
   },

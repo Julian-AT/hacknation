@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { tool } from "ai";
+import { z } from "zod";
 import { createToolLogger } from "../debug";
 
 /**
@@ -108,7 +108,9 @@ const INDICATOR_MAP: Record<
   },
 };
 
-const INDICATOR_KEYS = Object.keys(INDICATOR_MAP) as (keyof typeof INDICATOR_MAP)[];
+const INDICATOR_KEYS = Object.keys(
+  INDICATOR_MAP
+) as (keyof typeof INDICATOR_MAP)[];
 
 interface GHODataPoint {
   IndicatorCode: string;
@@ -122,7 +124,7 @@ interface GHODataPoint {
 async function fetchGHOIndicator(
   indicatorCode: string,
   countryCode: string,
-  limit = 5,
+  limit = 5
 ): Promise<GHODataPoint[]> {
   const url = `${WHO_GHO_BASE}/${indicatorCode}?$filter=SpatialDim eq '${countryCode}'&$orderby=TimeDim desc&$top=${String(limit)}`;
 
@@ -146,23 +148,21 @@ export const getWHOData = tool({
       .string()
       .length(3)
       .describe(
-        "ISO 3166-1 alpha-3 country code (e.g., GHA, NGA, KEN, USA, GBR, IND). Required.",
+        "ISO 3166-1 alpha-3 country code (e.g., GHA, NGA, KEN, USA, GBR, IND). Required."
       ),
     indicators: z
-      .array(
-        z.enum(INDICATOR_KEYS as [string, ...string[]]),
-      )
+      .array(z.enum(INDICATOR_KEYS as [string, ...string[]]))
       .min(1)
       .max(8)
       .describe(
-        `Which indicators to fetch. Available: ${INDICATOR_KEYS.join(", ")}`,
+        `Which indicators to fetch. Available: ${INDICATOR_KEYS.join(", ")}`
       ),
     compareWith: z
       .array(z.string().length(3))
       .max(3)
       .optional()
       .describe(
-        "Optional: up to 3 additional country codes to compare (e.g., ['NGA', 'KEN', 'ZAF'])",
+        "Optional: up to 3 additional country codes to compare (e.g., ['NGA', 'KEN', 'ZAF'])"
       ),
   }),
   execute: async ({ countryCode, indicators, compareWith }) => {
@@ -178,18 +178,14 @@ export const getWHOData = tool({
       const fetchPromises = countries.flatMap((cc) =>
         indicators.map(async (key) => {
           const meta = INDICATOR_MAP[key];
-          if (!meta) return null;
+          if (!meta) {
+            return null;
+          }
 
-          const dataPoints = await fetchGHOIndicator(
-            meta.code,
-            cc,
-            5,
-          );
+          const dataPoints = await fetchGHOIndicator(meta.code, cc, 5);
 
           // Get most recent non-null value
-          const latest = dataPoints.find(
-            (dp) => dp.NumericValue !== null,
-          );
+          const latest = dataPoints.find((dp) => dp.NumericValue !== null);
 
           return {
             country: cc,
@@ -208,13 +204,15 @@ export const getWHOData = tool({
                 value: dp.NumericValue,
               })),
           };
-        }),
+        })
       );
 
       const settled = await Promise.allSettled(fetchPromises);
 
       for (const item of settled) {
-        if (item.status !== "fulfilled" || !item.value) continue;
+        if (item.status !== "fulfilled" || !item.value) {
+          continue;
+        }
         const { country, indicator, ...data } = item.value;
 
         if (!results[country]) {
@@ -243,7 +241,7 @@ export const getWHOData = tool({
             | undefined;
           if (d?.value !== null && d?.value !== undefined) {
             summaryLines.push(
-              `${d.label}: ${String(d.value)} (${String(d.year)})`,
+              `${d.label}: ${String(d.value)} (${String(d.year)})`
             );
           }
         }

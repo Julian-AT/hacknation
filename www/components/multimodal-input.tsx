@@ -65,6 +65,7 @@ function PureMultimodalInput({
   setMessages,
   sendMessage,
   className,
+  isNewChat,
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
@@ -80,6 +81,7 @@ function PureMultimodalInput({
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   className?: string;
+  isNewChat: boolean;
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
@@ -87,7 +89,7 @@ function PureMultimodalInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
 
-  const adjustHeight = useCallback(() => {
+  const resetHeight = useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "44px";
     }
@@ -95,9 +97,9 @@ function PureMultimodalInput({
 
   useEffect(() => {
     if (textareaRef.current) {
-      adjustHeight();
+      resetHeight();
     }
-  }, [adjustHeight]);
+  }, [resetHeight]);
 
   const hasAutoFocused = useRef(false);
   useEffect(() => {
@@ -110,12 +112,6 @@ function PureMultimodalInput({
     }
   }, [width]);
 
-  const resetHeight = useCallback(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "44px";
-    }
-  }, []);
-
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
     ""
@@ -124,22 +120,28 @@ function PureMultimodalInput({
   useEffect(() => {
     if (textareaRef.current) {
       // For new chats (no messages), always start with empty input
-      const isNewChat = messages.length === 0;
-      if (isNewChat) {
+      const chatIsNew = messages.length === 0;
+      if (chatIsNew) {
         setInput("");
         setLocalStorageInput("");
-        adjustHeight();
+        resetHeight();
         return;
       }
       const domValue = textareaRef.current.value;
       // Prefer DOM value over localStorage to handle hydration
       const finalValue = domValue || localStorageInput || "";
       setInput(finalValue);
-      adjustHeight();
+      resetHeight();
     }
     // Only run once after hydration
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    resetHeight,
+    localStorageInput,
+    messages.length,
+    setInput,
+    setLocalStorageInput,
+  ]);
 
   useEffect(() => {
     setLocalStorageInput(input);
@@ -305,7 +307,8 @@ function PureMultimodalInput({
 
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
-      {messages.length === 0 &&
+      {isNewChat &&
+        messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
           <SuggestedActions
@@ -426,6 +429,9 @@ export const MultimodalInput = memo(
       return false;
     }
     if (!equal(prevProps.attachments, nextProps.attachments)) {
+      return false;
+    }
+    if (prevProps.isNewChat !== nextProps.isNewChat) {
       return false;
     }
     if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {

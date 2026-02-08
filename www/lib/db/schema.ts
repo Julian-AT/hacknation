@@ -3,7 +3,6 @@ import {
   boolean,
   foreignKey,
   index,
-  integer,
   json,
   pgTable,
   primaryKey,
@@ -188,9 +187,9 @@ export const workingMemory = pgTable(
     scopeIdx: index("idx_working_memory_scope").on(
       table.scope,
       table.chatId,
-      table.userId,
+      table.userId
     ),
-  }),
+  })
 );
 
 export type WorkingMemoryRow = InferSelectModel<typeof workingMemory>;
@@ -206,9 +205,6 @@ export const conversationMessages = pgTable(
     timestamp: timestamp("timestamp").notNull().defaultNow(),
   },
   (table) => ({
-    chatIdx: index("idx_conv_messages_chat").on(
-      table.chatId,
-      table.timestamp,
-    ),
-  }),
+    chatIdx: index("idx_conv_messages_chat").on(table.chatId, table.timestamp),
+  })
 );

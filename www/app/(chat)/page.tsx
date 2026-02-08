@@ -13,8 +13,8 @@ export default function Page() {
   );
 }
 
-import { VFProvider } from "@/lib/vf-context";
 import { Provider as ChatStoreProvider } from "@ai-sdk-tools/store";
+import { VFProvider } from "@/lib/vf-context";
 
 async function NewChatPage() {
   const cookieStore = await cookies();
@@ -22,7 +22,7 @@ async function NewChatPage() {
   const id = generateUUID();
 
   return (
-    <ChatStoreProvider>
+    <ChatStoreProvider key={id}>
       <VFProvider>
         <Chat
           autoResume={false}

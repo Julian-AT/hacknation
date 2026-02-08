@@ -1,14 +1,14 @@
+"use client";
 
-'use client';
-
-import { useChat } from '@ai-sdk-tools/store';
-import { useArtifacts } from '@ai-sdk-tools/artifacts/client';
-import { DefaultChatTransport } from 'ai';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import useSWR, { useSWRConfig } from 'swr';
-import { unstable_serialize } from 'swr/infinite';
-import { ChatHeader } from '@/components/chat-header';
+import { useArtifacts } from "@ai-sdk-tools/artifacts/client";
+import { useChat } from "@ai-sdk-tools/store";
+import { DefaultChatTransport } from "ai";
+import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import useSWR, { useSWRConfig } from "swr";
+import { unstable_serialize } from "swr/infinite";
+import { ChatHeader } from "@/components/chat-header";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,24 +18,23 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { useAutoResume } from '@/hooks/use-auto-resume';
-import { useChatVisibility } from '@/hooks/use-chat-visibility';
-import type { Vote } from '@/lib/db/schema';
-import { ChatSDKError } from '@/lib/errors';
-import type { Attachment, ChatMessage } from '@/lib/types';
-import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
-import { ArtifactCanvas } from './artifact-canvas';
-import { useDataStream } from './data-stream-provider';
-import { Messages } from './messages';
-import { MultimodalInput } from './multimodal-input';
-import { getChatHistoryPaginationKey } from './sidebar-history';
-import { toast } from './toast';
-import type { VisibilityType } from './visibility-selector';
-import dynamic from 'next/dynamic';
-import { useVF } from '@/lib/vf-context';
+} from "@/components/ui/alert-dialog";
+import { useAutoResume } from "@/hooks/use-auto-resume";
+import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import type { Vote } from "@/lib/db/schema";
+import { ChatSDKError } from "@/lib/errors";
+import type { Attachment, ChatMessage } from "@/lib/types";
+import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { useVF } from "@/lib/vf-context";
+import { ArtifactCanvas } from "./artifact-canvas";
+import { useDataStream } from "./data-stream-provider";
+import { Messages } from "./messages";
+import { MultimodalInput } from "./multimodal-input";
+import { getChatHistoryPaginationKey } from "./sidebar-history";
+import { toast } from "./toast";
+import type { VisibilityType } from "./visibility-selector";
 
-const DeckMap = dynamic(() => import('./vf-ui/DeckMap'), { ssr: false });
+const DeckMap = dynamic(() => import("./vf-ui/DeckMap"), { ssr: false });
 
 export function Chat({
   id,
@@ -53,7 +52,13 @@ export function Chat({
   autoResume: boolean;
 }) {
   const router = useRouter();
-  const { setMapFacilities, setMapCenter, setMapZoom, isMapVisible, setMapVisible } = useVF();
+  const {
+    setMapFacilities,
+    setMapCenter,
+    setMapZoom,
+    isMapVisible,
+    setMapVisible,
+  } = useVF();
 
   // Track whether the artifact canvas should be visible
   const [{ current: activeArtifact }] = useArtifacts();
@@ -81,20 +86,24 @@ export function Chat({
 
     // Reset old artifact SWR state
     if (isNewChat) {
-      mutate("artifact", {
-        documentId: "init",
-        content: "",
-        kind: "text",
-        title: "",
-        status: "idle",
-        isVisible: false,
-        boundingBox: { top: 0, left: 0, width: 0, height: 0 },
-      }, false);
+      mutate(
+        "artifact",
+        {
+          documentId: "init",
+          content: "",
+          kind: "text",
+          title: "",
+          status: "idle",
+          isVisible: false,
+          boundingBox: { top: 0, left: 0, width: 0, height: 0 },
+        },
+        false
+      );
     }
 
     // Reset canvas dismissed state
     setCanvasDismissed(false);
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isNewChat, mutate, setDataStream, setMapFacilities, setMapVisible]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -103,11 +112,11 @@ export function Chat({
       router.refresh();
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [router]);
 
-  const [input, setInput] = useState<string>('');
+  const [input, setInput] = useState<string>("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
@@ -134,25 +143,25 @@ export function Chat({
       const shouldContinue =
         lastMessage?.parts?.some(
           (part) =>
-            'state' in part &&
-            part.state === 'approval-responded' &&
-            'approval' in part &&
+            "state" in part &&
+            part.state === "approval-responded" &&
+            "approval" in part &&
             (part.approval as { approved?: boolean })?.approved === true
         ) ?? false;
       return shouldContinue;
     },
     transport: new DefaultChatTransport({
-      api: '/api/chat',
+      api: "/api/chat",
       fetch: fetchWithErrorHandlers as typeof fetch,
       prepareSendMessagesRequest(request) {
         const lastMessage = request.messages.at(-1);
         const isToolApprovalContinuation =
-          lastMessage?.role !== 'user' ||
+          lastMessage?.role !== "user" ||
           request.messages.some((msg) =>
             msg.parts?.some((part) => {
               const state = (part as { state?: string }).state;
               return (
-                state === 'approval-responded' || state === 'output-denied'
+                state === "approval-responded" || state === "output-denied"
               );
             })
           );
@@ -179,12 +188,12 @@ export function Chat({
     onError: (error) => {
       if (error instanceof ChatSDKError) {
         if (
-          error.message?.includes('AI Gateway requires a valid credit card')
+          error.message?.includes("AI Gateway requires a valid credit card")
         ) {
           setShowCreditCardAlert(true);
         } else {
           toast({
-            type: 'error',
+            type: "error",
             description: error.message,
           });
         }
@@ -195,8 +204,10 @@ export function Chat({
   // Fallback: listen for getFacility tool results to show on legacy VF map
   // (findNearby, findMedicalDeserts, getStats, planMission now stream via artifacts)
   useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role !== 'assistant' || !lastMessage.parts) return;
+    const lastMessage = messages.at(-1);
+    if (lastMessage?.role !== "assistant" || !lastMessage.parts) {
+      return;
+    }
 
     for (const part of lastMessage.parts) {
       const p = part as any;
@@ -214,17 +225,21 @@ export function Chat({
         result = p.state === "output-available" ? p.output : undefined;
       }
 
-      if (toolName !== "getFacility" || !result) continue;
+      if (toolName !== "getFacility" || !result) {
+        continue;
+      }
 
       if (result.facility?.lat && result.facility?.lng) {
-        setMapFacilities([{
-          id: result.facility.id,
-          name: result.facility.name,
-          lat: result.facility.lat,
-          lng: result.facility.lng,
-          type: result.facility.facilityType,
-          city: result.facility.addressCity,
-        }]);
+        setMapFacilities([
+          {
+            id: result.facility.id,
+            name: result.facility.name,
+            lat: result.facility.lat,
+            lng: result.facility.lng,
+            type: result.facility.facilityType,
+            city: result.facility.addressCity,
+          },
+        ]);
         setMapCenter([result.facility.lat, result.facility.lng]);
         setMapZoom(12);
         setMapVisible(true);
@@ -232,21 +247,20 @@ export function Chat({
     }
   }, [messages, setMapFacilities, setMapCenter, setMapZoom, setMapVisible]);
 
-
   const searchParams = useSearchParams();
-  const query = searchParams.get('query');
+  const query = searchParams.get("query");
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 
   useEffect(() => {
     if (query && !hasAppendedQuery) {
       sendMessage({
-        role: 'user' as const,
-        parts: [{ type: 'text', text: query }],
+        role: "user" as const,
+        parts: [{ type: "text", text: query }],
       });
 
       setHasAppendedQuery(true);
-      window.history.replaceState({}, '', `/chat/${id}`);
+      window.history.replaceState({}, "", `/chat/${id}`);
     }
   }, [query, sendMessage, hasAppendedQuery, id]);
 
@@ -269,16 +283,20 @@ export function Chat({
     if (activeArtifact) {
       setCanvasDismissed(false);
     }
-  }, [activeArtifact?.id]);
+  }, [activeArtifact?.id, activeArtifact]);
 
   return (
     <>
       <div className="flex h-dvh min-w-0 bg-background overflow-hidden">
         {/* Left Panel: Chat */}
-        <div className={cn(
-          'flex flex-col h-full',
-          (isCanvasVisible || isMapVisible) ? 'w-[45%] border-r border-border' : 'w-full'
-        )}>
+        <div
+          className={cn(
+            "flex flex-col h-full",
+            isCanvasVisible || isMapVisible
+              ? "w-[45%] border-r border-border"
+              : "w-full"
+          )}
+        >
           <ChatHeader
             chatId={id}
             isReadonly={isReadonly}
@@ -304,6 +322,7 @@ export function Chat({
                 attachments={attachments}
                 chatId={id}
                 input={input}
+                isNewChat={isNewChat}
                 messages={messages}
                 onModelChange={setCurrentModelId}
                 selectedModelId={currentModelId}
@@ -322,9 +341,7 @@ export function Chat({
         {/* Right Panel: Artifact Canvas (streamed visualizations) */}
         {isCanvasVisible && (
           <div className="w-[55%] h-full bg-background relative">
-            <ArtifactCanvas
-              onClose={() => setCanvasDismissed(true)}
-            />
+            <ArtifactCanvas onClose={() => setCanvasDismissed(true)} />
           </div>
         )}
 
@@ -342,14 +359,24 @@ export function Chat({
                 setMapFacilities([]);
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   setMapVisible(false);
                   setMapFacilities([]);
                 }
               }}
               type="button"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                fill="none"
+                height="16"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                width="16"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <title>Close</title>
                 <path d="M18 6 6 18" />
                 <path d="m6 6 12 12" />
@@ -367,8 +394,8 @@ export function Chat({
           <AlertDialogHeader>
             <AlertDialogTitle>Activate AI Gateway</AlertDialogTitle>
             <AlertDialogDescription>
-              This application requires{' '}
-              {process.env.NODE_ENV === 'production' ? 'the owner' : 'you'} to
+              This application requires{" "}
+              {process.env.NODE_ENV === "production" ? "the owner" : "you"} to
               activate Vercel AI Gateway.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -377,10 +404,10 @@ export function Chat({
             <AlertDialogAction
               onClick={() => {
                 window.open(
-                  'https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card',
-                  '_blank'
+                  "https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card",
+                  "_blank"
                 );
-                window.location.href = '/';
+                window.location.href = "/";
               }}
             >
               Activate

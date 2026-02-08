@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Eye, MapPin } from "lucide-react";
+import { Eye, MapPin } from "lucide-react";
 import { useVF } from "@/lib/vf-context";
 
 interface FacilityProfileCardProps {
@@ -13,7 +13,9 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
   const missingCriticalData = result.missingCriticalData as string | null;
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
 
-  if (!facility) return null;
+  if (!facility) {
+    return null;
+  }
 
   const name = facility.name as string;
   const type = facility.facilityType as string | undefined;
@@ -26,10 +28,10 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
   const lng = facility.lng as number | undefined;
   const specialties = facility.specialties as string[] | undefined;
   const procedures = facility.procedures as string[] | undefined;
-  const equipment = facility.equipment as string[] | undefined;
+  const _equipment = facility.equipment as string[] | undefined;
   const phone = facility.phone as string | undefined;
   const email = facility.email as string | undefined;
-  const website = facility.website as string | undefined;
+  const _website = facility.website as string | undefined;
 
   const qualityNum = dataQualityScore
     ? Number.parseInt(dataQualityScore, 10)
@@ -95,7 +97,10 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
             <CapacityMetric label="DOCTORS" value={doctors} />
           )}
           {areaSqm !== null && (
-            <CapacityMetric label="AREA" value={`${areaSqm.toLocaleString()}m²`} />
+            <CapacityMetric
+              label="AREA"
+              value={`${areaSqm.toLocaleString()}m²`}
+            />
           )}
         </div>
       </div>
@@ -109,8 +114,8 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
           <div className="flex flex-wrap gap-1">
             {specialties?.slice(0, 8).map((s) => (
               <span
-                key={s}
                 className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                key={s}
               >
                 {s}
               </span>
@@ -132,8 +137,8 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
           <div className="flex flex-wrap gap-1">
             {procedures?.slice(0, 6).map((p) => (
               <span
-                key={p}
                 className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                key={p}
               >
                 {p}
               </span>
@@ -164,10 +169,10 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
         </div>
         {lat && lng && (
           <button
-            type="button"
             aria-label="View on map"
-            onClick={handleViewOnMap}
             className="flex items-center gap-1 rounded bg-blue-950/30 px-1.5 py-0.5 text-[11px] text-blue-400 hover:bg-blue-950/50"
+            onClick={handleViewOnMap}
+            type="button"
           >
             <Eye className="size-3" />
             Map
@@ -198,7 +203,11 @@ function CapacityMetric({
 }
 
 function getQualityColor(score: number): string {
-  if (score >= 70) return "text-green-400";
-  if (score >= 40) return "text-amber-400";
+  if (score >= 70) {
+    return "text-green-400";
+  }
+  if (score >= 40) {
+    return "text-amber-400";
+  }
   return "text-red-400";
 }

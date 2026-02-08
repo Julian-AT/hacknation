@@ -1,13 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  DeckGL,
-  ScatterplotLayer,
-  FlyToInterpolator,
-} from "deck.gl";
 import type { MapViewState, PickingInfo } from "deck.gl";
-import { Map } from "react-map-gl/maplibre";
+import { DeckGL, FlyToInterpolator, ScatterplotLayer } from "deck.gl";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Map as MapGL } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useVF } from "@/lib/vf-context";
 
@@ -98,7 +94,9 @@ export default function DeckMap() {
   const getTooltip = useMemo(
     () =>
       ({ object }: PickingInfo<Facility>) => {
-        if (!object) return null;
+        if (!object) {
+          return null;
+        }
 
         const isDesert =
           (object.type ?? "").toLowerCase().includes("desert") ||
@@ -121,7 +119,7 @@ export default function DeckMap() {
           },
         };
       },
-    [],
+    []
   );
 
   return (
@@ -136,7 +134,7 @@ export default function DeckMap() {
         style={{ position: "relative", width: "100%", height: "100%" }}
         viewState={internalViewState}
       >
-        <Map mapStyle={DARK_STYLE} />
+        <MapGL mapStyle={DARK_STYLE} />
       </DeckGL>
     </div>
   );

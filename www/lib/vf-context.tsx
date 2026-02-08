@@ -1,7 +1,6 @@
+"use client";
 
-'use client';
-
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, type ReactNode, useContext, useState } from "react";
 
 type Facility = {
   id: number;
@@ -30,7 +29,9 @@ const VFContext = createContext<VFContextType | undefined>(undefined);
 
 export function VFProvider({ children }: { children: ReactNode }) {
   const [mapFacilities, setMapFacilities] = useState<Facility[]>([]);
-  const [highlightedFacilityId, setHighlightedFacilityId] = useState<number | null>(null);
+  const [highlightedFacilityId, setHighlightedFacilityId] = useState<
+    number | null
+  >(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([20, 0]); // World center (adjusts dynamically when data loads)
   const [mapZoom, setMapZoom] = useState<number>(7);
   const [isMapVisible, setMapVisible] = useState<boolean>(false);
@@ -58,7 +59,7 @@ export function VFProvider({ children }: { children: ReactNode }) {
 export function useVF() {
   const context = useContext(VFContext);
   if (context === undefined) {
-    throw new Error('useVF must be used within a VFProvider');
+    throw new Error("useVF must be used within a VFProvider");
   }
   return context;
 }

@@ -1,4 +1,3 @@
-import { geolocation } from "@vercel/functions";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -10,7 +9,6 @@ import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import { createOrchestratorAgent } from "@/lib/ai/agents";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
-import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
@@ -52,13 +50,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const {
-      id,
-      message,
-      messages,
-      selectedChatModel,
-      selectedVisibilityType,
-    } = requestBody;
+    const { id, message, messages, selectedChatModel, selectedVisibilityType } =
+      requestBody;
 
     const session = await auth();
 
@@ -148,9 +141,7 @@ export async function POST(request: Request) {
             messages: modelMessages,
           });
 
-          dataStream.merge(
-            result.toUIMessageStream({ sendReasoning: true })
-          );
+          dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
         } catch (streamError: unknown) {
           const duration = Date.now() - streamStart;
           const errorMessage =
@@ -162,7 +153,7 @@ export async function POST(request: Request) {
           );
           if (streamError instanceof Error && streamError.stack) {
             console.error(
-              `[ChatRoute] Agent ERROR | stack:`,
+              "[ChatRoute] Agent ERROR | stack:",
               streamError.stack
             );
           }
@@ -177,9 +168,7 @@ export async function POST(request: Request) {
           } catch (titleError) {
             console.error(
               "[ChatRoute] Title generation failed:",
-              titleError instanceof Error
-                ? titleError.message
-                : titleError
+              titleError instanceof Error ? titleError.message : titleError
             );
           }
         }
@@ -227,9 +216,7 @@ export async function POST(request: Request) {
               })),
             });
           }
-          console.log(
-            `[ChatRoute] Messages saved successfully | chatId=${id}`
-          );
+          console.log(`[ChatRoute] Messages saved successfully | chatId=${id}`);
         } catch (saveError) {
           console.error(
             `[ChatRoute] Failed to save messages | chatId=${id}:`,
@@ -296,7 +283,7 @@ export async function POST(request: Request) {
       `[ChatRoute] UNHANDLED ERROR | message=${error instanceof Error ? error.message : String(error)}`
     );
     if (error instanceof Error && error.stack) {
-      console.error(`[ChatRoute] UNHANDLED ERROR | stack:`, error.stack);
+      console.error("[ChatRoute] UNHANDLED ERROR | stack:", error.stack);
     }
     return new ChatSDKError("offline:chat").toResponse();
   }

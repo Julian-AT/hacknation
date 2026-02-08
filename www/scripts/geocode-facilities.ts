@@ -10,9 +10,9 @@
  */
 
 import dotenv from "dotenv";
+import { and, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { sql, isNull, or, and, isNotNull, ne } from "drizzle-orm";
 import { facilities } from "../lib/db/schema.facilities";
 
 dotenv.config({ path: ".env.local" });
@@ -27,7 +27,7 @@ const client = postgres(connectionString);
 const db = drizzle(client);
 
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
-const DELAY_MS = 1_100; // Nominatim requires max 1 req/sec
+const DELAY_MS = 1100; // Nominatim requires max 1 req/sec
 
 interface NominatimResult {
   lat: string;
@@ -39,9 +39,11 @@ interface NominatimResult {
 async function geocodeCity(
   city: string,
   region: string | null,
-  country: string,
+  country: string
 ): Promise<{ lat: number; lng: number } | null> {
-  const query = region ? `${city}, ${region}, ${country}` : `${city}, ${country}`;
+  const query = region
+    ? `${city}, ${region}, ${country}`
+    : `${city}, ${country}`;
 
   const params = new URLSearchParams({
     q: query,
@@ -57,10 +59,14 @@ async function geocodeCity(
     signal: AbortSignal.timeout(10_000),
   });
 
-  if (!response.ok) return null;
+  if (!response.ok) {
+    return null;
+  }
 
   const results = (await response.json()) as NominatimResult[];
-  if (results.length === 0) return null;
+  if (results.length === 0) {
+    return null;
+  }
 
   const best = results[0];
   return {
@@ -79,7 +85,7 @@ async function main() {
   console.log(
     isDryRun
       ? "DRY RUN — no database updates will be made\n"
-      : "Geocoding facilities with missing coordinates...\n",
+      : "Geocoding facilities with missing coordinates...\n"
   );
 
   // Find facilities with city but no coords
@@ -96,8 +102,8 @@ async function main() {
       and(
         or(isNull(facilities.lat), isNull(facilities.lng)),
         isNotNull(facilities.addressCity),
-        ne(facilities.addressCity, "null"),
-      ),
+        ne(facilities.addressCity, "null")
+      )
     );
 
   console.log(`Found ${String(missing.length)} facilities to geocode\n`);
@@ -115,12 +121,12 @@ async function main() {
     const coords = await geocodeCity(
       fac.city,
       fac.region,
-      fac.country ?? "Ghana",
+      fac.country ?? "Ghana"
     );
 
     if (coords) {
       console.log(
-        `  ✓ ${fac.name} (${fac.city}) → ${String(coords.lat)}, ${String(coords.lng)}`,
+        `  ✓ ${fac.name} (${fac.city}) → ${String(coords.lat)}, ${String(coords.lng)}`
       );
 
       if (!isDryRun) {
@@ -139,7 +145,7 @@ async function main() {
     await sleep(DELAY_MS);
   }
 
-  console.log(`\nDone!`);
+  console.log("\nDone!");
   console.log(`  Updated: ${String(updated)}`);
   console.log(`  Failed:  ${String(failed)}`);
   console.log(`  Skipped: ${String(skipped)}`);

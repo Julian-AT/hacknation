@@ -1,10 +1,10 @@
+import { tool } from "ai";
+import { and, eq, ilike, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../../db";
 import { facilities } from "../../../db/schema.facilities";
-import { and, isNotNull, ilike, eq } from "drizzle-orm";
-import { tool } from "ai";
 import { createToolLogger } from "../debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "../safeguards";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "../safeguards";
 
 /**
  * Language patterns for service classification.
@@ -212,7 +212,9 @@ type ServiceClassification = {
 
 function extractSnippet(text: string, pattern: string): string {
   const idx = text.indexOf(pattern);
-  if (idx < 0) return "";
+  if (idx < 0) {
+    return "";
+  }
   const snippetStart = Math.max(0, idx - 40);
   const snippetEnd = Math.min(text.length, idx + pattern.length + 60);
   return `...${text.slice(snippetStart, snippetEnd).trim()}...`;
@@ -221,7 +223,9 @@ function extractSnippet(text: string, pattern: string): string {
 function matchPatterns(text: string, patterns: string[]): string[] {
   const seen = new Set<string>();
   return patterns.filter((p) => {
-    if (seen.has(p)) return false;
+    if (seen.has(p)) {
+      return false;
+    }
     if (text.includes(p)) {
       seen.add(p);
       return true;
@@ -265,7 +269,10 @@ export const classifyServices = tool({
         "Focus the classification on a specific aspect: service_type (permanent/itinerant/referral), individual_tied (services depending on specific people), camp_missions (surgical camps/NGO missions), weak_operations (weak operational signals despite clinical claims)"
       ),
   }),
-  execute: async ({ facilityId, region, serviceFilter, focusArea }, { abortSignal }) => {
+  execute: async (
+    { facilityId, region, serviceFilter, focusArea },
+    { abortSignal }
+  ) => {
     const log = createToolLogger("classifyServices");
     const start = Date.now();
     log.start({ facilityId, region, serviceFilter, focusArea });
@@ -279,9 +286,7 @@ export const classifyServices = tool({
         conditions.push(ilike(facilities.addressRegion, `%${region}%`));
       }
       if (serviceFilter) {
-        conditions.push(
-          ilike(facilities.proceduresRaw, `%${serviceFilter}%`)
-        );
+        conditions.push(ilike(facilities.proceduresRaw, `%${serviceFilter}%`));
       }
 
       const rows = await withTimeout(
@@ -331,8 +336,14 @@ export const classifyServices = tool({
         const permanentMatches = matchPatterns(allText, PERMANENT_PATTERNS);
 
         // Extended classifications
-        const individualTiedMatches = matchPatterns(allText, INDIVIDUAL_TIED_PATTERNS);
-        const campMissionMatches = matchPatterns(allText, CAMP_MISSION_PATTERNS);
+        const individualTiedMatches = matchPatterns(
+          allText,
+          INDIVIDUAL_TIED_PATTERNS
+        );
+        const campMissionMatches = matchPatterns(
+          allText,
+          CAMP_MISSION_PATTERNS
+        );
         const weakOpMatches = matchPatterns(allText, WEAK_OPERATIONAL_PATTERNS);
 
         // Determine primary classification based on pattern matches
@@ -344,7 +355,10 @@ export const classifyServices = tool({
           serviceType = "itinerant";
           confidence = itinerantMatches.length >= 2 ? "high" : "medium";
           matchedPatterns.push(...itinerantMatches);
-        } else if (referralMatches.length > 0 && permanentMatches.length === 0) {
+        } else if (
+          referralMatches.length > 0 &&
+          permanentMatches.length === 0
+        ) {
           serviceType = "referral";
           confidence = referralMatches.length >= 2 ? "high" : "medium";
           matchedPatterns.push(...referralMatches);
@@ -368,12 +382,16 @@ export const classifyServices = tool({
         const evidenceQuotes: string[] = [];
         for (const pattern of matchedPatterns.slice(0, 3)) {
           const snippet = extractSnippet(allText, pattern);
-          if (snippet) evidenceQuotes.push(snippet);
+          if (snippet) {
+            evidenceQuotes.push(snippet);
+          }
         }
         // Add individual-tied evidence
         for (const pattern of individualTiedMatches.slice(0, 2)) {
           const snippet = extractSnippet(allText, pattern);
-          if (snippet) evidenceQuotes.push(snippet);
+          if (snippet) {
+            evidenceQuotes.push(snippet);
+          }
         }
 
         // Decide whether to include based on focus area
@@ -387,7 +405,8 @@ export const classifyServices = tool({
         const matchesFocusFilter =
           focusArea === "all" ||
           (focusArea === "service_type" && serviceType !== "unclear") ||
-          (focusArea === "individual_tied" && individualTiedMatches.length > 0) ||
+          (focusArea === "individual_tied" &&
+            individualTiedMatches.length > 0) ||
           (focusArea === "camp_missions" && campMissionMatches.length > 0) ||
           (focusArea === "weak_operations" && weakOpMatches.length > 0) ||
           Boolean(facilityId);
@@ -411,13 +430,21 @@ export const classifyServices = tool({
       }
 
       const summary = {
-        permanent: classifications.filter((c) => c.serviceType === "permanent").length,
-        itinerant: classifications.filter((c) => c.serviceType === "itinerant").length,
-        referral: classifications.filter((c) => c.serviceType === "referral").length,
-        unclear: classifications.filter((c) => c.serviceType === "unclear").length,
+        permanent: classifications.filter((c) => c.serviceType === "permanent")
+          .length,
+        itinerant: classifications.filter((c) => c.serviceType === "itinerant")
+          .length,
+        referral: classifications.filter((c) => c.serviceType === "referral")
+          .length,
+        unclear: classifications.filter((c) => c.serviceType === "unclear")
+          .length,
         individualTied: classifications.filter((c) => c.individualTied).length,
-        campMissionEvidence: classifications.filter((c) => c.campMissionEvidence).length,
-        weakOperationalSignals: classifications.filter((c) => c.weakOperationalSignals.length > 0).length,
+        campMissionEvidence: classifications.filter(
+          (c) => c.campMissionEvidence
+        ).length,
+        weakOperationalSignals: classifications.filter(
+          (c) => c.weakOperationalSignals.length > 0
+        ).length,
       };
 
       const output = {

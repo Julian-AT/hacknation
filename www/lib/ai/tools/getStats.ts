@@ -1,10 +1,10 @@
+import { tool } from "ai";
+import { and, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
-import { sql, and, isNotNull } from "drizzle-orm";
-import { tool } from "ai";
 import { createToolLogger } from "./debug";
-import { withTimeout, clampNumber, DB_QUERY_TIMEOUT_MS } from "./safeguards";
+import { clampNumber, DB_QUERY_TIMEOUT_MS, withTimeout } from "./safeguards";
 
 export const getStats = tool({
   description:

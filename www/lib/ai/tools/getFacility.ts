@@ -1,10 +1,10 @@
+import { tool } from "ai";
+import { eq, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
-import { eq, ilike } from "drizzle-orm";
-import { tool } from "ai";
 import { createToolLogger } from "./debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "./safeguards";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "./safeguards";
 
 export const getFacility = tool({
   description:
@@ -39,11 +39,7 @@ export const getFacility = tool({
       if (id) {
         log.step("Lookup by ID", id);
         result = await withTimeout(
-          db
-            .select()
-            .from(facilities)
-            .where(eq(facilities.id, id))
-            .limit(1),
+          db.select().from(facilities).where(eq(facilities.id, id)).limit(1),
           DB_QUERY_TIMEOUT_MS,
           abortSignal
         );
@@ -69,10 +65,7 @@ export const getFacility = tool({
       }
 
       if (result.length > 1 && !id) {
-        log.step(
-          "Multiple matches found, returning candidates",
-          result.length
-        );
+        log.step("Multiple matches found, returning candidates", result.length);
         const output = {
           message:
             "Multiple facilities found. Please specify ID or exact name.",

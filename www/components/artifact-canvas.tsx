@@ -1,18 +1,18 @@
 "use client";
 
-import { useArtifacts } from "@ai-sdk-tools/artifacts/client";
 import type { ArtifactData } from "@ai-sdk-tools/artifacts";
+import { useArtifacts } from "@ai-sdk-tools/artifacts/client";
 import { FacilityMapRenderer } from "./artifacts/facility-map";
 import { MedicalDesertRenderer } from "./artifacts/medical-desert";
-import { StatsDashboardRenderer } from "./artifacts/stats-dashboard";
 import { MissionPlanRenderer } from "./artifacts/mission-plan";
+import { StatsDashboardRenderer } from "./artifacts/stats-dashboard";
 
 /**
  * Canvas panel that renders the active artifact streamed by AI tools.
  * Switches on artifact type to display the appropriate visualization.
  */
 export function ArtifactCanvas({ onClose }: { onClose?: () => void }) {
-  const [{ current, latestByType, types }] = useArtifacts();
+  const [{ current, types }] = useArtifacts();
 
   // Show the most recently streamed artifact
   const artifact = current;
@@ -105,25 +105,41 @@ function ArtifactRouter({ artifact }: { artifact: ArtifactData<unknown> }) {
     case "facility-map":
       return (
         <FacilityMapRenderer
-          data={artifact.payload as Parameters<typeof FacilityMapRenderer>[0]["data"]}
+          data={
+            artifact.payload as Parameters<
+              typeof FacilityMapRenderer
+            >[0]["data"]
+          }
         />
       );
     case "medical-desert":
       return (
         <MedicalDesertRenderer
-          data={artifact.payload as Parameters<typeof MedicalDesertRenderer>[0]["data"]}
+          data={
+            artifact.payload as Parameters<
+              typeof MedicalDesertRenderer
+            >[0]["data"]
+          }
         />
       );
     case "stats-dashboard":
       return (
         <StatsDashboardRenderer
-          data={artifact.payload as Parameters<typeof StatsDashboardRenderer>[0]["data"]}
+          data={
+            artifact.payload as Parameters<
+              typeof StatsDashboardRenderer
+            >[0]["data"]
+          }
         />
       );
     case "mission-plan":
       return (
         <MissionPlanRenderer
-          data={artifact.payload as Parameters<typeof MissionPlanRenderer>[0]["data"]}
+          data={
+            artifact.payload as Parameters<
+              typeof MissionPlanRenderer
+            >[0]["data"]
+          }
         />
       );
     default:

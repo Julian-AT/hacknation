@@ -1,38 +1,38 @@
 "use client";
 
 import {
-  Search,
-  Map as MapIcon,
   Activity,
-  Database,
   AlertTriangle,
-  Eye,
   Brain,
-  Globe,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  Database,
+  Eye,
   GitCompare,
+  Globe,
+  Map as MapIcon,
+  Search,
   Stethoscope,
   WrenchIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ChevronDownIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import {
+  CodeBlock,
+  CodeBlockActions,
+  CodeBlockContent,
+  CodeBlockCopyButton,
+  CodeBlockHeader,
+} from "@/components/ai-elements/code-block";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  CodeBlock,
-  CodeBlockContent,
-  CodeBlockCopyButton,
-  CodeBlockHeader,
-  CodeBlockActions,
-} from "@/components/ai-elements/code-block";
-import { useVF } from "@/lib/vf-context";
 import { cn } from "@/lib/utils";
+import { useVF } from "@/lib/vf-context";
 
 /**
  * Agent delegation tool names — these represent subagent calls
@@ -80,27 +80,42 @@ const AGENT_DISPLAY_NAMES: Record<string, string> = {
   researchWeb: "Web Research",
 };
 
-function formatArgs(toolName: string, currentArgs: any, isAgentTool: boolean): string {
+function formatArgs(
+  toolName: string,
+  currentArgs: any,
+  isAgentTool: boolean
+): string {
   if (isAgentTool && currentArgs.task) {
     const task = String(currentArgs.task);
     return task.slice(0, 60) + (task.length > 60 ? "..." : "");
   }
-  if (toolName === "searchFacilities") return `query: "${currentArgs.query}"`;
-  if (toolName === "findNearby") return `near: "${currentArgs.location}"`;
-  if (toolName === "queryDatabase") return "SQL Query";
-  if (toolName === "planMission") return `specialty: "${currentArgs.specialty}"`;
+  if (toolName === "searchFacilities") {
+    return `query: "${currentArgs.query}"`;
+  }
+  if (toolName === "findNearby") {
+    return `near: "${currentArgs.location}"`;
+  }
+  if (toolName === "queryDatabase") {
+    return "SQL Query";
+  }
+  if (toolName === "planMission") {
+    return `specialty: "${currentArgs.specialty}"`;
+  }
   if (toolName === "compareRegions" && Array.isArray(currentArgs.regions)) {
     return (currentArgs.regions as string[]).join(" vs ");
   }
-  if (toolName === "firecrawlSearch") return `"${currentArgs.query}"`;
-  if (toolName === "firecrawlScrape")
+  if (toolName === "firecrawlSearch") {
+    return `"${currentArgs.query}"`;
+  }
+  if (toolName === "firecrawlScrape") {
     return String(currentArgs.url ?? "").slice(0, 40);
+  }
   const str = JSON.stringify(currentArgs);
   return str.slice(0, 30) + (str.length > 30 ? "..." : "");
 }
 
 export function ToolTrace({
-  toolCallId,
+  toolCallId: _toolCallId,
   toolName,
   args,
   result,
@@ -109,29 +124,38 @@ export function ToolTrace({
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
 
   const isAgentTool = AGENT_TOOLS.has(toolName);
-  const icon =
-    TOOL_ICONS[toolName] ?? <WrenchIcon className="size-4 text-muted-foreground" />;
+  const icon = TOOL_ICONS[toolName] ?? (
+    <WrenchIcon className="size-4 text-muted-foreground" />
+  );
   const displayName = isAgentTool
     ? (AGENT_DISPLAY_NAMES[toolName] ?? toolName)
     : toolName;
 
   const hasGeoData = (): boolean => {
-    if (!result || result.error) return false;
-    if (toolName === "findNearby" && result.facilities?.length > 0) return true;
-    if (toolName === "findMedicalDeserts" && result.desertZones?.length > 0)
+    if (!result || result.error) {
+      return false;
+    }
+    if (toolName === "findNearby" && result.facilities?.length > 0) {
       return true;
+    }
+    if (toolName === "findMedicalDeserts" && result.desertZones?.length > 0) {
+      return true;
+    }
     if (
       toolName === "getFacility" &&
       result.facility?.lat &&
       result.facility?.lng
-    )
+    ) {
       return true;
+    }
     return false;
   };
 
   const handleViewOnMap = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!result) return;
+    if (!result) {
+      return;
+    }
 
     if (toolName === "findNearby" && result.facilities) {
       setMapFacilities(result.facilities);
@@ -215,10 +239,10 @@ export function ToolTrace({
         <div className="flex items-center gap-2">
           {hasGeoData() && (
             <button
-              type="button"
               aria-label="View on map"
-              onClick={handleViewOnMap}
               className="flex items-center gap-1 rounded border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-xs text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
+              onClick={handleViewOnMap}
+              type="button"
             >
               <Eye className="size-3" />
               Map
@@ -244,7 +268,7 @@ export function ToolTrace({
           <ChevronDownIcon
             className={cn(
               "size-4 text-muted-foreground transition-transform",
-              isOpen && "rotate-180",
+              isOpen && "rotate-180"
             )}
           />
         </div>
@@ -259,11 +283,7 @@ export function ToolTrace({
               {isAgentTool ? "Task" : "Parameters"}
             </h4>
             {isSqlTool && sqlQuery ? (
-              <CodeBlock
-                code={sqlQuery}
-                language="sql"
-                className="text-xs"
-              >
+              <CodeBlock className="text-xs" code={sqlQuery} language="sql">
                 <CodeBlockHeader className="px-2 py-1">
                   <span className="text-[10px] text-muted-foreground">SQL</span>
                   <CodeBlockActions>
@@ -290,7 +310,7 @@ export function ToolTrace({
                   "max-h-60 overflow-y-auto whitespace-pre-wrap rounded-md p-2.5 font-mono text-xs",
                   result?.error
                     ? "bg-destructive/10 text-destructive"
-                    : "bg-muted text-muted-foreground",
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 {outputJson}

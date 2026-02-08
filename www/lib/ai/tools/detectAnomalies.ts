@@ -1,16 +1,16 @@
+import { tool } from "ai";
+import { and, gt, ilike, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { facilities } from "../../db/schema.facilities";
-import { sql, isNotNull, and, ilike, gt } from "drizzle-orm";
-import { tool } from "ai";
-import { createToolLogger } from "./debug";
-import { withTimeout, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 import { MEDICAL_KNOWLEDGE } from "../../medical-knowledge";
+import { createToolLogger } from "./debug";
+import { DB_QUERY_TIMEOUT_MS, withTimeout } from "./safeguards";
 
 type Anomaly = {
   type: string;
   description: string;
-  facilities: Array<Record<string, unknown>>;
+  facilities: Record<string, unknown>[];
 };
 
 export const detectAnomalies = tool({
@@ -178,7 +178,7 @@ export const detectAnomalies = tool({
                 isNotNull(facilities.capacity),
                 isNotNull(facilities.numDoctors),
                 gt(facilities.capacity, 0),
-                gt(facilities.numDoctors, 0),
+                gt(facilities.numDoctors, 0)
               )
             )
             .limit(100),
@@ -194,8 +194,7 @@ export const detectAnomalies = tool({
         if (highBedPerDoctor.length > 0) {
           anomalies.push({
             type: "High Bed-to-Doctor Ratio",
-            description:
-              `Facilities with more than ${expectedRatios.bedsPerDoctor.max} beds per doctor (expected typical: ${expectedRatios.bedsPerDoctor.typical}). May indicate misrepresentation or data error.`,
+            description: `Facilities with more than ${expectedRatios.bedsPerDoctor.max} beds per doctor (expected typical: ${expectedRatios.bedsPerDoctor.typical}). May indicate misrepresentation or data error.`,
             facilities: highBedPerDoctor.slice(0, 10).map((f) => ({
               id: f.id,
               name: f.name,
@@ -234,7 +233,7 @@ export const detectAnomalies = tool({
           abortSignal
         );
 
-        const subspecialtyMismatches: Array<Record<string, unknown>> = [];
+        const subspecialtyMismatches: Record<string, unknown>[] = [];
 
         for (const fac of allFacs) {
           if (abortSignal?.aborted) {
@@ -247,7 +246,9 @@ export const detectAnomalies = tool({
           const beds = fac.beds ?? 0;
           const doctors = fac.doctors ?? 0;
 
-          for (const [specialty, thresholds] of Object.entries(specialtyInfrastructure)) {
+          for (const [specialty, thresholds] of Object.entries(
+            specialtyInfrastructure
+          )) {
             if (
               specText.includes(specialty.toLowerCase()) ||
               procText.includes(specialty.toLowerCase())
@@ -258,14 +259,18 @@ export const detectAnomalies = tool({
                 issues.push(`${beds} beds (min ${thresholds.minBeds})`);
               }
               if (doctors > 0 && doctors < thresholds.minDoctors) {
-                issues.push(`${doctors} doctors (min ${thresholds.minDoctors})`);
+                issues.push(
+                  `${doctors} doctors (min ${thresholds.minDoctors})`
+                );
               }
               if (thresholds.requiredEquipment && equipText.length > 0) {
                 const hasAny = thresholds.requiredEquipment.some((eq) =>
                   equipText.includes(eq.toLowerCase())
                 );
                 if (!hasAny) {
-                  issues.push(`no required equipment (needs: ${thresholds.requiredEquipment.join(", ")})`);
+                  issues.push(
+                    `no required equipment (needs: ${thresholds.requiredEquipment.join(", ")})`
+                  );
                 }
               }
 
@@ -292,7 +297,10 @@ export const detectAnomalies = tool({
           });
         }
 
-        log.step("subspecialty_size_mismatch results", subspecialtyMismatches.length);
+        log.step(
+          "subspecialty_size_mismatch results",
+          subspecialtyMismatches.length
+        );
       }
 
       // 6. Procedure Breadth Mismatch (Q4.8, Q4.9)
@@ -320,7 +328,7 @@ export const detectAnomalies = tool({
           abortSignal
         );
 
-        const breadthAnomalies: Array<Record<string, unknown>> = [];
+        const breadthAnomalies: Record<string, unknown>[] = [];
 
         for (const fac of breadthData) {
           if (abortSignal?.aborted) {
@@ -328,7 +336,9 @@ export const detectAnomalies = tool({
           }
 
           const procCount = fac.procedures?.length ?? 0;
-          if (procCount === 0) continue;
+          if (procCount === 0) {
+            continue;
+          }
 
           const beds = fac.beds ?? 0;
           const doctors = fac.doctors ?? 0;
@@ -351,9 +361,21 @@ export const detectAnomalies = tool({
 
           if (overProcedures || thinEquipment || thinStaffing) {
             const issues: string[] = [];
-            if (overProcedures) issues.push(`${procCount} procedures (max ${maxExpected} expected for ${beds > 0 ? `${beds}-bed` : "unknown-size"} facility)`);
-            if (thinEquipment) issues.push(`${procCount} procedures with minimal equipment documentation (${equipLen} chars)`);
-            if (thinStaffing) issues.push(`${procCount} procedures with only ${doctors} doctors`);
+            if (overProcedures) {
+              issues.push(
+                `${procCount} procedures (max ${maxExpected} expected for ${beds > 0 ? `${beds}-bed` : "unknown-size"} facility)`
+              );
+            }
+            if (thinEquipment) {
+              issues.push(
+                `${procCount} procedures with minimal equipment documentation (${equipLen} chars)`
+              );
+            }
+            if (thinStaffing) {
+              issues.push(
+                `${procCount} procedures with only ${doctors} doctors`
+              );
+            }
 
             breadthAnomalies.push({
               id: fac.id,
