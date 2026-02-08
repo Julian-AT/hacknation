@@ -15,15 +15,17 @@ type SuggestedActionsProps = {
 
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const suggestedActions = [
-    "Plan a volunteer surgical mission for orthopedic gaps in Ghana",
-    "Find maternal care deserts in Ghana and suggest optimal clinic sites with staffing estimates",
-    "Flag facilities in Ghana with suspicious capability vs. volume data and suggest verification",
-    "Compare healthcare access between Northern and Ashanti regions in Ghana",
-  ]; 
+    "How many hospitals in Ghana have cardiology?",
+    "Are there any clinics in Accra that do eye surgery?",
+    "Which facilities claim an unrealistic number of procedures relative to their size?",
+    "Where are the largest geographic cold spots where a critical procedure is absent?",
+    "Where is the workforce for ophthalmology actually practicing in Ghana?",
+    "In each region, which procedures depend on very few facilities?",
+  ];
 
   return (
     <div
-      className="grid w-full gap-2 sm:grid-cols-2"
+      className="grid w-full gap-2 sm:grid-cols-2 lg:grid-cols-3"
       data-testid="suggested-actions"
     >
       {suggestedActions.map((suggestedAction, index) => (
