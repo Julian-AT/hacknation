@@ -11,6 +11,11 @@ import { webResearchAgentPrompt } from "./prompts";
 /**
  * Web Research Agent — searches and scrapes the web for real-time data.
  * Tools: firecrawlSearch, firecrawlScrape, firecrawlExtract, corroborateClaims, getWHOData, queryOSMFacilities
+ *
+ * Phased execution via prepareStep:
+ *   Phase 1 (0-1): Search — getWHOData, firecrawlSearch, queryOSMFacilities
+ *   Phase 2 (2-4): Deep dive — firecrawlScrape, firecrawlExtract, corroborateClaims
+ *   Phase 3 (5+):  Synthesis — no tools, generate final research summary
  */
 export const webResearchAgent = new ToolLoopAgent({
   model: getLanguageModel("google/gemini-2.5-flash-lite"),
@@ -23,5 +28,34 @@ export const webResearchAgent = new ToolLoopAgent({
     getWHOData,
     queryOSMFacilities,
   },
-  stopWhen: stepCountIs(6),
+  stopWhen: stepCountIs(8),
+  prepareStep: async ({ stepNumber }) => {
+    // Phase 1 (steps 0-1): Search — cast a wide net
+    if (stepNumber <= 1) {
+      return {
+        activeTools: [
+          "getWHOData",
+          "firecrawlSearch",
+          "queryOSMFacilities",
+        ],
+      };
+    }
+
+    // Phase 2 (steps 2-4): Deep dive — investigate promising leads
+    if (stepNumber <= 4) {
+      return {
+        activeTools: [
+          "firecrawlScrape",
+          "firecrawlExtract",
+          "corroborateClaims",
+          "firecrawlSearch",
+        ],
+      };
+    }
+
+    // Phase 3 (steps 5+): Synthesis — no tools, generate research summary
+    return {
+      activeTools: [],
+    };
+  },
 });
