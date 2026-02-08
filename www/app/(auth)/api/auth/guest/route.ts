@@ -25,7 +25,10 @@ function getSafeRedirectUrl(
     if (url.origin !== origin) {
       return "/chat";
     }
-    return url.pathname + url.search;
+    const dest = url.pathname + url.search;
+    // Avoid redirecting back to "/" which re-triggers the middleware and
+    // can cause a redirect loop before the session cookie is read.
+    return dest === "/" ? "/chat" : dest;
   } catch {
     return "/chat";
   }
@@ -53,6 +56,8 @@ export async function GET(request: Request) {
     req: request,
     secret: process.env.AUTH_SECRET,
     secureCookie: !isDevelopmentEnvironment,
+    cookieName: SESSION_COOKIE_NAME,
+    salt: SESSION_COOKIE_NAME,
   });
 
   if (token) {

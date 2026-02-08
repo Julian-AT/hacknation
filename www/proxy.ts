@@ -2,6 +2,16 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
 
+/*
+ * next-auth v5 defaults to "authjs.session-token" but auth.ts overrides
+ * the cookie name to "next-auth.session-token". We must tell getToken()
+ * the exact name so it can find the cookie.
+ */
+const isProduction = process.env.NODE_ENV === "production";
+const SESSION_COOKIE = isProduction
+  ? "__Secure-next-auth.session-token"
+  : "next-auth.session-token";
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -21,9 +31,20 @@ export async function proxy(request: NextRequest) {
     req: request,
     secret: process.env.AUTH_SECRET,
     secureCookie: !isDevelopmentEnvironment,
+    cookieName: SESSION_COOKIE,
+    salt: SESSION_COOKIE,
   });
 
   if (!token) {
+    // Break redirect loops: if the guest route already tried to set a
+    // session cookie (_guest_attempt marker) but getToken still returns
+    // null, stop redirecting and let the request through to avoid an
+    // infinite 307 cycle.
+    const alreadyAttempted = request.cookies.get("_guest_attempt");
+    if (alreadyAttempted) {
+      return NextResponse.next();
+    }
+
     const redirectUrl = encodeURIComponent(request.url);
 
     return NextResponse.redirect(
