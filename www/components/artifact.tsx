@@ -318,7 +318,7 @@ function PureArtifact({
                   damping: 30,
                 },
               }}
-              className="relative h-dvh w-[600px] shrink-0 bg-muted dark:bg-background"
+              className="relative h-dvh w-[800px] shrink-0 bg-muted dark:bg-background"
               exit={{
                 opacity: 0,
                 x: 0,
@@ -331,7 +331,7 @@ function PureArtifact({
                 {!isCurrentVersion && (
                   <motion.div
                     animate={{ opacity: 1 }}
-                    className="absolute top-0 left-0 z-50 h-dvh w-[600px] bg-zinc-900/50"
+                    className="absolute top-0 left-0 z-50 h-dvh w-[800px] bg-zinc-900/50"
                     exit={{ opacity: 0 }}
                     initial={{ opacity: 0 }}
                   />
@@ -393,12 +393,12 @@ function PureArtifact({
                   }
                 : {
                     opacity: 1,
-                    x: 600,
+                    x: 800,
                     y: 0,
                     height: windowHeight,
                     width: windowWidth
-                      ? windowWidth - 600
-                      : "calc(100dvw - 600px)",
+                      ? windowWidth - 800
+                      : "calc(100dvw - 800px)",
                     borderRadius: 0,
                     transition: {
                       delay: 0,
@@ -416,7 +416,7 @@ function PureArtifact({
               transition: {
                 delay: 0.1,
                 type: "spring",
-                stiffness: 600,
+                stiffness: 800,
                 damping: 30,
               },
             }}

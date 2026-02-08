@@ -58,11 +58,12 @@ const SUGGESTED_QUERIES: { icon: ReactNode; label: string; query: string }[] = [
   },
 ];
 
-export const Greeting = () => {
+export const Greeting = ({ chatId }: { chatId: string }) => {
   const { sendMessage } = useChatActions();
 
   const handleSuggestion = (query: string) => {
     if (sendMessage) {
+      window.history.pushState({}, "", `/chat/${chatId}`);
       sendMessage({
         role: "user" as const,
         parts: [{ type: "text" as const, text: query }],

@@ -39,7 +39,7 @@ function PureDocumentToolResult({
 
   return (
     <Button
-      className="w-fit gap-3 px-3 py-2"
+      className="w-fit gap-3 px-3 py-2 bg-red-500"
       onClick={(event) => {
         if (isReadonly) {
           toast.error(
@@ -131,7 +131,7 @@ function PureDocumentToolCall({
         }));
       }}
       type="button"
-      variant="outline"
+      variant="default"
     >
       <div className="text-muted-foreground">
         {type === "create" ? (
