@@ -2,6 +2,8 @@ import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { openai } from "@ai-sdk/openai";
 import { wrapLanguageModel } from "ai";
 import { chatModels } from "./models";
+import { anthropic } from '@ai-sdk/anthropic';
+import { google } from '@ai-sdk/google';
 
 const isDevMode = process.env.NODE_ENV === "development";
 
@@ -29,7 +31,7 @@ export function getLanguageModel(modelId: string) {
   }
 
   // const model = gateway(modelId);
-  const model = openai("gpt-5-mini");
+  const model = google("gemini-3-flash-preview")
 
   if (isDevMode) {
     return wrapLanguageModel({ model, middleware: devToolsMiddleware() });
@@ -42,12 +44,12 @@ export function getLanguageModel(modelId: string) {
  * Model used for generating chat titles. Uses a fast, cheap model.
  */
 export function getTitleModel() {
-  return openai("gpt-5-nano");
+  return google("gemini-3-flash-preview")
 }
 
 /**
  * Model used for artifact generation and suggestion requests.
  */
 export function getArtifactModel() {
-  return openai("gpt-5-mini");
+  return google("gemini-3-flash-preview")
 }
