@@ -37,6 +37,8 @@ export const getStats = tool({
               count: sql<number>`count(*)`,
               doctors: sql<number>`sum(${facilities.numDoctors})`,
               beds: sql<number>`sum(${facilities.capacity})`,
+              facilitiesWithDoctorData: sql<number>`count(${facilities.numDoctors})`,
+              facilitiesWithBedData: sql<number>`count(${facilities.capacity})`,
             })
             .from(facilities)
             .groupBy(facilities.addressRegion)
@@ -46,7 +48,17 @@ export const getStats = tool({
           abortSignal
         );
         log.step("Region stats returned", stats.length);
-        const output = { groupBy, stats };
+
+        // Add data completeness warnings
+        const nullRegionCount = stats.filter(
+          (s) => s.region === null || String(s.region) === "null"
+        ).length;
+        const dataQualityNote =
+          nullRegionCount > 0
+            ? `${stats.find((s) => s.region === null || String(s.region) === "null")?.count ?? 0} facilities have no region assigned (NULL). Doctor and bed counts show "null" when no facilities in that group have data for that field — check facilitiesWithDoctorData and facilitiesWithBedData for actual coverage.`
+            : undefined;
+
+        const output = { groupBy, stats, ...(dataQualityNote ? { dataQualityNote } : {}) };
         log.success(output, Date.now() - start);
         return output;
       }
