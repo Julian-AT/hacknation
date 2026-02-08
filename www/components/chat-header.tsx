@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
+import Link from "next/link";
+import { Github } from "lucide-react";
 
 function PureChatHeader({
   chatId,
@@ -49,9 +51,19 @@ function PureChatHeader({
         />
       )}
 
-      <span className="order-3 hidden items-center gap-1.5 px-2 text-muted-foreground text-sm md:ml-auto md:flex">
-        Meridian
-      </span>
+     <Button
+        asChild
+        className="order-3 hidden bg-zinc-900 px-2 text-zinc-50 hover:bg-zinc-800 md:ml-auto md:flex md:h-fit dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+      >
+        <Link
+          href={"https://github.com/julian-at/hacknation/"}
+          rel="noreferrer"
+          target="_noblank"
+        >
+          <Github size={16} />
+          GitHub Repo
+        </Link>
+      </Button>
     </header>
   );
 }
