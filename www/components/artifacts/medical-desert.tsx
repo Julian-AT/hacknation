@@ -9,6 +9,15 @@ import "maplibre-gl/dist/maplibre-gl.css";
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
+function escapeHtml(str: string): string {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 type DesertZone = {
   city: string;
   nearestProvider: string | null;
@@ -126,13 +135,13 @@ export function MedicalDesertRenderer({
         if (layer?.id === "desert-markers") {
           const zone = object as DesertZone;
           const lines = [
-            `<div style="font-weight:600;font-size:13px;color:#f87171;margin-bottom:2px">${zone.city}</div>`,
+            `<div style="font-weight:600;font-size:13px;color:#f87171;margin-bottom:2px">${escapeHtml(zone.city)}</div>`,
             `<div style="font-size:11px;color:#a1a1aa">Medical Desert</div>`,
             `<div style="font-size:11px;color:#a1a1aa">Nearest provider: ${String(zone.distanceKm)} km away</div>`,
           ];
           if (zone.nearestProvider) {
             lines.push(
-              `<div style="font-size:11px;color:#a1a1aa">(${zone.nearestProvider})</div>`,
+              `<div style="font-size:11px;color:#a1a1aa">(${escapeHtml(zone.nearestProvider)})</div>`,
             );
           }
           return {
@@ -152,8 +161,8 @@ export function MedicalDesertRenderer({
           const provider = object as Provider;
           return {
             html: `<div style="font-family:var(--font-geist),system-ui,sans-serif;max-width:220px">
-              <div style="font-weight:600;font-size:13px;margin-bottom:2px">${provider.name}</div>
-              <div style="font-size:11px;color:#86efac">Provides ${data.service}</div>
+              <div style="font-weight:600;font-size:13px;margin-bottom:2px">${escapeHtml(provider.name)}</div>
+              <div style="font-size:11px;color:#86efac">Provides ${escapeHtml(data.service)}</div>
             </div>`,
             style: {
               backgroundColor: "rgba(0,0,0,0.85)",

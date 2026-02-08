@@ -9,6 +9,15 @@ import "maplibre-gl/dist/maplibre-gl.css";
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
+function escapeHtml(str: string): string {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 type FacilityItem = {
   id: number;
   name: string;
@@ -99,16 +108,16 @@ export function FacilityMapRenderer({ data }: { data: FacilityMapData }) {
         if (!object) return null;
 
         const lines = [
-          `<div style="font-weight:600;font-size:13px;margin-bottom:2px">${object.name}</div>`,
+          `<div style="font-weight:600;font-size:13px;margin-bottom:2px">${escapeHtml(object.name)}</div>`,
         ];
         if (object.type) {
           lines.push(
-            `<div style="font-size:11px;color:#93c5fd">${object.type}</div>`,
+            `<div style="font-size:11px;color:#93c5fd">${escapeHtml(object.type)}</div>`,
           );
         }
         if (object.city) {
           lines.push(
-            `<div style="font-size:11px;color:#a1a1aa">${object.city}</div>`,
+            `<div style="font-size:11px;color:#a1a1aa">${escapeHtml(object.city)}</div>`,
           );
         }
         if (object.doctors !== null && object.doctors > 0) {

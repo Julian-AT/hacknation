@@ -14,6 +14,15 @@ import { useVF } from "@/lib/vf-context";
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
+function escapeHtml(str: string): string {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 type Facility = {
   id: number;
   name: string;
@@ -97,9 +106,9 @@ export default function DeckMap() {
 
         return {
           html: `<div style="font-family:var(--font-geist),system-ui,sans-serif;max-width:220px">
-          <div style="font-weight:600;font-size:13px;margin-bottom:2px">${object.name}</div>
-          <div style="font-size:11px;color:${isDesert ? "#f87171" : "#93c5fd"}">${object.type ?? "Facility"}</div>
-          ${object.city ? `<div style="font-size:11px;color:#a1a1aa">${object.city}</div>` : ""}
+          <div style="font-weight:600;font-size:13px;margin-bottom:2px">${escapeHtml(object.name)}</div>
+          <div style="font-size:11px;color:${isDesert ? "#f87171" : "#93c5fd"}">${escapeHtml(object.type ?? "Facility")}</div>
+          ${object.city ? `<div style="font-size:11px;color:#a1a1aa">${escapeHtml(object.city)}</div>` : ""}
           ${object.distanceKm !== undefined ? `<div style="font-size:11px;color:#60a5fa;margin-top:2px">${object.distanceKm} km away</div>` : ""}
         </div>`,
           style: {
