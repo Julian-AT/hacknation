@@ -17,6 +17,7 @@ const AGENT_TOOLS = new Set([
   "medicalReasoning",
   "researchWeb",
   "searchHealthcare",
+  "parallelInvestigate",
 ]);
 
 export function ToolResultRouter({

@@ -15,14 +15,14 @@ type SuggestedActionsProps = {
 
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const suggestedActions = [
-    "Where should we send an orthopedic surgeon in Ghana?",
-    "Where are the medical deserts for emergency care?",
-    "Which facilities offer cataract surgery?",
-    "How are hospitals distributed across Ghana's regions?",
-    "Compare Northern and Ashanti regions for healthcare access",
-    "Which regions fall furthest below WHO doctor-to-patient guidelines?",
-    "What specialties have only 1-2 facilities in all of Ghana?",
-    "Find facilities with suspicious capability claims",
+    "Where are the biggest gaps in emergency care coverage?",
+    "Plan a volunteer surgical mission to address unmet orthopedic needs",
+    "Which facilities have suspicious capability claims that need verification?",
+    "Compare healthcare access between two regions and recommend improvements",
+    "Find medical deserts for maternal care and suggest where to place new clinics",
+    "What specialties have critically few providers relative to population?",
+    "Search the web for the latest WHO guidelines on doctor-to-patient ratios",
+    "Detect anomalies in facility data and flag potential reporting issues",
   ];
 
   return (

@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
-import { saveChatDocument } from "@/lib/db/queries";
+import { getChatById, saveChatDocument } from "@/lib/db/queries";
+import { ChatSDKError } from "@/lib/errors";
 
 const ACCEPTED_TYPES = new Set([
   "application/pdf",
@@ -48,11 +49,14 @@ export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return new ChatSDKError("unauthorized:document").toResponse();
   }
 
   if (request.body === null) {
-    return new Response("Request body is empty", { status: 400 });
+    return new ChatSDKError(
+      "bad_request:api",
+      "Request body is empty."
+    ).toResponse();
   }
 
   try {
@@ -61,10 +65,10 @@ export async function POST(request: Request) {
     const chatId = formData.get("chatId") as string | null;
 
     if (!file || !chatId) {
-      return NextResponse.json(
-        { error: "Missing file or chatId" },
-        { status: 400 }
-      );
+      return new ChatSDKError(
+        "bad_request:api",
+        "Missing file or chatId."
+      ).toResponse();
     }
 
     const validated = UploadSchema.safeParse({ file, chatId });
@@ -73,7 +77,17 @@ export async function POST(request: Request) {
       const errorMessage = validated.error.errors
         .map((e) => e.message)
         .join(", ");
-      return NextResponse.json({ error: errorMessage }, { status: 400 });
+      return new ChatSDKError("bad_request:document", errorMessage).toResponse();
+    }
+
+    const chat = await getChatById({ id: chatId });
+
+    if (!chat) {
+      return new ChatSDKError("not_found:chat").toResponse();
+    }
+
+    if (chat.userId !== session.user.id) {
+      return new ChatSDKError("forbidden:document").toResponse();
     }
 
     const filename = (formData.get("file") as File).name;

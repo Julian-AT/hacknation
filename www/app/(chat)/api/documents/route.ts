@@ -1,68 +1,98 @@
-import { NextResponse } from "next/server";
-
 import { auth } from "@/app/(auth)/auth";
-import { deleteChatDocument, getChatDocuments } from "@/lib/db/queries";
+import {
+  deleteChatDocument,
+  getChatById,
+  getChatDocumentById,
+  getChatDocuments,
+} from "@/lib/db/queries";
+import { ChatSDKError } from "@/lib/errors";
 
 export async function GET(request: Request) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
   const chatId = searchParams.get("chatId");
 
   if (!chatId) {
-    return NextResponse.json(
-      { error: "Missing chatId parameter" },
-      { status: 400 }
-    );
+    return new ChatSDKError(
+      "bad_request:api",
+      "Parameter chatId is required."
+    ).toResponse();
+  }
+
+  const session = await auth();
+
+  if (!session?.user) {
+    return new ChatSDKError("unauthorized:document").toResponse();
+  }
+
+  const chat = await getChatById({ id: chatId });
+
+  if (!chat) {
+    return new ChatSDKError("not_found:chat").toResponse();
+  }
+
+  if (chat.userId !== session.user.id) {
+    return new ChatSDKError("forbidden:document").toResponse();
   }
 
   try {
     const documents = await getChatDocuments({ chatId });
-    return NextResponse.json(documents);
+    return Response.json(documents, { status: 200 });
   } catch (error) {
     console.error(
       "[Documents] GET error:",
       error instanceof Error ? error.message : error
     );
-    return NextResponse.json(
-      { error: "Failed to fetch documents" },
-      { status: 500 }
-    );
+    return new ChatSDKError(
+      "bad_request:document",
+      "Failed to fetch documents"
+    ).toResponse();
   }
 }
 
 export async function DELETE(request: Request) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
   if (!id) {
-    return NextResponse.json(
-      { error: "Missing id parameter" },
-      { status: 400 }
-    );
+    return new ChatSDKError(
+      "bad_request:api",
+      "Parameter id is required."
+    ).toResponse();
+  }
+
+  const session = await auth();
+
+  if (!session?.user) {
+    return new ChatSDKError("unauthorized:document").toResponse();
+  }
+
+  const doc = await getChatDocumentById({ id });
+
+  if (!doc) {
+    return new ChatSDKError("not_found:document").toResponse();
+  }
+
+  const chat = await getChatById({ id: doc.chatId });
+
+  if (!chat) {
+    return new ChatSDKError("not_found:chat").toResponse();
+  }
+
+  if (chat.userId !== session.user.id) {
+    return new ChatSDKError("forbidden:document").toResponse();
   }
 
   try {
     await deleteChatDocument({ id });
-    return NextResponse.json({ success: true });
+    return Response.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error(
       "[Documents] DELETE error:",
       error instanceof Error ? error.message : error
     );
-    return NextResponse.json(
-      { error: "Failed to delete document" },
-      { status: 500 }
-    );
+    return new ChatSDKError(
+      "bad_request:document",
+      "Failed to delete document"
+    ).toResponse();
   }
 }

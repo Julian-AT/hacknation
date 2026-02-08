@@ -150,34 +150,37 @@ function createParallelInvestigateTool() {
           "Array of 2-4 tasks to run in parallel, each assigned to a different sub-agent"
         ),
     }),
-    execute: async ({ tasks }, { abortSignal }) => {
+    async *execute({ tasks }, { abortSignal }) {
       const startTime = Date.now();
 
-      const results = await Promise.all(
+      // Start all agent streams in parallel
+      const completedStreams = await Promise.all(
         tasks.map(async ({ agent, task }) => {
           const agentInstance = agentMap[agent as AgentName];
           try {
-            const result = await agentInstance.generate({
-              prompt: task,
-              abortSignal,
-            } as Parameters<typeof agentInstance.generate>[0]);
-            return {
-              agent,
-              task,
-              status: "success" as const,
-              result: result.text,
-              steps: result.steps.length,
-            };
+            const result = await agentInstance.stream(
+              { prompt: task, abortSignal } as Parameters<
+                typeof agentInstance.stream
+              >[0]
+            );
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const messages: any[] = [];
+            for await (const message of readUIMessageStream({
+              stream: result.toUIMessageStream(),
+            })) {
+              messages.push(message);
+            }
+            return { agent, task, status: "success" as const, messages };
           } catch (error) {
             return {
               agent,
               task,
               status: "error" as const,
-              result:
+              messages: [] as never[],
+              error:
                 error instanceof Error
                   ? error.message
                   : "Unknown error during investigation",
-              steps: 0,
             };
           }
         })
@@ -188,12 +191,32 @@ function createParallelInvestigateTool() {
         `[parallelInvestigate] ${tasks.length} agents completed in ${duration}ms`
       );
 
-      return {
-        investigations: results,
-        totalDurationMs: duration,
-        successCount: results.filter((r) => r.status === "success").length,
-        errorCount: results.filter((r) => r.status === "error").length,
-      };
+      // Yield all messages from all agents sequentially
+      for (const { messages } of completedStreams) {
+        for (const message of messages) {
+          yield message;
+        }
+      }
+    },
+    toModelOutput: ({ output }) => {
+      // Summarize the combined subagent outputs for the orchestrator's context
+      if (!output?.parts) {
+        return {
+          type: "text" as const,
+          value: "No results from parallel investigation.",
+        };
+      }
+      const textParts = output.parts.filter(
+        (p: { type: string }) => p.type === "text"
+      );
+      const texts = textParts
+        .map((p: { text?: string }) => (p.text ? p.text.trim() : ""))
+        .filter(Boolean);
+      const value =
+        texts.length > 0
+          ? texts.join("\n\n---\n\n")
+          : "Parallel investigation completed but produced no text output.";
+      return { type: "text" as const, value };
     },
   });
 }
