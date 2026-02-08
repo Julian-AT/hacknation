@@ -54,7 +54,7 @@ async function geocodeCity(
 
   const response = await fetch(`${NOMINATIM_BASE}?${params.toString()}`, {
     headers: {
-      "User-Agent": "CareMapAI/1.0 (healthcare-facility-geocoder)",
+      "User-Agent": "MeridianAI/1.0 (healthcare-facility-geocoder)",
     },
     signal: AbortSignal.timeout(10_000),
   });

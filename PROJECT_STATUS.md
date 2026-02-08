@@ -1,4 +1,4 @@
-# CareMap AI — Project Status
+# Meridian AI — Project Status
 
 **Last Updated:** February 8, 2026  
 **Status:** Phases 1-5 Complete, Phase 6 Polish & Hardening In Progress
@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-**CareMap AI** is an intelligent healthcare facility analyzer for the Virtue Foundation, designed to help NGO coordinators, volunteer doctors, and healthcare planners understand Ghana's medical infrastructure landscape.
+**Meridian AI** is an intelligent healthcare facility analyzer for the Virtue Foundation, designed to help NGO coordinators, volunteer doctors, and healthcare planners understand Ghana's medical infrastructure landscape.
 
 ### Core Features
 - **987 Healthcare Facilities** across Ghana (hospitals, clinics, pharmacies)
@@ -89,7 +89,7 @@ hacknation/
 │   │   ├── elements/       # Core rendering elements (15 files)
 │   │   ├── tool-results/   # Tool result card renderers (15 files)
 │   │   ├── ui/             # Radix/shadcn primitives (25 files)
-│   │   └── vf-ui/          # CareMap-specific (DeckMap, ToolTrace)
+│   │   └── vf-ui/          # Meridian-specific (DeckMap, ToolTrace)
 │   ├── hooks/              # Custom React hooks (6 files)
 │   ├── lib/                # Core libraries
 │   │   ├── ai/
@@ -257,7 +257,7 @@ hacknation/
 - `www/lib/ai/agents/web-research-agent.ts` — Web research sub-agent
 - `www/lib/ai/agents/prompts.ts` — All agent-specific system prompts
 - `www/lib/ai/agents/index.ts` — Agent exports
-- `www/lib/ai/memory.ts` — `CareMapMemoryProvider` (Drizzle-backed working memory)
+- `www/lib/ai/memory.ts` — `MeridianMemoryProvider` (Drizzle-backed working memory)
 - `www/lib/ai/cache.ts` — Tool caching factory (`@ai-sdk-tools/cache`)
 
 ---
@@ -323,10 +323,10 @@ hacknation/
 | `components/elements/` | 15 | Core rendering elements (message, loader, suggestion, task, etc.) |
 | `components/ui/` | 25 | Radix/shadcn primitives (button, dialog, select, sidebar, etc.) |
 | `components/artifacts/` | 4 | Domain artifact renderers (facility-map, medical-desert, mission-plan, stats-dashboard) |
-| `components/vf-ui/` | 2 | CareMap-specific (DeckMap, ToolTrace) |
+| `components/vf-ui/` | 2 | Meridian-specific (DeckMap, ToolTrace) |
 | `components/` (root) | 40+ | Top-level (chat, messages, multimodal-input, artifact, sidebar, etc.) |
 
-**CareMap-Specific Components:**
+**Meridian-Specific Components:**
 - `DeckMap.tsx` — Interactive deck.gl 3D globe with ScatterplotLayer, fly-to transitions, hover tooltips, desert/facility color coding, and highlighted facility support
 - `ToolTrace.tsx` — Expandable tool call display with per-tool icons, agent delegation awareness, formatted args, JSON output, and "View on Map" integration
 
@@ -616,7 +616,7 @@ pnpm test                   # Run Playwright E2E tests
 | `www/lib/ai/models.ts` | 10 model definitions (Anthropic, OpenAI, Google, xAI) |
 | `www/lib/ai/entitlements.ts` | Rate limits by user type |
 | `www/lib/ai/cache.ts` | Tool result caching factory |
-| `www/lib/ai/memory.ts` | CareMapMemoryProvider (Drizzle-backed working memory) |
+| `www/lib/ai/memory.ts` | MeridianMemoryProvider (Drizzle-backed working memory) |
 | `www/app/(chat)/api/chat/route.ts` | Main chat API endpoint (creates orchestrator agent) |
 
 ### Frontend
@@ -729,6 +729,6 @@ pnpm test                   # Run Playwright E2E tests
 
 **Project Type:** Virtue Foundation NGO Healthcare Analysis Tool  
 **Tech Stack:** Next.js 16, Vercel AI SDK v6 (multi-agent), Drizzle ORM, PostgreSQL + pgvector, deck.gl + MapLibre, Firecrawl, Vercel AI Gateway  
-**Package Name:** `caremap@0.1.0`
+**Package Name:** `meridian@0.1.0`
 
 For issues or questions, check the runtime logs (`[ChatRoute]` prefix) and refer to the blueprint at `assets/docs/technical-blueprint-v2.md`.

@@ -78,9 +78,9 @@ export function getWorkingMemoryInstructions(template: string): string {
 }
 
 /**
- * Working memory template for CareMap healthcare analysis.
+ * Working memory template for Meridian healthcare analysis.
  */
-export const CAREMAP_MEMORY_TEMPLATE = `# Working Memory
+export const MERIDIAN_MEMORY_TEMPLATE = `# Working Memory
 
 ## User Role
 - [NGO coordinator / Volunteer doctor / Healthcare planner / Researcher]
@@ -99,10 +99,10 @@ export const CAREMAP_MEMORY_TEMPLATE = `# Working Memory
 `;
 
 /**
- * Custom Drizzle-based memory provider for CareMap.
+ * Custom Drizzle-based memory provider for Meridian.
  * Uses the existing PostgreSQL database via Drizzle ORM.
  */
-export class CareMapMemoryProvider implements MemoryProvider {
+export class MeridianMemoryProvider implements MemoryProvider {
   async getWorkingMemory(params: {
     chatId?: string;
     userId?: string;
@@ -204,4 +204,4 @@ export class CareMapMemoryProvider implements MemoryProvider {
   }
 }
 
-export const memoryProvider = new CareMapMemoryProvider();
+export const memoryProvider = new MeridianMemoryProvider();

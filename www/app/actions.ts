@@ -4,7 +4,7 @@ import type { PushSubscription } from "web-push";
 import webpush from "web-push";
 
 webpush.setVapidDetails(
-  "mailto:hello@caremap.app",
+  "mailto:hello@meridian.app",
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!,
 );
@@ -34,7 +34,7 @@ export async function sendNotification(message: string) {
     await webpush.sendNotification(
       subscription,
       JSON.stringify({
-        title: "CareMap",
+        title: "Meridian",
         body: message,
         icon: "/icons/icon-192x192.svg",
       }),

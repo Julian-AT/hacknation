@@ -1,6 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
@@ -14,6 +14,77 @@ import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { ToolResultRouter } from "./tool-results";
+import { FacilityInlineCard } from "./vf-ui/FacilityInlineCard";
+
+/** Regex to match <<facility:ID:Name>> citation syntax in AI responses */
+const FACILITY_CITE_RE = /<<facility:(\d+):([^>]+)>>/g;
+
+type TextSegment =
+  | { kind: "text"; text: string }
+  | { kind: "facility"; id: number; name: string };
+
+function parseTextWithCitations(raw: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of raw.matchAll(FACILITY_CITE_RE)) {
+    const matchIndex = match.index;
+    if (matchIndex > lastIndex) {
+      segments.push({ kind: "text", text: raw.slice(lastIndex, matchIndex) });
+    }
+    segments.push({
+      kind: "facility",
+      id: Number.parseInt(match[1], 10),
+      name: match[2].trim(),
+    });
+    lastIndex = matchIndex + match[0].length;
+  }
+
+  if (lastIndex < raw.length) {
+    segments.push({ kind: "text", text: raw.slice(lastIndex) });
+  }
+
+  return segments;
+}
+
+function MessageTextWithCitations({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) {
+  const segments = useMemo(
+    () => parseTextWithCitations(sanitizeText(text)),
+    [text]
+  );
+
+  const hasCitations = segments.some((s) => s.kind === "facility");
+
+  if (!hasCitations) {
+    return <Response>{sanitizeText(text)}</Response>;
+  }
+
+  return (
+    <div className={cn("space-y-2", className)}>
+      {segments.map((seg, i) => {
+        const key = `seg-${String(i)}`;
+        if (seg.kind === "text") {
+          return seg.text.trim() ? (
+            <Response key={key}>{seg.text}</Response>
+          ) : null;
+        }
+        return (
+          <FacilityInlineCard
+            facilityId={seg.id}
+            key={key}
+            name={seg.name}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
 
 const PurePreviewMessage = ({
@@ -130,7 +201,11 @@ const PurePreviewMessage = ({
                       })}
                       data-testid="message-content"
                     >
-                      <Response>{sanitizeText(part.text)}</Response>
+                      {message.role === "assistant" ? (
+                        <MessageTextWithCitations text={part.text} />
+                      ) : (
+                        <Response>{sanitizeText(part.text)}</Response>
+                      )}
                     </MessageContent>
                   </div>
                 );

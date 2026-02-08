@@ -1,5 +1,5 @@
 /**
- * Orchestrator Agent — the main coordinator for CareMap AI.
+ * Orchestrator Agent — the main coordinator for Meridian AI.
  *
  * Delegates to specialized sub-agents, manages working memory,
  * and streams artifact results to the client.
@@ -24,7 +24,7 @@ import { z } from "zod";
 import type { ChatMessage } from "@/lib/types";
 import { createCached } from "../cache";
 import {
-  CAREMAP_MEMORY_TEMPLATE,
+  MERIDIAN_MEMORY_TEMPLATE,
   formatWorkingMemory,
   getWorkingMemoryInstructions,
   memoryProvider,
@@ -41,6 +41,8 @@ import {
   getStatsArtifact,
   planMissionArtifact,
 } from "../tools/artifact-tools";
+import { createDocument } from "../tools/create-document";
+import { updateDocument } from "../tools/update-document";
 import { databaseAgent } from "./database-agent";
 import { geospatialAgent } from "./geospatial-agent";
 import { healthSearchAgent } from "./health-search-agent";
@@ -233,7 +235,7 @@ function createParallelInvestigateTool() {
  *   - Increased step limit: 15 (from 10) for complex multi-tool workflows
  */
 export async function createOrchestratorAgent({
-  session: _session,
+  session,
   dataStream,
   modelId,
   userId,
@@ -249,7 +251,7 @@ export async function createOrchestratorAgent({
         scope: "user",
       });
       if (wm) {
-        memoryContext = `\n\n## Working Memory (persistent context about this user)\n${formatWorkingMemory(wm)}\n\n${getWorkingMemoryInstructions(CAREMAP_MEMORY_TEMPLATE)}`;
+        memoryContext = `\n\n## Working Memory (persistent context about this user)\n${formatWorkingMemory(wm)}\n\n${getWorkingMemoryInstructions(MERIDIAN_MEMORY_TEMPLATE)}`;
       }
     } catch (e) {
       // Memory loading is best-effort
@@ -284,6 +286,10 @@ export async function createOrchestratorAgent({
       getRegionChoropleth: getRegionChoroplethArtifact({ dataStream }),
       getDataQualityMap: getDataQualityMapArtifact({ dataStream }),
       getAccessibilityMap: getAccessibilityMapArtifact({ dataStream }),
+
+      // --- Document artifact tools (text reports, code, sheets) ---
+      createDocument: createDocument({ session, dataStream }),
+      updateDocument: updateDocument({ session, dataStream }),
 
       // --- Parallel investigation tool (runs 2-4 sub-agents concurrently) ---
       parallelInvestigate: createParallelInvestigateTool(),

@@ -72,7 +72,7 @@ export async function resolveLocation(
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "CareMapAI/1.0 (https://caremap.ai)",
+        "User-Agent": "MeridianAI/1.0 (https://meridian.app)",
         Accept: "application/json",
       },
       signal: AbortSignal.timeout(5000),
