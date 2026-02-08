@@ -71,7 +71,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   setOpenMobile(false);
                 }}
               >
-                <span className="flex cursor-pointer items-center gap-2 rounded-md px-2 font-semibold text-lg hover:bg-muted">
+                <span className="flex cursor-pointer items-center gap-2 rounded-md px-2 font-semibold text-lg text-primary hover:bg-muted">
                   <CareMapLogo size={20} />
                   CareMap
                 </span>
