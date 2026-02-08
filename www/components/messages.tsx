@@ -3,6 +3,7 @@ import { ArrowDownIcon } from "lucide-react";
 import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { ArtifactHistoryCards } from "./artifact-inline-card";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
@@ -18,6 +19,7 @@ type MessagesProps = {
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
+  onOpenArtifact?: (id: string) => void;
 };
 
 function PureMessages({
@@ -30,6 +32,7 @@ function PureMessages({
   regenerate,
   isReadonly,
   selectedModelId: _selectedModelId,
+  onOpenArtifact,
 }: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
@@ -46,7 +49,7 @@ function PureMessages({
   return (
     <div className="relative flex-1">
       <div
-        className="absolute inset-0 touch-pan-y overflow-y-auto"
+        className="absolute inset-0 touch-pan-y overflow-x-hidden overflow-y-auto"
         ref={messagesContainerRef}
       >
         <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-4 px-2 py-4 md:gap-6 md:px-4">
@@ -75,6 +78,11 @@ function PureMessages({
               />
             </div>
           ))}
+
+          {/* Inline artifact cards — each artifact gets a dedicated open widget */}
+          {onOpenArtifact && messages.length > 0 && (
+            <ArtifactHistoryCards onOpen={onOpenArtifact} />
+          )}
 
           {status === "submitted" &&
             !messages.some((msg) =>

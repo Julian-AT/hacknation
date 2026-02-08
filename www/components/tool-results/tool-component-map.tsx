@@ -6,6 +6,7 @@ import { ClarifyingQuestionCard } from "./clarifying-question-card";
 import { ClaimsValidationResult } from "./claims-validation-result";
 import { CredibilityAssessmentResult } from "./credibility-assessment-result";
 import { DemographicsResult } from "./demographics-result";
+import { DocumentResultCard } from "./document-result-card";
 import { FacilityProfileCard } from "./facility-profile-card";
 import { MedicalDesertsResult } from "./medical-deserts-result";
 import { MissionPlanResult } from "./mission-plan-result";
@@ -71,6 +72,10 @@ export function getToolComponent(
       return <ProviderSearchResult args={args} result={result} />;
     case "getProviderProfile":
       return <ProviderCard provider={(result.provider ?? result) as Record<string, unknown> & { name: string; type: string }} />;
+    case "createDocument":
+      return <DocumentResultCard result={result} type="create" />;
+    case "updateDocument":
+      return <DocumentResultCard result={result} type="update" />;
     default:
       return null;
   }
