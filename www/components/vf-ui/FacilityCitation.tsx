@@ -68,9 +68,9 @@ export function FacilityCitation({
               <h4 className="text-sm font-semibold leading-tight">{name}</h4>
               <div className="mt-1 flex items-center gap-1.5">
                 {facilityType && (
-                  <span className="rounded bg-blue-950/50 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
+                  <Badge variant="secondary" className="text-[10px] font-normal">
                     {facilityType}
-                  </span>
+                  </Badge>
                 )}
                 {location && (
                   <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
@@ -86,8 +86,8 @@ export function FacilityCitation({
             (doctors !== null && doctors !== undefined) ? (
               <div className="flex gap-2">
                 {beds !== null && beds !== undefined && (
-                  <div className="flex flex-col rounded bg-muted px-2 py-1">
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="flex flex-col rounded-md border border-border px-2 py-1">
+                    <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
                       Beds
                     </span>
                     <span className="font-mono text-sm font-bold tabular-nums">
@@ -96,8 +96,8 @@ export function FacilityCitation({
                   </div>
                 )}
                 {doctors !== null && doctors !== undefined && (
-                  <div className="flex flex-col rounded bg-muted px-2 py-1">
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="flex flex-col rounded-md border border-border px-2 py-1">
+                    <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
                       Doctors
                     </span>
                     <span className="font-mono text-sm font-bold tabular-nums">
@@ -112,12 +112,13 @@ export function FacilityCitation({
             {specialties && specialties.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {specialties.slice(0, 4).map((s) => (
-                  <span
-                    className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                  <Badge
+                    className="text-[10px] font-normal"
                     key={s}
+                    variant="secondary"
                   >
                     {s}
-                  </span>
+                  </Badge>
                 ))}
                 {specialties.length > 4 && (
                   <span className="text-[10px] text-muted-foreground">

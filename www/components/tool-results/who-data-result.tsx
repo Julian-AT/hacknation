@@ -33,9 +33,9 @@ export function WHODataResult({ result }: WHODataResultProps) {
   if (comparisonTable && comparisonTable.length > 0) {
     const cols = Object.keys(comparisonTable.at(0) as Record<string, unknown>);
     return (
-      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <Card className="my-2 w-full overflow-hidden">
         <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-          <Globe className="size-3.5 text-blue-400" />
+          <Globe className="size-3.5 text-muted-foreground" />
           <span className="text-balance text-xs font-medium text-muted-foreground">
             WHO Health Indicators &mdash; Country Comparison
           </span>
@@ -99,10 +99,10 @@ export function WHODataResult({ result }: WHODataResultProps) {
   const entries = Object.entries(indicators);
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Globe className="size-3.5 text-blue-400" />
+          <Globe className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             WHO Health Indicators &mdash; {country ?? "Ghana"}
           </span>
@@ -142,7 +142,7 @@ export function WHODataResult({ result }: WHODataResultProps) {
                   <TableCell className="max-w-[220px] truncate px-3 py-1.5 text-xs text-muted-foreground">
                     {data.label}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap px-3 py-1.5 font-mono font-bold tabular-nums text-xs text-emerald-400">
+                  <TableCell className="whitespace-nowrap px-3 py-1.5 font-mono font-bold tabular-nums text-xs text-foreground">
                     {data.value !== null
                       ? typeof data.value === "number"
                         ? data.value.toLocaleString(undefined, {
@@ -212,16 +212,11 @@ function MiniTrend({
     <span className="flex items-center gap-1">
       <TrendingUp
         className={cn(
-          "size-3",
-          isUp ? "text-emerald-400" : "rotate-180 text-rose-400"
+          "size-3 text-muted-foreground",
+          !isUp && "rotate-180"
         )}
       />
-      <span
-        className={cn(
-          "tabular-nums text-[10px]",
-          isUp ? "text-emerald-400" : "text-rose-400"
-        )}
-      >
+      <span className="tabular-nums text-[10px] text-muted-foreground">
         {isUp ? "+" : ""}
         {diff.toFixed(1)}
       </span>

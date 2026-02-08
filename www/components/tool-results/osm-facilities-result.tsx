@@ -43,9 +43,9 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
 
   if (facilities.length === 0) {
     return (
-      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <Card className="my-2 w-full overflow-hidden">
         <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-          <MapPin className="size-3.5 text-orange-400" />
+          <MapPin className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             OpenStreetMap &mdash; No facilities found nearby
           </span>
@@ -60,10 +60,10 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
   }
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <MapPin className="size-3.5 text-orange-400" />
+          <MapPin className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             OpenStreetMap Facilities
             {radiusMeters
@@ -116,26 +116,17 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
                   <TableCell className="px-3 py-1.5">
                     <span className="flex flex-wrap gap-1">
                       {f.beds !== null && (
-                        <Badge
-                          className="border-blue-500/20 bg-blue-500/10 px-1 py-0 text-[10px] text-blue-400"
-                          variant="outline"
-                        >
+                        <Badge variant="secondary" className="px-1 py-0 text-[10px]">
                           {f.beds} beds
                         </Badge>
                       )}
                       {f.emergency === "yes" && (
-                        <Badge
-                          className="border-rose-500/20 bg-rose-500/10 px-1 py-0 text-[10px] text-rose-400"
-                          variant="outline"
-                        >
+                        <Badge variant="secondary" className="px-1 py-0 text-[10px]">
                           ER
                         </Badge>
                       )}
                       {f.healthcareSpecialty && (
-                        <Badge
-                          className="border-emerald-500/20 bg-emerald-500/10 px-1 py-0 text-[10px] text-emerald-400"
-                          variant="outline"
-                        >
+                        <Badge variant="outline" className="px-1 py-0 text-[10px]">
                           {f.healthcareSpecialty}
                         </Badge>
                       )}

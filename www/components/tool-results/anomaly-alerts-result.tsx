@@ -26,17 +26,17 @@ export function AnomalyAlertsResult({ result }: AnomalyAlertsResultProps) {
   const details = (result.details as AnomalyDetail[]) ?? [];
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="size-3.5 text-red-400" />
+          <AlertTriangle className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Anomalies{region ? ` in ${region}` : " Found"}
           </span>
         </div>
         <Badge
-          className="border-red-500/20 bg-red-500/10 font-mono text-[11px] text-red-400"
-          variant="outline"
+          className="font-mono text-[11px]"
+          variant="secondary"
         >
           {foundAnomalies} {foundAnomalies === 1 ? "issue" : "issues"}
         </Badge>
@@ -45,7 +45,7 @@ export function AnomalyAlertsResult({ result }: AnomalyAlertsResultProps) {
       <CardContent className="px-3 pb-3 pt-0">
         {foundAnomalies === 0 || details.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <AlertTriangle className="size-5 text-green-500/50" />
+            <AlertTriangle className="size-5 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">No anomalies detected</p>
             <p className="text-[11px] text-muted-foreground/70">All checked facilities passed consistency checks</p>
           </div>
@@ -65,12 +65,9 @@ export function AnomalyAlertsResult({ result }: AnomalyAlertsResultProps) {
 
 function AnomalyItem({ detail }: { detail: AnomalyDetail }) {
   return (
-    <Card className="p-2.5">
+    <div className="rounded-md border border-border p-2.5">
       <div className="flex flex-col gap-1.5">
-        <Badge
-          className="w-fit border-red-500/20 bg-red-500/10 text-[9px] uppercase tracking-wider text-orange-400"
-          variant="outline"
-        >
+        <Badge variant="secondary" className="w-fit text-[9px] uppercase tracking-wider font-medium">
           {detail.type.replaceAll("_", " ")}
         </Badge>
         <p className="text-pretty text-xs text-muted-foreground">
@@ -101,7 +98,7 @@ function AnomalyItem({ detail }: { detail: AnomalyDetail }) {
           </CollapsibleContent>
         </Collapsible>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -114,15 +111,14 @@ function AnomalyFacilityCard({ facility }: { facility: Record<string, unknown> }
   const doctors = (facility.numDoctors ?? facility.num_doctors ?? facility.doctors) as number | null | undefined;
   const id = facility.id as number | undefined;
 
-  // Collect any extra keys that aren't standard fields for context
   const standardKeys = new Set(["id", "name", "facilityType", "facility_type", "type", "addressRegion", "address_region", "region", "addressCity", "address_city", "city", "capacity", "beds", "numDoctors", "num_doctors", "doctors", "lat", "lng", "embedding"]);
   const extraEntries = Object.entries(facility).filter(
     ([k, v]) => !standardKeys.has(k) && v !== null && v !== undefined && v !== ""
   );
 
   return (
-    <div className="flex items-start gap-2 rounded-md bg-muted/60 px-2.5 py-2">
-      <Building2 className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/60" />
+    <div className="flex items-start gap-2 rounded-md bg-muted px-2.5 py-2">
+      <Building2 className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-[11px] font-medium text-foreground">
@@ -134,32 +130,22 @@ function AnomalyFacilityCard({ facility }: { facility: Record<string, unknown> }
             </span>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
           {type && (
-            <Badge className="border-blue-500/20 bg-blue-500/10 text-[9px] text-blue-400" variant="outline">
+            <Badge variant="secondary" className="text-[9px] font-normal">
               {type}
             </Badge>
           )}
           {(region ?? city) && (
-            <span className="text-[10px] text-muted-foreground">
-              {[city, region].filter(Boolean).join(", ")}
-            </span>
+            <span>{[city, region].filter(Boolean).join(", ")}</span>
+          )}
+          {beds !== null && beds !== undefined && (
+            <span className="font-mono tabular-nums">{beds} beds</span>
+          )}
+          {doctors !== null && doctors !== undefined && (
+            <span className="font-mono tabular-nums">{doctors} doctors</span>
           )}
         </div>
-        {(beds !== null && beds !== undefined) || (doctors !== null && doctors !== undefined) ? (
-          <div className="flex items-center gap-2">
-            {beds !== null && beds !== undefined && (
-              <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                {beds} beds
-              </span>
-            )}
-            {doctors !== null && doctors !== undefined && (
-              <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                {doctors} doctors
-              </span>
-            )}
-          </div>
-        ) : null}
         {extraEntries.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-0.5">
             {extraEntries.slice(0, 4).map(([key, val]) => (

@@ -31,9 +31,9 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
     : content?.slice(0, previewLength);
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-        <FileText className="size-3.5 text-emerald-400" />
+        <FileText className="size-3.5 text-muted-foreground" />
         <span className="text-xs font-medium text-muted-foreground">
           Scraped Content
         </span>
@@ -47,7 +47,7 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
           </p>
         )}
         <a
-          className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-emerald-500/70 hover:text-emerald-400"
+          className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
           href={url}
           rel="noopener noreferrer"
           target="_blank"
@@ -60,10 +60,7 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
             {contentLength.toLocaleString()} chars
           </span>
           {truncated && (
-            <Badge
-              className="border-amber-500/20 bg-amber-500/10 px-1 py-0 text-[10px] text-amber-400"
-              variant="outline"
-            >
+            <Badge variant="secondary" className="text-[10px]">
               truncated
             </Badge>
           )}

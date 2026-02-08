@@ -39,15 +39,15 @@ export function RegionComparisonResult({
 
   if (comparison.length === 0) {
     return (
-      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <Card className="my-2 w-full overflow-hidden">
         <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-          <GitCompare className="size-3.5 text-cyan-400" />
+          <GitCompare className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Region Comparison
           </span>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-2 py-6 text-center">
-          <GitCompare className="size-5 text-muted-foreground/50" />
+          <GitCompare className="size-5 text-muted-foreground/40" />
           <p className="text-xs text-muted-foreground">No regions to compare</p>
           <p className="text-[11px] text-muted-foreground/70">Specify 2-5 regions for side-by-side comparison</p>
         </CardContent>
@@ -73,10 +73,10 @@ export function RegionComparisonResult({
   };
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <GitCompare className="size-3.5 text-cyan-400" />
+          <GitCompare className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Region Comparison
           </span>
@@ -121,8 +121,8 @@ export function RegionComparisonResult({
                           className={cn(
                             "whitespace-nowrap px-3 py-1.5 font-mono tabular-nums text-xs",
                             isMax
-                              ? "font-semibold text-cyan-400"
-                              : "text-foreground"
+                              ? "font-semibold text-foreground"
+                              : "text-muted-foreground"
                           )}
                           key={`${r.region}-${metric.key}`}
                         >
@@ -160,12 +160,12 @@ export function RegionComparisonResult({
         <>
           <Separator />
           <CardContent className="px-3 py-2.5">
-            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Identified Gaps
             </span>
             <ul className="flex flex-col gap-1">
               {gaps.map((gap) => (
-                <li className="text-[11px] text-amber-400" key={gap}>
+                <li className="text-[11px] text-muted-foreground" key={gap}>
                   {gap}
                 </li>
               ))}

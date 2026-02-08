@@ -1,13 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, ExternalLink, Eye, MapPin, Phone, Mail, Check } from "lucide-react";
+import {
+  Building2,
+  Check,
+  Copy,
+  ExternalLink,
+  Eye,
+  Mail,
+  MapPin,
+  Phone,
+  Users,
+  BedDouble,
+  Maximize,
+  Calendar,
+  Briefcase,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
-import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
 
 interface FacilityProfileCardProps {
   result: Record<string, unknown>;
@@ -17,18 +29,6 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
   const facility = result.facility as Record<string, unknown> | undefined;
   const dataQualityScore = result.dataQualityScore as string | undefined;
   const missingCriticalData = result.missingCriticalData as string | null;
-  const anomalyConfidence = result.anomalyConfidence as
-    | {
-        level: "green" | "yellow" | "red";
-        score: number;
-        summary: string;
-        flags: {
-          checkId: string;
-          severity: "critical" | "high" | "medium" | "low";
-          explanation: string;
-        }[];
-      }
-    | undefined;
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
   const [copied, setCopied] = useState(false);
 
@@ -38,6 +38,7 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
 
   const name = facility.name as string;
   const type = facility.facilityType as string | undefined;
+  const operatorType = facility.operatorType as string | undefined;
   const region = facility.addressRegion as string | undefined;
   const city = facility.addressCity as string | undefined;
   const beds = facility.capacity as number | null;
@@ -47,8 +48,11 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
   const lng = facility.lng as number | undefined;
   const specialties = facility.specialties as string[] | undefined;
   const procedures = facility.procedures as string[] | undefined;
+  const equipment = facility.equipment as string[] | undefined;
   const phone = facility.phone as string | undefined;
   const email = facility.email as string | undefined;
+  const website = facility.website as string | undefined;
+  const yearEstablished = facility.yearEstablished as number | undefined;
 
   const qualityNum = dataQualityScore
     ? Number.parseInt(dataQualityScore, 10)
@@ -96,88 +100,78 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
     });
   };
 
+  const hasMetrics = beds !== null || doctors !== null || areaSqm !== null;
+  const hasContact = Boolean(phone ?? email ?? website);
+  const hasSpecialties = (specialties?.length ?? 0) > 0;
+  const hasProcedures = (procedures?.length ?? 0) > 0;
+  const hasEquipment = (equipment?.length ?? 0) > 0;
+
   return (
-    <div className="my-2 w-full max-w-md overflow-hidden rounded-xl border border-border bg-background shadow-sm">
-      {/* Map preview header */}
-      <button
-        aria-label="View on map"
-        className="relative flex h-28 w-full items-end bg-muted"
-        disabled={!lat || !lng}
-        onClick={handleViewOnMap}
-        type="button"
-      >
-        {/* Map tile background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <MapPreviewPattern />
-        </div>
-
-        {/* Pin */}
-        {lat && lng && (
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full">
-            <div className="flex flex-col items-center">
-              <div className="flex size-8 items-center justify-center rounded-full bg-red-500 shadow-md">
-                <MapPin className="size-4 text-white" />
-              </div>
-              <div className="size-2 -translate-y-0.5 rounded-full bg-red-500/40" />
-            </div>
-          </div>
-        )}
-
-        {/* Coordinates badge */}
-        {lat && lng && (
-          <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground tabular-nums backdrop-blur-sm">
-            {lat.toFixed(4)}, {lng.toFixed(4)}
-          </span>
-        )}
-      </button>
-
-      {/* Main content */}
+    <div className="not-prose my-2 w-full overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+      {/* Primary block: Name, type, operator */}
       <div className="px-4 py-3">
-        {/* Name and type */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="text-balance text-base font-semibold text-foreground leading-tight">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-balance text-base font-semibold leading-tight text-foreground">
               {name}
             </h3>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               {type && (
-                <Badge
-                  className="border-blue-500/20 bg-blue-500/10 text-[10px] text-blue-500 dark:text-blue-400"
-                  variant="outline"
-                >
+                <Badge variant="secondary" className="text-[11px] font-normal">
                   {type}
                 </Badge>
               )}
-              {qualityNum !== null && (
-                <Badge
-                  className={cn(
-                    "text-[10px]",
-                    qualityNum >= 70
-                      ? "border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400"
-                      : qualityNum >= 40
-                        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                        : "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400"
-                  )}
-                  variant="outline"
-                >
-                  {qualityNum}% quality
+              {operatorType && (
+                <Badge variant="outline" className="text-[11px] font-normal">
+                  {operatorType}
                 </Badge>
+              )}
+              {yearEstablished && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="size-3" />
+                  Est. {String(yearEstablished)}
+                </span>
               )}
             </div>
           </div>
+          {qualityNum !== null && (
+            <div className="flex shrink-0 flex-col items-end">
+              <span className="font-mono text-lg font-bold tabular-nums text-foreground">
+                {qualityNum}%
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                data quality
+              </span>
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Address */}
-        {addressLine && (
-          <div className="mt-2.5 flex items-start gap-2 text-sm text-muted-foreground">
-            <MapPin className="mt-0.5 size-3.5 shrink-0" />
-            <span>{addressLine}</span>
+      {/* Location block */}
+      {(addressLine || (lat && lng)) && (
+        <>
+          <Separator />
+          <div className="px-4 py-2.5">
+            {addressLine && (
+              <div className="flex items-start gap-2 text-sm text-foreground">
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                <span>{addressLine}</span>
+              </div>
+            )}
+            {lat && lng && (
+              <span className="mt-1 block pl-5.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+                {lat.toFixed(4)}, {lng.toFixed(4)}
+              </span>
+            )}
           </div>
-        )}
+        </>
+      )}
 
-        {/* Contact info */}
-        {(phone ?? email) && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+      {/* Contact block */}
+      {hasContact && (
+        <>
+          <Separator />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5">
             {phone && (
               <a
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
@@ -196,19 +190,35 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
                 {email}
               </a>
             )}
+            {website && (
+              <a
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                href={website.startsWith("http") ? website : `https://${website}`}
+                rel="noopener"
+                target="_blank"
+              >
+                <ExternalLink className="size-3" />
+                Website
+              </a>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
-      {/* Metrics row */}
-      {(beds !== null || doctors !== null || areaSqm !== null) && (
+      {/* Metrics block */}
+      {hasMetrics && (
         <>
           <Separator />
           <div className="grid grid-cols-3 divide-x divide-border">
-            {beds !== null && <MetricCell label="Beds" value={beds} />}
-            {doctors !== null && <MetricCell label="Doctors" value={doctors} />}
+            {beds !== null && (
+              <MetricCell icon={BedDouble} label="Beds" value={beds} />
+            )}
+            {doctors !== null && (
+              <MetricCell icon={Users} label="Doctors" value={doctors} />
+            )}
             {areaSqm !== null && (
               <MetricCell
+                icon={Maximize}
                 label="Area"
                 value={`${areaSqm.toLocaleString()}m\u00b2`}
               />
@@ -217,22 +227,22 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
         </>
       )}
 
-      {/* Specialties */}
-      {(specialties?.length ?? 0) > 0 && (
+      {/* Specialties block */}
+      {hasSpecialties && (
         <>
           <Separator />
           <div className="px-4 py-2.5">
-            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Specialties
             </span>
             <div className="flex flex-wrap gap-1">
               {specialties?.slice(0, 8).map((s) => (
-                <Badge className="text-[10px] font-normal" key={s} variant="secondary">
+                <Badge className="text-[11px] font-normal" key={s} variant="secondary">
                   {s}
                 </Badge>
               ))}
               {(specialties?.length ?? 0) > 8 && (
-                <span className="text-[10px] text-muted-foreground">
+                <span className="self-center text-[11px] text-muted-foreground">
                   +{(specialties?.length ?? 0) - 8} more
                 </span>
               )}
@@ -241,22 +251,22 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
         </>
       )}
 
-      {/* Procedures */}
-      {(procedures?.length ?? 0) > 0 && (
+      {/* Procedures block */}
+      {hasProcedures && (
         <>
           <Separator />
           <div className="px-4 py-2.5">
-            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Procedures
             </span>
             <div className="flex flex-wrap gap-1">
               {procedures?.slice(0, 6).map((p) => (
-                <Badge className="text-[10px] font-normal" key={p} variant="secondary">
+                <Badge className="text-[11px] font-normal" key={p} variant="secondary">
                   {p}
                 </Badge>
               ))}
               {(procedures?.length ?? 0) > 6 && (
-                <span className="text-[10px] text-muted-foreground">
+                <span className="self-center text-[11px] text-muted-foreground">
                   +{(procedures?.length ?? 0) - 6} more
                 </span>
               )}
@@ -265,23 +275,37 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
         </>
       )}
 
-      {/* Anomaly confidence */}
-      {anomalyConfidence && (
+      {/* Equipment block */}
+      {hasEquipment && (
         <>
           <Separator />
           <div className="px-4 py-2.5">
-            <AnomalyConfidenceBadge confidence={anomalyConfidence} />
+            <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Equipment
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {equipment?.slice(0, 6).map((e) => (
+                <Badge className="text-[11px] font-normal" key={e} variant="outline">
+                  {e}
+                </Badge>
+              ))}
+              {(equipment?.length ?? 0) > 6 && (
+                <span className="self-center text-[11px] text-muted-foreground">
+                  +{(equipment?.length ?? 0) - 6} more
+                </span>
+              )}
+            </div>
           </div>
         </>
       )}
 
-      {/* Missing data warning */}
-      {missingCriticalData && !anomalyConfidence && (
+      {/* Missing data notice */}
+      {missingCriticalData && (
         <>
           <Separator />
-          <div className="bg-amber-500/5 px-4 py-2">
-            <span className="text-[11px] text-amber-600 dark:text-amber-400">
-              Missing: {missingCriticalData}
+          <div className="px-4 py-2">
+            <span className="text-[11px] text-muted-foreground">
+              Missing data: {missingCriticalData}
             </span>
           </div>
         </>
@@ -325,7 +349,7 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
           variant="ghost"
         >
           {copied ? (
-            <Check className="size-3.5 text-green-500" />
+            <Check className="size-3.5" />
           ) : (
             <Copy className="size-3.5" />
           )}
@@ -337,14 +361,17 @@ export function FacilityProfileCard({ result }: FacilityProfileCardProps) {
 }
 
 function MetricCell({
+  icon: Icon,
   label,
   value,
 }: {
+  icon: typeof Users;
   label: string;
   value: number | string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 py-2.5">
+    <div className="flex flex-col items-center gap-0.5 py-3">
+      <Icon className="mb-0.5 size-3.5 text-muted-foreground" />
       <span className="font-mono text-base font-bold tabular-nums text-foreground">
         {typeof value === "number" ? value.toLocaleString() : value}
       </span>
@@ -352,37 +379,5 @@ function MetricCell({
         {label}
       </span>
     </div>
-  );
-}
-
-/** SVG pattern that mimics a subtle map grid for the preview header. */
-function MapPreviewPattern() {
-  return (
-    <svg
-      className="size-full text-muted-foreground/[0.06]"
-      preserveAspectRatio="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <pattern
-          height="20"
-          id="map-grid"
-          patternUnits="userSpaceOnUse"
-          width="20"
-        >
-          <path
-            d="M 20 0 L 0 0 0 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-          />
-        </pattern>
-      </defs>
-      <rect fill="url(#map-grid)" height="100%" width="100%" />
-      {/* Subtle diagonal road lines */}
-      <line stroke="currentColor" strokeWidth="2" x1="0" x2="100%" y1="40%" y2="60%" />
-      <line stroke="currentColor" strokeWidth="2" x1="30%" x2="70%" y1="0" y2="100%" />
-      <line stroke="currentColor" strokeWidth="1.5" x1="60%" x2="100%" y1="100%" y2="20%" />
-    </svg>
   );
 }

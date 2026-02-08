@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 interface StatsOverviewResultProps {
   result: Record<string, unknown>;
@@ -30,26 +31,25 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
 
   if (totalFacilities === undefined && facilitiesByType.length === 0 && stats.length === 0) {
     return (
-      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <Card className="my-2 w-full overflow-hidden">
         <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-          <BarChart3 className="size-3.5 text-blue-400" />
+          <BarChart3 className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Facility Statistics
           </span>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-2 py-6 text-center">
-          <BarChart3 className="size-5 text-muted-foreground/50" />
+          <BarChart3 className="size-5 text-muted-foreground/40" />
           <p className="text-xs text-muted-foreground">No statistics available</p>
-          <p className="text-[11px] text-muted-foreground/70">Try a different grouping or filter</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
-        <BarChart3 className="size-3.5 text-blue-400" />
+        <BarChart3 className="size-3.5 text-muted-foreground" />
         <span className="text-xs font-medium text-muted-foreground">
           Facility Statistics
         </span>
@@ -58,21 +58,20 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
       {(totalFacilities !== undefined || facilitiesByType.length > 0) && (
         <CardContent className="flex flex-wrap gap-2 px-3 pb-3 pt-0">
           {totalFacilities !== undefined && (
-            <MetricCard label="TOTAL" value={totalFacilities} />
+            <MetricCard label="Total" value={totalFacilities} />
           )}
           {facilitiesByType.slice(0, 4).map((item) => {
             const label = String(
               item.facility_type ?? item.type ?? "Unknown"
-            ).toUpperCase();
+            );
             const value = Number(item.count ?? 0);
             return (
-              <MetricCard accent key={label} label={label} value={value} />
+              <MetricCard key={label} label={label} value={value} />
             );
           })}
           {facilitiesWithCoordinates !== undefined && (
             <MetricCard
-              accent
-              label="GEO-CODED"
+              label="Geo-coded"
               value={facilitiesWithCoordinates}
             />
           )}
@@ -85,7 +84,7 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
           <CardContent className="px-0 py-2">
             {groupBy && (
               <div className="px-3 pb-1">
-                <Badge className="text-[10px] uppercase" variant="secondary">
+                <Badge className="text-[10px]" variant="secondary">
                   Grouped by {groupBy}
                 </Badge>
               </div>
@@ -137,22 +136,18 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
 function MetricCard({
   label,
   value,
-  accent,
 }: {
   label: string;
   value: number;
-  accent?: boolean;
 }) {
   return (
-    <Card className="flex flex-1 basis-20 flex-col gap-1 p-3">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="flex flex-1 basis-20 flex-col gap-1 rounded-md border border-border p-3">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <span
-        className={`font-mono text-lg font-bold tabular-nums ${accent ? "text-blue-400" : "text-foreground"}`}
-      >
+      <span className="font-mono text-lg font-bold tabular-nums text-foreground">
         {value.toLocaleString()}
       </span>
-    </Card>
+    </div>
   );
 }

@@ -10,7 +10,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 
 interface ValidationIssue {
   facilityId: number;
@@ -25,13 +24,6 @@ interface ClaimsValidationResultProps {
   result: Record<string, unknown>;
 }
 
-const SEVERITY_BADGE: Record<string, string> = {
-  critical: "border-red-500/20 bg-red-500/10 text-red-400",
-  high: "border-orange-500/20 bg-orange-500/10 text-orange-400",
-  medium: "border-amber-500/20 bg-amber-500/10 text-amber-400",
-  low: "border-green-500/20 bg-green-500/10 text-green-400",
-};
-
 export function ClaimsValidationResult({
   result,
 }: ClaimsValidationResultProps) {
@@ -41,10 +33,10 @@ export function ClaimsValidationResult({
   const summary = result.summary as string | undefined;
 
   return (
-    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden">
       <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <Brain className="size-3.5 text-orange-400" />
+          <Brain className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">
             Claims Validation
           </span>
@@ -54,8 +46,8 @@ export function ClaimsValidationResult({
             {facilitiesChecked} checked
           </span>
           <Badge
-            className="border-orange-500/20 bg-orange-500/10 font-mono text-[11px] text-orange-400"
-            variant="outline"
+            className="font-mono text-[11px]"
+            variant="secondary"
           >
             {issuesFound} {issuesFound === 1 ? "issue" : "issues"}
           </Badge>
@@ -71,7 +63,7 @@ export function ClaimsValidationResult({
             }
             return (
               <Badge
-                className={cn("text-[10px] uppercase", SEVERITY_BADGE[sev])}
+                className="text-[10px] uppercase"
                 key={sev}
                 variant="outline"
               >
@@ -85,9 +77,8 @@ export function ClaimsValidationResult({
       <CardContent className="px-3 pb-3 pt-0">
         {results.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <Brain className="size-5 text-green-500/50" />
+            <Brain className="size-5 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">No validation issues found</p>
-            <p className="text-[11px] text-muted-foreground/70">All checked claims passed cross-validation</p>
           </div>
         ) : (
         <ul className="flex flex-col gap-1.5">
@@ -115,14 +106,12 @@ export function ClaimsValidationResult({
 }
 
 function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
-  const badgeClass = SEVERITY_BADGE[issue.severity] ?? SEVERITY_BADGE.low;
-
   return (
-    <Card className="p-2.5">
+    <div className="rounded-md border border-border p-2.5">
       <div className="flex items-center gap-2">
         <Badge
-          className={cn("text-[9px] uppercase tracking-wider", badgeClass)}
-          variant="outline"
+          className="text-[9px] uppercase tracking-wider"
+          variant="secondary"
         >
           {issue.severity}
         </Badge>
@@ -157,7 +146,7 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
           </CollapsibleContent>
         </Collapsible>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -189,7 +178,7 @@ function EvidenceRow({ label, value }: { label: string; value: unknown }) {
   };
 
   return (
-    <div className="flex items-baseline gap-2 rounded-md bg-muted/60 px-2.5 py-1.5">
+    <div className="flex items-baseline gap-2 rounded-md bg-muted px-2.5 py-1.5">
       <span className="shrink-0 text-[10px] font-medium text-muted-foreground">
         {displayLabel}:
       </span>
