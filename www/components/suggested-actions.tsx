@@ -19,6 +19,10 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
     "Which facilities offer cataract surgery?",
     "Where are the medical deserts for emergency care?",
     "I'm an ophthalmologist — where should I volunteer?",
+    "Compare Northern and Ashanti regions for healthcare access",
+    "Which regions fall furthest below WHO doctor-to-patient guidelines?",
+    "What specialties have only 1-2 facilities in all of Ghana?",
+    "Find facilities with suspicious capability claims",
   ];
 
   return (

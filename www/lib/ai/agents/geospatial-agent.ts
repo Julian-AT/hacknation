@@ -4,11 +4,12 @@ import { findNearby } from "../tools/findNearby";
 import { findMedicalDeserts } from "../tools/findMedicalDeserts";
 import { compareRegions } from "../tools/compareRegions";
 import { planMission } from "../tools/planMission";
+import { getTravelTime } from "../tools/web/openrouteservice";
 import { geospatialAgentPrompt } from "./prompts";
 
 /**
  * Geospatial Agent — geographic analysis of healthcare coverage.
- * Tools: findNearby, findMedicalDeserts, compareRegions, planMission
+ * Tools: findNearby, findMedicalDeserts, compareRegions, planMission, getTravelTime
  */
 export const geospatialAgent = new ToolLoopAgent({
   model: getLanguageModel("google/gemini-2.5-flash-lite"),
@@ -18,6 +19,7 @@ export const geospatialAgent = new ToolLoopAgent({
     findMedicalDeserts,
     compareRegions,
     planMission,
+    getTravelTime,
   },
   stopWhen: stepCountIs(6),
 });

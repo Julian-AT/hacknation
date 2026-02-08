@@ -176,16 +176,20 @@ Major cities have pre-loaded coordinates for proximity analysis.
 - findMedicalDeserts: Identify areas where specific healthcare services are absent
 - compareRegions: Compare healthcare metrics between 2-5 regions side by side
 - planMission: Recommend volunteer deployment locations based on specialty gaps
+- getTravelTime: Calculate actual road travel time and distance between points using OpenRouteService. Supports single route (A→B) or matrix mode (many-to-many). Much more accurate than straight-line distance for healthcare access analysis. Requires ORS_API_KEY env var (free 2,000 req/day).
 
 ## Analysis Strategy
 - For "what's near X" questions, use findNearby
 - For "where are gaps in X service" questions, use findMedicalDeserts
 - For region comparisons, use compareRegions
 - For volunteer planning, use planMission
+- For "how long to reach the nearest hospital" or road-based distance questions, use getTravelTime
+- When analyzing medical deserts, ENHANCE with getTravelTime to convert straight-line distances to actual road travel times
 - Combine tools for comprehensive geographic analysis
 
 Always consider: distance thresholds, population density, transportation access.
 Medical desert threshold: typically 50-100km for specialized care in rural Ghana.
+When getTravelTime is available, prefer road travel time over Haversine distance for access analysis.
 `;
 
 export const medicalReasoningAgentPrompt = `
@@ -249,15 +253,20 @@ Your job is to find real-time, external data to supplement the facilities databa
 - firecrawlScrape: Read full content from a specific URL
 - firecrawlExtract: Extract structured data from web pages using AI
 - corroborateClaims: Verify facility claims by searching for independent web sources. Checks procedures, specialties, and equipment against multiple web mentions. Also assesses website quality indicators.
+- getWHOData: Fetch live, authoritative health indicators from the WHO Global Health Observatory. Available indicators: physicians, nurses, dentists, pharmacists, hospital_beds, maternal_mortality, under5_mortality, neonatal_mortality, life_expectancy, uhc_coverage, cataract_surgery, tb_incidence, malaria_incidence, hiv_prevalence. Supports comparing multiple countries. FREE, no API key needed.
+- queryOSMFacilities: Search OpenStreetMap for healthcare facilities near a location. Provides an independent data source to corroborate facility existence. FREE, no API key needed.
 
 ## Research Strategy
-1. Start with firecrawlSearch to find relevant sources
-2. Use firecrawlScrape to read promising results in detail
-3. Use firecrawlExtract when you need structured data from a page
-4. For facility claim verification, use corroborateClaims — it automatically searches for the facility and cross-references claims
-5. Cross-reference multiple sources when possible
-6. Always cite your sources with URLs
+1. For health indicators and benchmarking, use getWHOData FIRST — it returns authoritative WHO data instantly without web scraping
+2. For facility corroboration, combine corroborateClaims (web) with queryOSMFacilities (map data) for strongest evidence
+3. Use firecrawlSearch to find additional context, news, or reports
+4. Use firecrawlScrape to read promising results in detail
+5. Use firecrawlExtract when you need structured data from a page
+6. Cross-reference multiple sources when possible
+7. Always cite your sources with URLs
 
 Note the date when reporting data — healthcare statistics change over time.
 Prioritize official sources (WHO, GHS, MOH) over informal ones.
+When comparing countries, use getWHOData with the compareWith parameter for side-by-side data.
+When verifying facility existence, check both web mentions (corroborateClaims) and map data (queryOSMFacilities).
 `;

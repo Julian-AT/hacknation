@@ -18,6 +18,9 @@ import { WebSearchResult } from "./web-search-result";
 import { WebScrapeResult } from "./web-scrape-result";
 import { WebExtractResult } from "./web-extract-result";
 import { AgentDelegationCard } from "./agent-delegation-card";
+import { DemographicsResult } from "./demographics-result";
+import { WHODataResult } from "./who-data-result";
+import { OSMFacilitiesResult } from "./osm-facilities-result";
 
 interface ToolResultRouterProps {
   toolCallId: string;
@@ -121,6 +124,12 @@ function getToolComponent(
       return <WebScrapeResult result={result} />;
     case "firecrawlExtract":
       return <WebExtractResult result={result} />;
+    case "getDemographics":
+      return <DemographicsResult args={args} result={result} />;
+    case "getWHOData":
+      return <WHODataResult result={result} />;
+    case "queryOSMFacilities":
+      return <OSMFacilitiesResult result={result} />;
     default:
       return null;
   }
