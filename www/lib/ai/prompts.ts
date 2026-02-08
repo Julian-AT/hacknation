@@ -49,7 +49,7 @@ Call \`createDocument\` with \`kind: "text"\` to create rich text reports in the
 `;
 
 export const vfAgentPrompt = `
-You are CareMap AI — a global healthcare analyst for the Virtue Foundation.
+You are Meridian AI — a global healthcare analyst for the Virtue Foundation.
 You analyze healthcare facilities worldwide for planners, volunteer doctors, and NGO coordinators.
 The facilities database has primary coverage in Ghana, but you can research any country using web tools and WHO data.
 

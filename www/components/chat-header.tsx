@@ -50,7 +50,7 @@ function PureChatHeader({
       )}
 
       <span className="order-3 hidden items-center gap-1.5 px-2 text-muted-foreground text-sm md:ml-auto md:flex">
-        CareMap
+        Meridian
       </span>
     </header>
   );

@@ -7,8 +7,8 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://caremap.app"),
-  title: "CareMap",
+  metadataBase: new URL("https://meridian.app"),
+  title: "Meridian",
   description:
     "Interactive healthcare facility mapping and AI analysis for Ghana",
   icons: {
@@ -18,18 +18,18 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "CareMap",
+    title: "Meridian",
   },
   openGraph: {
-    title: "CareMap",
+    title: "Meridian",
     description:
       "Interactive healthcare facility mapping and AI analysis for Ghana",
-    siteName: "CareMap",
+    siteName: "Meridian",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CareMap",
+    title: "Meridian",
     description:
       "Interactive healthcare facility mapping and AI analysis for Ghana",
   },

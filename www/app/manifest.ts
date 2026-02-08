@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "CareMap",
-    short_name: "CareMap",
+    name: "Meridian",
+    short_name: "Meridian",
     description:
       "Interactive healthcare facility mapping and AI analysis for Ghana",
     start_url: "/",

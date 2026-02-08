@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
-import { CareMapLogo, PlusIcon, TrashIcon } from "@/components/icons";
+import { MeridianLogo, PlusIcon, TrashIcon } from "@/components/icons";
 import {
   getChatHistoryPaginationKey,
   SidebarHistory,
@@ -72,8 +72,8 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 }}
               >
                 <span className="flex cursor-pointer items-center gap-2 rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  <CareMapLogo size={20} />
-                  CareMap
+                  <MeridianLogo size={20} />
+                  Meridian
                 </span>
               </Link>
               <div className="flex flex-row gap-1">

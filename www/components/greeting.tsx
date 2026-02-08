@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CareMapLogo } from "./icons";
+import { MeridianLogo } from "./icons";
 
 export const Greeting = () => {
   return (
@@ -14,7 +14,7 @@ export const Greeting = () => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.4 }}
       >
-        <CareMapLogo size={36} />
+        <MeridianLogo size={36} />
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
@@ -23,7 +23,7 @@ export const Greeting = () => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5 }}
       >
-        Welcome to CareMap
+        Welcome to Meridian
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}

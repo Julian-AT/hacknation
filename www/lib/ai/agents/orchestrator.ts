@@ -1,5 +1,5 @@
 /**
- * Orchestrator Agent — the main coordinator for CareMap AI.
+ * Orchestrator Agent — the main coordinator for Meridian AI.
  *
  * Delegates to specialized sub-agents, manages working memory,
  * and streams artifact results to the client.
@@ -24,7 +24,7 @@ import { z } from "zod";
 import type { ChatMessage } from "@/lib/types";
 import { createCached } from "../cache";
 import {
-  CAREMAP_MEMORY_TEMPLATE,
+  MERIDIAN_MEMORY_TEMPLATE,
   formatWorkingMemory,
   getWorkingMemoryInstructions,
   memoryProvider,
@@ -251,7 +251,7 @@ export async function createOrchestratorAgent({
         scope: "user",
       });
       if (wm) {
-        memoryContext = `\n\n## Working Memory (persistent context about this user)\n${formatWorkingMemory(wm)}\n\n${getWorkingMemoryInstructions(CAREMAP_MEMORY_TEMPLATE)}`;
+        memoryContext = `\n\n## Working Memory (persistent context about this user)\n${formatWorkingMemory(wm)}\n\n${getWorkingMemoryInstructions(MERIDIAN_MEMORY_TEMPLATE)}`;
       }
     } catch (e) {
       // Memory loading is best-effort
