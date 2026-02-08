@@ -1,116 +1,70 @@
-import type {
-  AssistantModelMessage,
-  ToolModelMessage,
-  UIMessage,
-  UIMessagePart,
-} from 'ai';
-import { type ClassValue, clsx } from 'clsx';
-import { formatISO } from 'date-fns';
-import { twMerge } from 'tailwind-merge';
-import type { DBMessage, Document } from '@/lib/db/schema';
-import { ChatSDKError, type ErrorCode } from './errors';
-import type { ChatMessage, ChatTools, CustomUIDataTypes } from './types';
+import { clsx, type ClassValue } from "clsx";
+import * as Color from "color-bits";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const fetcher = async (url: string) => {
-  const response = await fetch(url);
+// Helper function to convert any CSS color to rgba
+export const getRGBA = (
+  cssColor: React.CSSProperties["color"],
+  fallback: string = "rgba(180, 180, 180)",
+): string => {
+  if (typeof window === "undefined") return fallback;
+  if (!cssColor) return fallback;
 
-  if (!response.ok) {
-    const { code, cause } = await response.json();
-    throw new ChatSDKError(code as ErrorCode, cause);
+  try {
+    // Handle CSS variables
+    if (typeof cssColor === "string" && cssColor.startsWith("var(")) {
+      const element = document.createElement("div");
+      element.style.color = cssColor;
+      document.body.appendChild(element);
+      const computedColor = window.getComputedStyle(element).color;
+      document.body.removeChild(element);
+      return Color.formatRGBA(Color.parse(computedColor));
+    }
+
+    return Color.formatRGBA(Color.parse(cssColor));
+  } catch (e) {
+    console.error("Color parsing failed:", e);
+    return fallback;
   }
-
-  return response.json();
 };
 
-export async function fetchWithErrorHandlers(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-) {
-  try {
-    const response = await fetch(input, init);
+// Helper function to add opacity to an RGB color string
+export const colorWithOpacity = (color: string, opacity: number): string => {
+  if (!color.startsWith("rgb")) return color;
+  return Color.formatRGBA(Color.alpha(Color.parse(color), opacity));
+};
 
-    if (!response.ok) {
-      const { code, cause } = await response.json();
-      throw new ChatSDKError(code as ErrorCode, cause);
-    }
+// Tremor Raw focusInput [v0.0.1]
 
-    return response;
-  } catch (error: unknown) {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      throw new ChatSDKError('offline:chat');
-    }
+export const focusInput = [
+  // base
+  "focus:ring-2",
+  // ring color
+  "focus:ring-blue-200 focus:dark:ring-blue-700/30",
+  // border color
+  "focus:border-blue-500 focus:dark:border-blue-700",
+];
 
-    throw error;
-  }
-}
+// Tremor Raw focusRing [v0.0.1]
 
-export function getLocalStorage(key: string) {
-  if (typeof window !== 'undefined') {
-    return JSON.parse(localStorage.getItem(key) || '[]');
-  }
-  return [];
-}
+export const focusRing = [
+  // base
+  "outline outline-offset-2 outline-0 focus-visible:outline-2",
+  // outline color
+  "outline-blue-500 dark:outline-blue-500",
+];
 
-export function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
+// Tremor Raw hasErrorInput [v0.0.1]
 
-type ResponseMessageWithoutId = ToolModelMessage | AssistantModelMessage;
-type ResponseMessage = ResponseMessageWithoutId & { id: string };
-
-export function getMostRecentUserMessage(messages: UIMessage[]) {
-  const userMessages = messages.filter((message) => message.role === 'user');
-  return userMessages.at(-1);
-}
-
-export function getDocumentTimestampByIndex(
-  documents: Document[],
-  index: number,
-) {
-  if (!documents) { return new Date(); }
-  if (index > documents.length) { return new Date(); }
-
-  return documents[index].createdAt;
-}
-
-export function getTrailingMessageId({
-  messages,
-}: {
-  messages: ResponseMessage[];
-}): string | null {
-  const trailingMessage = messages.at(-1);
-
-  if (!trailingMessage) { return null; }
-
-  return trailingMessage.id;
-}
-
-export function sanitizeText(text: string) {
-  return text.replace('<has_function_call>', '');
-}
-
-export function convertToUIMessages(messages: DBMessage[]): ChatMessage[] {
-  return messages.map((message) => ({
-    id: message.id,
-    role: message.role as 'user' | 'assistant' | 'system',
-    parts: message.parts as UIMessagePart<CustomUIDataTypes, ChatTools>[],
-    metadata: {
-      createdAt: formatISO(message.createdAt),
-    },
-  }));
-}
-
-export function getTextFromMessage(message: ChatMessage | UIMessage): string {
-  return message.parts
-    .filter((part) => part.type === 'text')
-    .map((part) => (part as { type: 'text'; text: string}).text)
-    .join('');
-}
+export const hasErrorInput = [
+  // base
+  "ring-2",
+  // border color
+  "border-red-500 dark:border-red-700",
+  // ring color
+  "ring-red-200 dark:ring-red-700/30",
+];
