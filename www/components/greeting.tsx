@@ -5,6 +5,8 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  Globe,
+  Heart,
   MapPin,
   Search,
   Stethoscope,
@@ -17,32 +19,42 @@ const SUGGESTED_QUERIES: { icon: ReactNode; label: string; query: string }[] = [
   {
     icon: <BarChart3 className="size-3.5 shrink-0" />,
     label: "Hospitals with cardiology",
-    query: "How many hospitals offer cardiology in Ghana?",
+    query: "How many hospitals offer cardiology in Ghana and Kenya?",
   },
   {
     icon: <Search className="size-3.5 shrink-0" />,
     label: "Cataract surgery near Tamale",
-    query: "Find clinics near Tamale that perform cataract surgery",
+    query: "Clinics near Tamale, Ghana that do cataract surgery",
   },
   {
     icon: <MapPin className="size-3.5 shrink-0" />,
     label: "Medical deserts for emergency surgery",
-    query: "Where are the largest medical deserts for emergency surgery?",
+    query: "Largest medical deserts for emergency surgery in Nigeria",
   },
   {
     icon: <AlertTriangle className="size-3.5 shrink-0" />,
     label: "Detect suspicious facility claims",
-    query: "Which facilities claim unrealistic procedures for their size?",
+    query: "Facilities in Uganda with unrealistic procedure claims for their size",
   },
   {
     icon: <Stethoscope className="size-3.5 shrink-0" />,
-    label: "Compare regions",
-    query: "Compare healthcare capacity across Ghana's regions",
+    label: "Compare regions in Ghana",
+    query: "Compare healthcare capacity across regions in Ghana",
   },
   {
     icon: <Activity className="size-3.5 shrink-0" />,
     label: "Plan a volunteer mission",
-    query: "Plan a volunteer mission for an ophthalmologist",
+    query: "Plan a volunteer ophthalmology mission in Tanzania",
+  },
+  {
+    icon: <Globe className="size-3.5 shrink-0" />,
+    label: "Compare Austria with the US",
+    query: "Compare healthcare access between Austria and the US",
+  },
+  {
+    icon: <Heart className="size-3.5 shrink-0" />,
+    label: "Maternal care gaps",
+    query: "Maternal care deserts in Ethiopia and where to place new clinics",
   },
 ];
 
@@ -60,7 +72,7 @@ export const Greeting = () => {
 
   return (
     <div
-      className="mx-auto mt-4 flex size-full max-w-4xl flex-col justify-center px-4 md:mt-16 md:px-8"
+      className="mx-auto mt-4 flex size-full max-w-4xl flex-col justify-center px-4 md:mt-32 md:px-8"
       key="overview"
     >
       <motion.div
@@ -89,8 +101,6 @@ export const Greeting = () => {
         transition={{ delay: 0.6 }}
       >
         Meridian is an AI assistant for advanced healthcare data analytics. Analyze facility-level attributes, orchestrate mission strategies, identify critical service gaps, and extract actionable intelligence.
-        Your AI-powered healthcare intelligence assistant. Explore facilities,
-        plan missions, and analyze coverage data.
       </motion.p>
 
       <motion.div
