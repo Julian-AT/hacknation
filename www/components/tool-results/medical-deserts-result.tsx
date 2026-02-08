@@ -90,6 +90,13 @@ export function MedicalDesertsResult({ result }: MedicalDesertsResultProps) {
       </CardContent>
 
       <CardContent className="px-3 pb-2 pt-0">
+        {desertZones.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <AlertTriangle className="size-5 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground">No medical deserts detected</p>
+            <p className="text-[11px] text-muted-foreground/70">All checked areas have {service} coverage within {thresholdKm}km</p>
+          </div>
+        ) : (
         <ul className="flex flex-col gap-1">
           {desertZones.map((zone) => (
             <li key={zone.city}>
@@ -114,6 +121,7 @@ export function MedicalDesertsResult({ result }: MedicalDesertsResultProps) {
             </li>
           ))}
         </ul>
+        )}
       </CardContent>
 
       {desertZones.length > 0 && (

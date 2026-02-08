@@ -19,6 +19,7 @@
 <p align="center">
   <a href="#what-is-meridian-ai"><strong>What is Meridian AI?</strong></a> ·
   <a href="#features"><strong>Features</strong></a> ·
+  <a href="#try-these-prompts"><strong>Try These Prompts</strong></a> ·
   <a href="#architecture"><strong>Architecture</strong></a> ·
   <a href="#tech-stack"><strong>Tech Stack</strong></a> ·
   <a href="#getting-started"><strong>Getting Started</strong></a>
@@ -95,8 +96,49 @@ Every AI decision is traceable. The **ToolTrace** component shows users exactly 
 - **10+ AI model support** — Gemini, Claude, GPT-4.1, GPT-5.2, Grok via AI Gateway
 - **Chat history & persistence** — Full conversation management with Redis-backed resumable streams
 - **Guest & authenticated modes** — Instant access or persistent accounts via NextAuth
-- **PWA support** — Installable on mobile and desktop
+- **Full PWA support** — Installable on mobile and desktop
+- **Fully responsive UI** — Optimized for mobile, tablet, and desktop
 - **Dark & light themes** — Respects system preference
+
+## Try These Prompts
+
+These prompts demonstrate the full power of Meridian AI's multi-agent system. Paste any of them into the chat to see orchestrated tool calls, streaming artifacts, and interactive visualizations.
+
+### Cross-Regional Mission Planning
+
+> Compare the healthcare infrastructure of the Northern and Ashanti regions, identify the top 3 gaps in surgical coverage, and plan a 2-week volunteer orthopedic surgery mission to address them. Show the mission route on the map and estimate travel times between stops.
+
+*Triggers: Database Agent (regional comparison) → Geospatial Agent (gap analysis + mission planning + travel times) → Medical Agent (service classification) → Artifacts (comparison dashboard + mission plan + route map)*
+
+### Medical Desert Investigation with Claim Validation
+
+> Find all medical deserts in the Upper East and Upper West regions where residents travel more than 60 minutes to reach emergency services. Then check if any nearby clinics claim to offer emergency surgery — cross-validate those claims against their actual equipment lists and flag anything suspicious.
+
+*Triggers: Geospatial Agent (desert detection + accessibility isochrones) → Database Agent (facility lookup) → Medical Agent (cross-validation + anomaly detection) → Artifacts (medical desert map + data quality overlay)*
+
+### Full Volunteer Deployment Workflow
+
+> I'm coordinating a team of 4 volunteer doctors — 2 general surgeons, 1 pediatrician, and 1 OB-GYN — for a 3-week deployment starting in Tamale. Find the areas with the greatest need for these specialties, evaluate facility readiness at candidate hospitals, and build a mission plan with recommended stops, equipment requirements, and logistics.
+
+*Triggers: Geospatial Agent (findMedicalDeserts for each specialty) → Database Agent (facility profiles + semantic search) → Medical Agent (anomaly detection on candidates) → Mission Planner (evaluatePlan with iterative improvement) → Artifacts (mission plan + facility map + stats dashboard)*
+
+### Healthcare Accessibility Deep Dive
+
+> Build a comprehensive healthcare accessibility report for the Greater Accra region: generate a heatmap of facility density, calculate travel time isochrones from major population centers, identify specialties that are over-concentrated in Accra proper but missing in surrounding districts, and flag any data quality issues in the dataset.
+
+*Triggers: Database Agent (queryDatabase + getStats) → Geospatial Agent (accessibility isochrones + compareRegions) → Medical Agent (detectAnomalies + classifyServices) → Artifacts (heatmap + accessibility map + stats dashboard)*
+
+### WHO Benchmark Analysis with Gap Mapping
+
+> How does Ghana's doctor-to-patient ratio compare to WHO benchmarks? Pull the latest WHO data, show me which regions are most understaffed, overlay that on a map with facility locations, and identify the 5 communities where adding a single clinic would have the highest impact on coverage.
+
+*Triggers: Web Research Agent (getWHOData + getDemographics) → Database Agent (regional aggregation) → Geospatial Agent (gap analysis + findMedicalDeserts) → Artifacts (region choropleth + facility map + stats dashboard)*
+
+### Web-Corroborated Anomaly Investigation
+
+> Several facilities in the Volta region claim to have advanced imaging capabilities like CT scanners and MRI machines. Investigate whether those claims hold up — cross-validate against their equipment inventories, search the web for any NGO investments or government upgrades that could explain discrepancies, and give me a credibility score for each facility.
+
+*Triggers: Database Agent (searchFacilities + getFacility) → Medical Agent (crossValidateClaims + analyzeTextEvidence) → Web Research Agent (corroborateClaims + firecrawlSearch) → Artifacts (data quality map + stats dashboard)*
 
 ## Architecture
 

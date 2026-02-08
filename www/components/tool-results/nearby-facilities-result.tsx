@@ -72,6 +72,13 @@ export function NearbyFacilitiesResult({
       </CardHeader>
 
       <CardContent className="px-3 pb-2 pt-0">
+        {facilities.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <MapPin className="size-5 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground">No facilities found nearby</p>
+            <p className="text-[11px] text-muted-foreground/70">Try increasing the search radius or changing location</p>
+          </div>
+        ) : (
         <ul className="flex flex-col gap-1">
           {facilities.map((f) => (
             <li key={f.id}>
@@ -100,6 +107,7 @@ export function NearbyFacilitiesResult({
             </li>
           ))}
         </ul>
+        )}
       </CardContent>
 
       {facilities.length > 0 && (

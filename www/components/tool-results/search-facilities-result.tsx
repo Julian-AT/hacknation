@@ -1,11 +1,10 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
 import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
 
@@ -24,6 +23,8 @@ interface FacilityResult {
   similarity: number;
   procedures: string;
   equipment: string;
+  lat?: number;
+  lng?: number;
   confidence?: FacilityConfidence;
 }
 
@@ -39,20 +40,26 @@ export function SearchFacilitiesResult({
   const query = (result.query as string) ?? (args.query as string) ?? "";
   const count = (result.count as number) ?? 0;
   const results = (result.results as FacilityResult[]) ?? [];
-  const { setMapFacilities, setMapVisible } = useVF();
+  const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } = useVF();
 
-  const _handleViewOnMap = (facility: FacilityResult) => {
-    setMapFacilities([
-      {
-        id: facility.id,
-        name: facility.name,
-        lat: 0,
-        lng: 0,
-        type: facility.type,
-        city: facility.city,
-      },
-    ]);
-    setMapVisible(true);
+  const geoResults = results.filter((f) => f.lat != null && f.lng != null);
+
+  const handleViewAllOnMap = () => {
+    if (geoResults.length > 0) {
+      setMapFacilities(
+        geoResults.map((f) => ({
+          id: f.id,
+          name: f.name,
+          lat: f.lat as number,
+          lng: f.lng as number,
+          type: f.type,
+          city: f.city,
+        }))
+      );
+      setMapCenter([geoResults.at(0)?.lat as number, geoResults.at(0)?.lng as number]);
+      setMapZoom(7);
+      setMapVisible(true);
+    }
   };
 
   return (
@@ -71,6 +78,13 @@ export function SearchFacilitiesResult({
       </CardHeader>
 
       <CardContent className="px-3 pb-3 pt-0">
+        {results.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Search className="size-5 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground">No matching facilities found</p>
+            <p className="text-[11px] text-muted-foreground/70">Try different keywords or broaden your search</p>
+          </div>
+        ) : (
         <ul className="flex flex-col gap-1.5">
           {results.map((facility) => (
             <li key={facility.id}>
@@ -126,7 +140,27 @@ export function SearchFacilitiesResult({
             </li>
           ))}
         </ul>
+        )}
       </CardContent>
+
+      {geoResults.length > 0 && (
+        <>
+          <Separator />
+          <CardFooter className="justify-end px-3 py-2">
+            <Button
+              aria-label="View all matching facilities on map"
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={handleViewAllOnMap}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Eye className="size-3" />
+              View All on Map
+            </Button>
+          </CardFooter>
+        </>
+      )}
     </Card>
   );
 }

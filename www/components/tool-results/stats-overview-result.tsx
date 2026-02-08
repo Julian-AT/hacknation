@@ -28,6 +28,24 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
   const stats = (result.stats as Record<string, unknown>[]) ?? [];
   const groupBy = result.groupBy as string | undefined;
 
+  if (totalFacilities === undefined && facilitiesByType.length === 0 && stats.length === 0) {
+    return (
+      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+        <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
+          <BarChart3 className="size-3.5 text-blue-400" />
+          <span className="text-xs font-medium text-muted-foreground">
+            Facility Statistics
+          </span>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-2 py-6 text-center">
+          <BarChart3 className="size-5 text-muted-foreground/50" />
+          <p className="text-xs text-muted-foreground">No statistics available</p>
+          <p className="text-[11px] text-muted-foreground/70">Try a different grouping or filter</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">

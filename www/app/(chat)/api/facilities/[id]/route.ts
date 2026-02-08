@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { facilities } from "@/lib/db/schema.facilities";
 import { computeAnomalyConfidence } from "@/lib/ai/tools/computeAnomalyConfidence";
 import { ChatSDKError } from "@/lib/errors";
+import { after } from "next/server";
+import { enrichIfNeeded } from "@/lib/enrichment";
 
 export async function GET(
   _request: Request,
@@ -48,6 +50,9 @@ export async function GET(
     const dataQualityScore = `${Math.round((presentFields / fields.length) * 100)}%`;
 
     const anomalyConfidence = computeAnomalyConfidence(facility);
+
+    // Schedule background enrichment for missing data (runs after response)
+    after(() => enrichIfNeeded(facility));
 
     return Response.json(
       {

@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
@@ -344,8 +345,8 @@ export function Chat({
         <div
           className={cn(
             "flex flex-col h-full",
-            isCanvasVisible || isMapVisible
-              ? "w-[45%] border-r border-border"
+            isMapVisible && !isCanvasVisible
+              ? "w-full md:w-[45%] md:border-r md:border-border"
               : "w-full"
           )}
         >
@@ -392,16 +393,28 @@ export function Chat({
           </div>
         </div>
 
-        {/* Right Panel: Artifact Canvas (streamed visualizations) */}
-        {isCanvasVisible && (
-          <div className="w-[55%] h-full bg-background relative">
-            <ArtifactCanvas onClose={() => setCanvasDismissed(true)} />
-          </div>
-        )}
+        {/* Artifact Canvas (full-screen overlay) */}
+        <Sheet
+          onOpenChange={(open) => {
+            if (!open) {
+              setCanvasDismissed(true);
+            }
+          }}
+          open={isCanvasVisible}
+        >
+          <SheetContent
+            className="flex h-dvh w-dvw max-w-none flex-col gap-0 border-0 p-0 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] [&>button]:hidden"
+            side="right"
+          >
+            <div className="flex min-h-0 flex-1 flex-col">
+              <ArtifactCanvas onClose={() => setCanvasDismissed(true)} />
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* Right Panel: Map (only visible when geographic data is available) */}
         {isMapVisible && !isCanvasVisible && (
-          <div className="w-[55%] h-full bg-background relative">
+          <div className="fixed inset-0 z-50 bg-background md:relative md:inset-auto md:z-auto md:w-[55%] md:h-full">
             <DeckMap />
 
             <button
