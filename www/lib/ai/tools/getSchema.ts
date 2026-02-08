@@ -1,11 +1,26 @@
 import { z } from "zod";
 import { tool } from "ai";
-import { FACILITIES_SCHEMA } from "./schema-map";
+import {
+  FACILITIES_SCHEMA,
+  DEMOGRAPHICS_COUNTRIES_SCHEMA,
+  DEMOGRAPHICS_REGIONS_SCHEMA,
+  DEMOGRAPHICS_BENCHMARKS_SCHEMA,
+} from "./schema-map";
+import type { ColumnDef } from "./schema-map";
+
+const TABLE_SCHEMAS: Record<string, ColumnDef[]> = {
+  facilities: FACILITIES_SCHEMA,
+  demographics_countries: DEMOGRAPHICS_COUNTRIES_SCHEMA,
+  demographics_regions: DEMOGRAPHICS_REGIONS_SCHEMA,
+  demographics_benchmarks: DEMOGRAPHICS_BENCHMARKS_SCHEMA,
+};
+
+const AVAILABLE_TABLES = Object.keys(TABLE_SCHEMAS);
 
 /**
- * Schema discovery tool — returns the facilities table structure.
- * Gives the LLM a reliable way to discover column names, types, and
- * descriptions without needing information_schema access.
+ * Schema discovery tool — returns table structures for facilities and
+ * demographics tables. Gives the LLM a reliable way to discover column
+ * names, types, and descriptions without needing information_schema access.
  *
  * Use when:
  * - A query fails with "column does not exist"
@@ -14,18 +29,32 @@ import { FACILITIES_SCHEMA } from "./schema-map";
  */
 export const getSchema = tool({
   description:
-    "Retrieve the full database schema for the facilities table, including all column names, data types, and descriptions. Use this tool before writing SQL if you are unsure about column names, or after a query fails with a 'column does not exist' error. All column names use snake_case.",
+    "Retrieve the database schema for any table (facilities, demographics_countries, demographics_regions, demographics_benchmarks). Returns column names, data types, and descriptions. Use before writing SQL if unsure about column names, or after a 'column does not exist' error. All column names use snake_case.",
   inputSchema: z.object({
+    table: z
+      .enum(["facilities", "demographics_countries", "demographics_regions", "demographics_benchmarks"])
+      .default("facilities")
+      .describe(
+        "Table to get schema for. Options: facilities, demographics_countries, demographics_regions, demographics_benchmarks",
+      ),
     filter: z
       .string()
       .max(100)
       .optional()
       .describe(
-        'Optional keyword to filter columns (e.g. "address", "type", "raw"). Returns all columns if omitted.'
+        'Optional keyword to filter columns (e.g. "address", "mortality", "doctors"). Returns all columns if omitted.',
       ),
   }),
-  execute: async ({ filter }) => {
-    let columns = FACILITIES_SCHEMA;
+  execute: async ({ table, filter }) => {
+    const schema = TABLE_SCHEMAS[table];
+
+    if (!schema) {
+      return {
+        error: `Table "${table}" not found. Available: ${AVAILABLE_TABLES.join(", ")}`,
+      };
+    }
+
+    let columns = schema;
 
     if (filter) {
       const lower = filter.toLowerCase();
@@ -33,13 +62,14 @@ export const getSchema = tool({
         (col) =>
           col.column.includes(lower) ||
           col.type.includes(lower) ||
-          col.description.toLowerCase().includes(lower)
+          col.description.toLowerCase().includes(lower),
       );
     }
 
     return {
-      table: "facilities",
-      totalColumns: FACILITIES_SCHEMA.length,
+      table,
+      availableTables: AVAILABLE_TABLES,
+      totalColumns: schema.length,
       matchedColumns: columns.length,
       columns: columns.map((c) => ({
         name: c.column,

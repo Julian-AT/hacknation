@@ -138,3 +138,68 @@ const KEY_COLUMNS = [
 
 export const FACILITIES_COLUMNS_HINT =
   `Available columns include: ${KEY_COLUMNS.join(", ")}, and more. Use the getSchema tool for the full list.`;
+
+// ---------------------------------------------------------------------------
+// Demographics tables schema definitions
+// ---------------------------------------------------------------------------
+
+export const DEMOGRAPHICS_COUNTRIES_SCHEMA: ColumnDef[] = [
+  { column: "country_code", type: "varchar(3)", description: "ISO 3166-1 alpha-3 country code (PK, e.g. GHA)" },
+  { column: "country_name", type: "text", description: "Country name (NOT NULL)" },
+  { column: "total_population", type: "bigint", description: "Total population (national)" },
+  { column: "gdp_per_capita_usd", type: "double precision", description: "GDP per capita in USD" },
+  { column: "doctors_per_1000", type: "double precision", description: "Physicians per 1,000 people" },
+  { column: "nurses_per_1000", type: "double precision", description: "Nurses/midwives per 1,000 people" },
+  { column: "beds_per_1000", type: "double precision", description: "Hospital beds per 1,000 people" },
+  { column: "maternal_mortality_per_100k", type: "double precision", description: "Maternal mortality ratio per 100,000 live births" },
+  { column: "under5_mortality_per_1k", type: "double precision", description: "Under-5 mortality rate per 1,000 live births" },
+  { column: "life_expectancy", type: "double precision", description: "Life expectancy at birth (years)" },
+  { column: "data_source", type: "text", description: "Data source (e.g. World Bank API 2024)" },
+  { column: "updated_at", type: "timestamp", description: "Last update timestamp" },
+];
+
+export const DEMOGRAPHICS_REGIONS_SCHEMA: ColumnDef[] = [
+  { column: "id", type: "serial", description: "Primary key (auto-increment)" },
+  { column: "country_code", type: "varchar(3)", description: "ISO country code (FK to demographics_countries)" },
+  { column: "region", type: "text", description: "Region name (NOT NULL)" },
+  { column: "capital", type: "text", description: "Regional capital city" },
+  { column: "population", type: "bigint", description: "Total population" },
+  { column: "urban_percent", type: "double precision", description: "Urban population percentage" },
+  { column: "rural_percent", type: "double precision", description: "Rural population percentage" },
+  { column: "area_sq_km", type: "double precision", description: "Area in square kilometers" },
+  { column: "population_density", type: "double precision", description: "Population density per sq km" },
+  { column: "classification", type: "text", description: "Classification: urban-heavy, semi-urban, rural-heavy" },
+  { column: "gdp_per_capita_usd", type: "double precision", description: "Regional GDP per capita (USD)" },
+  { column: "age_under15_pct", type: "double precision", description: "Percentage of population under 15" },
+  { column: "age_working_pct", type: "double precision", description: "Percentage of working-age population (15-64)" },
+  { column: "age_over65_pct", type: "double precision", description: "Percentage of population over 65" },
+  { column: "maternal_mortality_per_100k", type: "double precision", description: "Regional maternal mortality per 100,000 live births" },
+  { column: "under5_mortality_per_1k", type: "double precision", description: "Regional under-5 mortality per 1,000 live births" },
+  { column: "doctors_per_1000", type: "double precision", description: "Doctors per 1,000 people" },
+  { column: "nurses_per_1000", type: "double precision", description: "Nurses per 1,000 people" },
+  { column: "disease_burden", type: "text[]", description: "Common diseases in the region (use ANY() for filtering)" },
+  { column: "data_source", type: "text", description: "Data source" },
+  { column: "updated_at", type: "timestamp", description: "Last update timestamp" },
+];
+
+export const DEMOGRAPHICS_BENCHMARKS_SCHEMA: ColumnDef[] = [
+  { column: "id", type: "serial", description: "Primary key (auto-increment)" },
+  { column: "benchmark_name", type: "text", description: "Benchmark name: WHO Minimum, Developed Country Average (UNIQUE)" },
+  { column: "doctors_per_1000", type: "double precision", description: "Doctors per 1,000 people" },
+  { column: "nurses_per_1000", type: "double precision", description: "Nurses per 1,000 people" },
+  { column: "beds_per_1000", type: "double precision", description: "Hospital beds per 1,000 people" },
+  { column: "maternal_mortality_per_100k", type: "double precision", description: "Maternal mortality per 100,000 live births" },
+  { column: "under5_mortality_per_1k", type: "double precision", description: "Under-5 mortality per 1,000 live births" },
+  { column: "ophthalmologists_per_capita", type: "double precision", description: "Ophthalmologists per capita" },
+  { column: "surgeons_per_capita", type: "double precision", description: "Surgeons per capita" },
+  { column: "operating_rooms_per_100k", type: "double precision", description: "Operating rooms per 100,000 people" },
+  { column: "data_source", type: "text", description: "Data source" },
+  { column: "updated_at", type: "timestamp", description: "Last update timestamp" },
+];
+
+/** All demographics schemas combined for the getSchema tool. */
+export const ALL_DEMOGRAPHICS_SCHEMAS = {
+  demographics_countries: DEMOGRAPHICS_COUNTRIES_SCHEMA,
+  demographics_regions: DEMOGRAPHICS_REGIONS_SCHEMA,
+  demographics_benchmarks: DEMOGRAPHICS_BENCHMARKS_SCHEMA,
+};
