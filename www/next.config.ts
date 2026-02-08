@@ -48,8 +48,16 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self' https://*.vercel-storage.com https://*.vercel.sh wss://*.vercel.sh; font-src 'self' data:; frame-ancestors 'none';",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "connect-src 'self' https://*.vercel-storage.com https://*.vercel.sh wss://*.vercel.sh https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://tiles.basemaps.cartocdn.com",
+              "font-src 'self' data:",
+              "worker-src 'self' blob:",
+              "frame-ancestors 'none'",
+            ].join("; "),
           },
           {
             key: "Permissions-Policy",

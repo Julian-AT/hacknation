@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapGL } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useVF } from "@/lib/vf-context";
+import { MapErrorBoundary } from "@/components/artifacts/map-error-boundary";
 
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
@@ -31,6 +32,7 @@ type Facility = {
 
 export default function DeckMap() {
   const { mapFacilities, mapCenter, mapZoom, highlightedFacilityId } = useVF();
+  const [isMounted, setIsMounted] = useState(false);
   const [internalViewState, setInternalViewState] = useState<MapViewState>({
     latitude: mapCenter[0],
     longitude: mapCenter[1],
@@ -41,6 +43,10 @@ export default function DeckMap() {
 
   const prevCenterRef = useRef(mapCenter);
   const prevZoomRef = useRef(mapZoom);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Fly to new position when context center/zoom changes
   useEffect(() => {
@@ -122,20 +128,33 @@ export default function DeckMap() {
     []
   );
 
+  if (!isMounted) {
+    return (
+      <div className="flex size-full items-center justify-center bg-zinc-950 text-zinc-500">
+        <div className="flex flex-col items-center gap-2">
+          <div className="size-6 rounded-full border-2 border-zinc-700 border-t-blue-500 animate-spin" />
+          <span className="text-sm">Loading map...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="size-full bg-zinc-950">
-      <DeckGL
-        controller
-        getTooltip={getTooltip}
-        layers={layers}
-        onViewStateChange={({ viewState }) =>
-          setInternalViewState(viewState as MapViewState)
-        }
-        style={{ position: "relative", width: "100%", height: "100%" }}
-        viewState={internalViewState}
-      >
-        <MapGL mapStyle={DARK_STYLE} />
-      </DeckGL>
+      <MapErrorBoundary>
+        <DeckGL
+          controller
+          getTooltip={getTooltip}
+          layers={layers}
+          onViewStateChange={({ viewState }) =>
+            setInternalViewState(viewState as MapViewState)
+          }
+          style={{ position: "relative", width: "100%", height: "100%" }}
+          viewState={internalViewState}
+        >
+          <MapGL mapStyle={DARK_STYLE} />
+        </DeckGL>
+      </MapErrorBoundary>
     </div>
   );
 }

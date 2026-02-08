@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
 import { Map as MapGL } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { MapErrorBoundary } from "./map-error-boundary";
 
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
@@ -210,15 +211,17 @@ export function DataQualityMapRenderer({
 
       {/* Map */}
       <div className="relative flex-1 z-0">
-        <DeckGL
-          controller
-          getTooltip={getTooltip}
-          initialViewState={viewState}
-          layers={layers}
-          style={{ position: "relative", width: "100%", height: "100%" }}
-        >
-          <MapGL key={mapStyle} mapStyle={mapStyle} />
-        </DeckGL>
+        <MapErrorBoundary>
+          <DeckGL
+            controller
+            getTooltip={getTooltip}
+            initialViewState={viewState}
+            layers={layers}
+            style={{ position: "relative", width: "100%", height: "100%" }}
+          >
+            <MapGL key={mapStyle} mapStyle={mapStyle} />
+          </DeckGL>
+        </MapErrorBoundary>
 
         {/* Legend */}
         <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 rounded-lg border border-border bg-background/90 px-3 py-2 backdrop-blur-sm">
