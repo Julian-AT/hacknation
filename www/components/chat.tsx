@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useChat } from '@ai-sdk/react';
+import { useChat } from '@ai-sdk-tools/store';
+import { useArtifacts } from '@ai-sdk-tools/artifacts/client';
 import { DefaultChatTransport } from 'ai';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -26,13 +27,13 @@ import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
 import { Artifact } from './artifact';
+import { ArtifactCanvas } from './artifact-canvas';
 import { useDataStream } from './data-stream-provider';
 import { Messages } from './messages';
 import { MultimodalInput } from './multimodal-input';
 import { getChatHistoryPaginationKey } from './sidebar-history';
 import { toast } from './toast';
 import type { VisibilityType } from './visibility-selector';
-import GlobeView from './vf-ui/GlobeView';
 import { useVF } from '@/lib/vf-context';
 
 export function Chat({
@@ -52,6 +53,11 @@ export function Chat({
 }) {
   const router = useRouter();
   const { setMapFacilities, setMapCenter, setMapZoom, isMapVisible, setMapVisible } = useVF();
+
+  // Track whether the artifact canvas should be visible
+  const [{ current: activeArtifact }] = useArtifacts();
+  const [canvasDismissed, setCanvasDismissed] = useState(false);
+  const isCanvasVisible = activeArtifact !== null && !canvasDismissed;
 
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -157,13 +163,12 @@ export function Chat({
     },
   });
 
-  // Effect to listen for tool calls and update map
-  // This listens to the *last* message. If it has tool invocations with results, we update.
+  // Fallback: listen for getFacility tool results to show on legacy VF map
+  // (findNearby, findMedicalDeserts, getStats, planMission now stream via artifacts)
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role !== 'assistant' || !lastMessage.parts) return;
 
-    // We look for tool-invocation parts that are finished
     const toolParts = lastMessage.parts.filter(
       (part) => (part as any).type === 'tool-invocation' && 'result' in (part as any).toolInvocation
     );
@@ -171,32 +176,9 @@ export function Chat({
     for (const part of toolParts) {
       if ((part as any).type !== 'tool-invocation') continue;
       const { toolName, result } = (part as any).toolInvocation as any;
-
       if (!result) continue;
 
-      if (toolName === 'findNearby' && result.facilities) {
-        setMapFacilities(result.facilities);
-        if (result.center) {
-          setMapCenter([result.center.lat, result.center.lng]);
-          setMapZoom(10);
-        }
-        setMapVisible(true);
-      } else if (toolName === 'findMedicalDeserts' && result.desertZones) {
-        const markers = result.desertZones.map((z: any) => ({
-          id: Math.random(),
-          name: `${z.city} Gap (${z.distanceKm}km)`,
-          lat: z.coordinates.lat,
-          lng: z.coordinates.lng,
-          type: 'Medical Desert',
-          distanceKm: z.distanceKm
-        }));
-        setMapFacilities(markers);
-        if (markers.length > 0) {
-           setMapCenter([markers[0].lat, markers[0].lng]);
-           setMapZoom(7);
-        }
-        setMapVisible(true);
-      } else if (toolName === 'getFacility' && result.facility?.lat && result.facility?.lng) {
+      if (toolName === 'getFacility' && result.facility?.lat && result.facility?.lng) {
         setMapFacilities([{
           id: result.facility.id,
           name: result.facility.name,
@@ -245,13 +227,20 @@ export function Chat({
     setMessages,
   });
 
+  // Reset canvas dismissed state when a new artifact streams in
+  useEffect(() => {
+    if (activeArtifact) {
+      setCanvasDismissed(false);
+    }
+  }, [activeArtifact?.id]);
+
   return (
     <>
       <div className="flex h-dvh min-w-0 bg-background overflow-hidden">
         {/* Left Panel: Chat */}
         <div className={cn(
           'flex flex-col h-full',
-          isMapVisible ? 'w-1/2 border-r border-zinc-800' : 'w-full'
+          (isCanvasVisible || isMapVisible) ? 'w-[45%] border-r border-zinc-800' : 'w-full'
         )}>
           <ChatHeader
             chatId={id}
@@ -293,39 +282,12 @@ export function Chat({
           </div>
         </div>
 
-        {/* Right Panel: Map (only visible when geographic data is available) */}
-        {isMapVisible && (
-          <div className="w-1/2 h-full bg-zinc-950 relative">
-            <GlobeView />
-
-            {/* Close button */}
-            <button
-              type="button"
-              aria-label="Close map panel"
-              className="absolute top-4 left-4 z-10 flex items-center justify-center size-8 rounded-lg bg-black/70 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700"
-              onClick={() => {
-                setMapVisible(false);
-                setMapFacilities([]);
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-
-            {/* Legend Overlay */}
-            <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-sm p-3 rounded-lg border border-zinc-800 text-xs text-zinc-300 z-10">
-              <div className="font-semibold mb-2 text-white">Legend</div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="size-2.5 rounded-full bg-blue-500" />
-                <span>Facility</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-red-500" />
-                <span>Desert / Gap</span>
-              </div>
-            </div>
+        {/* Right Panel: Artifact Canvas (streamed visualizations) */}
+        {isCanvasVisible && (
+          <div className="w-[55%] h-full bg-zinc-950 relative">
+            <ArtifactCanvas
+              onClose={() => setCanvasDismissed(true)}
+            />
           </div>
         )}
       </div>

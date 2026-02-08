@@ -9,6 +9,14 @@ export { findMedicalDeserts } from "./findMedicalDeserts";
 export { planMission } from "./planMission";
 export { compareRegions } from "./compareRegions";
 
+// Artifact-enhanced geospatial tools (stream visualizations to canvas)
+export {
+  findNearbyArtifact,
+  findMedicalDesertsArtifact,
+  getStatsArtifact,
+  planMissionArtifact,
+} from "./artifact-tools";
+
 // Medical reasoning tools
 export { detectAnomalies } from "./detectAnomalies";
 export { crossValidateClaims } from "./medical/crossValidateClaims";

@@ -2,9 +2,12 @@ import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  index,
+  integer,
   json,
   pgTable,
   primaryKey,
+  serial,
   text,
   timestamp,
   uuid,
@@ -168,3 +171,44 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// ─── AI Memory tables (@ai-sdk-tools/memory) ──────────────────────────
+
+export const workingMemory = pgTable(
+  "WorkingMemory",
+  {
+    id: text("id").primaryKey(),
+    scope: text("scope").notNull(), // 'chat' | 'user'
+    chatId: text("chat_id"),
+    userId: text("user_id"),
+    content: text("content").notNull(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    scopeIdx: index("idx_working_memory_scope").on(
+      table.scope,
+      table.chatId,
+      table.userId,
+    ),
+  }),
+);
+
+export type WorkingMemoryRow = InferSelectModel<typeof workingMemory>;
+
+export const conversationMessages = pgTable(
+  "ConversationMessage",
+  {
+    id: serial("id").primaryKey(),
+    chatId: text("chat_id").notNull(),
+    userId: text("user_id"),
+    role: text("role").notNull(),
+    content: text("content").notNull(),
+    timestamp: timestamp("timestamp").notNull().defaultNow(),
+  },
+  (table) => ({
+    chatIdx: index("idx_conv_messages_chat").on(
+      table.chatId,
+      table.timestamp,
+    ),
+  }),
+);

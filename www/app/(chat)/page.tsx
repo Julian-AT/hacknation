@@ -14,6 +14,7 @@ export default function Page() {
 }
 
 import { VFProvider } from "@/lib/vf-context";
+import { Provider as ChatStoreProvider } from "@ai-sdk-tools/store";
 
 async function NewChatPage() {
   const cookieStore = await cookies();
@@ -21,17 +22,19 @@ async function NewChatPage() {
   const id = generateUUID();
 
   return (
-    <VFProvider>
-      <Chat
-        autoResume={false}
-        id={id}
-        initialChatModel={modelIdFromCookie?.value || DEFAULT_CHAT_MODEL}
-        initialMessages={[]}
-        initialVisibilityType="private"
-        isReadonly={false}
-        key={id}
-      />
-      <DataStreamHandler />
-    </VFProvider>
+    <ChatStoreProvider>
+      <VFProvider>
+        <Chat
+          autoResume={false}
+          id={id}
+          initialChatModel={modelIdFromCookie?.value || DEFAULT_CHAT_MODEL}
+          initialMessages={[]}
+          initialVisibilityType="private"
+          isReadonly={false}
+          key={id}
+        />
+        <DataStreamHandler />
+      </VFProvider>
+    </ChatStoreProvider>
   );
 }

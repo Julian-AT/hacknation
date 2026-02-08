@@ -135,10 +135,12 @@ export async function POST(request: Request) {
 
         try {
           // Create the orchestrator agent with dataStream access for artifact tools
-          const agent = createOrchestratorAgent({
+          const agent = await createOrchestratorAgent({
             session,
             dataStream,
             modelId: selectedChatModel,
+            userId: session.user.id,
+            chatId: id,
           });
 
           // Run the agent and merge its output stream into our data stream

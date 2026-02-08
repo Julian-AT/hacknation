@@ -19,6 +19,10 @@
     "devtools": "npx @ai-sdk/devtools"
   },
   "dependencies": {
+    "@ai-sdk-tools/artifacts": "^1.2.0",
+    "@ai-sdk-tools/cache": "^1.2.0",
+    "@ai-sdk-tools/memory": "^1.2.0",
+    "@ai-sdk-tools/store": "^1.2.0",
     "@ai-sdk/devtools": "^0.0.12",
     "@ai-sdk/gateway": "^3.0.15",
     "@ai-sdk/google": "^3.0.22",
@@ -108,7 +112,8 @@
     "tailwindcss-animate": "^1.0.7",
     "use-stick-to-bottom": "^1.1.1",
     "usehooks-ts": "^3.1.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",

@@ -18,6 +18,7 @@ export default function Page(props: { params: Promise<{ id: string }> }) {
 }
 
 import { VFProvider } from "@/lib/vf-context";
+import { Provider as ChatStoreProvider } from "@ai-sdk-tools/store";
 
 async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,16 +54,18 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const chatModelFromCookie = cookieStore.get("chat-model");
 
   return (
-    <VFProvider>
-      <Chat
-        autoResume={true}
-        id={chat.id}
-        initialChatModel={chatModelFromCookie?.value || DEFAULT_CHAT_MODEL}
-        initialMessages={uiMessages}
-        initialVisibilityType={chat.visibility}
-        isReadonly={session?.user?.id !== chat.userId}
-      />
-      <DataStreamHandler />
-    </VFProvider>
+    <ChatStoreProvider>
+      <VFProvider>
+        <Chat
+          autoResume={true}
+          id={chat.id}
+          initialChatModel={chatModelFromCookie?.value || DEFAULT_CHAT_MODEL}
+          initialMessages={uiMessages}
+          initialVisibilityType={chat.visibility}
+          isReadonly={session?.user?.id !== chat.userId}
+        />
+        <DataStreamHandler />
+      </VFProvider>
+    </ChatStoreProvider>
   );
 }

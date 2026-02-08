@@ -14,6 +14,19 @@ import { createDocument } from "../tools/create-document";
 import { getWeather } from "../tools/get-weather";
 import { requestSuggestions } from "../tools/request-suggestions";
 import { updateDocument } from "../tools/update-document";
+import {
+  findNearbyArtifact,
+  findMedicalDesertsArtifact,
+  getStatsArtifact,
+  planMissionArtifact,
+} from "../tools/artifact-tools";
+import { cached } from "../cache";
+import {
+  memoryProvider,
+  CAREMAP_MEMORY_TEMPLATE,
+  formatWorkingMemory,
+  getWorkingMemoryInstructions,
+} from "../memory";
 import { databaseAgent } from "./database-agent";
 import { geospatialAgent } from "./geospatial-agent";
 import { medicalReasoningAgent } from "./medical-reasoning-agent";
@@ -24,6 +37,8 @@ type OrchestratorConfig = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
   modelId: string;
+  userId?: string;
+  chatId?: string;
 };
 
 /**
@@ -82,14 +97,36 @@ function createDelegationTool({
  * Creates the main orchestrator agent that delegates to specialized subagents.
  * Direct tools (artifacts, weather) stay at orchestrator level.
  * Data/geo/medical/web tasks are delegated to subagents.
+ *
+ * Artifact-enhanced geospatial tools are also available directly so map data
+ * streams to the client canvas without going through the delegation layer.
  */
-export function createOrchestratorAgent({
+export async function createOrchestratorAgent({
   session,
   dataStream,
   modelId,
+  userId,
+  chatId,
 }: OrchestratorConfig) {
-  // Combine orchestrator prompt with artifacts instructions
-  const instructions = `${orchestratorPrompt}\n\n${artifactsPrompt}`;
+  // Load working memory for this user
+  let memoryContext = "";
+  if (userId) {
+    try {
+      const wm = await memoryProvider.getWorkingMemory({
+        userId,
+        scope: "user",
+      });
+      if (wm) {
+        memoryContext = `\n\n## Working Memory (persistent context about this user)\n${formatWorkingMemory(wm)}\n\n${getWorkingMemoryInstructions(CAREMAP_MEMORY_TEMPLATE)}`;
+      }
+    } catch (e) {
+      // Memory loading is best-effort
+      console.error("[Orchestrator] Failed to load working memory:", e);
+    }
+  }
+
+  // Combine orchestrator prompt with artifacts instructions and memory
+  const instructions = `${orchestratorPrompt}\n\n${artifactsPrompt}${memoryContext}`;
 
   return new ToolLoopAgent({
     model: getLanguageModel(modelId),
@@ -101,7 +138,13 @@ export function createOrchestratorAgent({
       updateDocument: updateDocument({ session, dataStream }),
       requestSuggestions: requestSuggestions({ session, dataStream }),
 
-      // --- Subagent delegation tools ---
+      // --- Artifact-enhanced geospatial tools (stream directly to canvas) ---
+      findNearby: cached(findNearbyArtifact({ dataStream }), { ttl: 30 * 60 * 1000 }),
+      findMedicalDeserts: cached(findMedicalDesertsArtifact({ dataStream }), { ttl: 60 * 60 * 1000 }),
+      getStats: cached(getStatsArtifact({ dataStream }), { ttl: 30 * 60 * 1000 }),
+      planMission: planMissionArtifact({ dataStream }),
+
+      // --- Subagent delegation tools (for complex multi-step analysis) ---
       investigateData: createDelegationTool({
         description:
           "Query and analyze healthcare facility data from the database. Use for counts, aggregations, SQL queries, facility lookups, semantic search, and data filtering.",
@@ -110,7 +153,7 @@ export function createOrchestratorAgent({
 
       analyzeGeography: createDelegationTool({
         description:
-          "Analyze geographic distribution and accessibility of healthcare facilities. Use for finding nearby facilities, identifying medical deserts, comparing regions, and planning volunteer missions.",
+          "Perform complex multi-step geographic analysis that requires chaining multiple tools. For simple proximity searches or desert detection, prefer the direct findNearby / findMedicalDeserts tools instead.",
         agent: geospatialAgent,
       }),
 
@@ -124,6 +167,34 @@ export function createOrchestratorAgent({
         description:
           "Search the web for real-time external data. Use for WHO statistics, GHS reports, disease prevalence, healthcare workforce data, government policies, and any information not in the database.",
         agent: webResearchAgent,
+      }),
+
+      // --- Memory tool: let the agent update its working memory ---
+      updateWorkingMemory: tool({
+        description:
+          "Save important facts, user preferences, or analysis summaries to persistent memory. Call this when you learn something important about the user that should persist across conversations.",
+        inputSchema: z.object({
+          content: z
+            .string()
+            .describe(
+              "Updated working memory content in markdown format. Include all existing facts plus any new information.",
+            ),
+        }),
+        execute: async ({ content }) => {
+          if (!userId) return { success: false, reason: "No user context" };
+          try {
+            await memoryProvider.updateWorkingMemory({
+              userId,
+              chatId,
+              scope: "user",
+              content,
+            });
+            return { success: true };
+          } catch (e) {
+            console.error("[Memory] Failed to update:", e);
+            return { success: false, reason: "Storage error" };
+          }
+        },
       }),
     },
     stopWhen: stepCountIs(15),
