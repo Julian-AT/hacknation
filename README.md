@@ -1,4 +1,4 @@
-# Bridging Medical Deserts: Intelligent Document Parsing for Healthcare
+<h1 align="center">Bridging Medical Deserts: Agentic AI for Healthcare</h1>
 
 <p align="center">
   <strong>An AI agent system for analyzing healthcare facility capabilities and identifying medical deserts</strong>
@@ -90,89 +90,12 @@ The system answers 59 categorized questions across 11 query types:
 
 ## Technology Stack
 
-**Primary Stack**:
-- **Agentic Orchestrator**: LangGraph, LlamaIndex, or CrewAI
-- **ML Lifecycle**: MLflow
-- **RAG**: Databricks, FAISS, or LanceDB
-- **Text-to-SQL**: Genie
-- **Environment**: Databricks Free Edition compatible
-
 **Implementation**:
 - Next.js 16 + React 19 + TypeScript
 - Vercel AI SDK v6
 - PostgreSQL + pgvector
 - deck.gl + MapLibre GL for visualization
 
-## Evaluation Criteria
-
-| Criteria | Weight | Description |
-|----------|--------|-------------|
-| Technical Accuracy | 35% | Reliably handle "Must Have" queries and detect anomalies |
-| IDP Innovation | 30% | Extract and synthesize information from unstructured text |
-| Social Impact | 25% | Effectively identify medical deserts for resource allocation |
-| User Experience | 10% | Intuitive interface for non-technical NGO planners |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- pnpm 9.12+
-- PostgreSQL with pgvector extension
-- Databricks account (free tier compatible)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/your-org/hacknation.git
-cd hacknation/www
-
-# Install dependencies
-pnpm install
-
-# Set up environment
-cp .env.example .env.local
-# Configure your credentials
-```
-
-### Environment Variables
-
-```env
-# Required
-DATABRICKS_HOST=
-DATABRICKS_TOKEN=
-POSTGRES_URL=
-
-# AI Gateway
-AI_GATEWAY_API_KEY=
-
-# Optional
-REDIS_URL=
-FIRECRAWL_API_KEY=
-```
-
-### Database Setup
-
-```bash
-# Run migrations
-pnpm db:migrate
-
-# Seed facilities data
-npx tsx scripts/seed-facilities.ts
-
-# Generate embeddings
-npx tsx scripts/seed-embeddings.ts
-```
-
-### Development
-
-```bash
-pnpm dev        # Start dev server
-pnpm build      # Production build
-pnpm lint       # Run checks
-pnpm db:studio  # Open Drizzle Studio
-```
 
 ## Why This Matters
 
@@ -198,7 +121,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 </p>
 <p align="center">
   Databricks "Bridging Medical Deserts" Track
-</p>
-<p align="center">
-  In partnership with the Virtue Foundation
 </p>

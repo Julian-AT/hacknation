@@ -18,8 +18,8 @@ import { MeridianLogo } from "./icons";
 const SUGGESTED_QUERIES: { icon: ReactNode; label: string; query: string }[] = [
   {
     icon: <BarChart3 className="size-3.5 shrink-0" />,
-    label: "Hospitals with cardiology",
-    query: "How many hospitals offer cardiology in Ghana and Kenya?",
+    label: "Hospitals with cardiology in Ghana",
+    query: "How many hospitals offer cardiology in Ghana?",
   },
   {
     icon: <Search className="size-3.5 shrink-0" />,
@@ -29,12 +29,12 @@ const SUGGESTED_QUERIES: { icon: ReactNode; label: string; query: string }[] = [
   {
     icon: <MapPin className="size-3.5 shrink-0" />,
     label: "Medical deserts for emergency surgery",
-    query: "Largest medical deserts for emergency surgery in Nigeria",
+    query: "Largest medical deserts for emergency surgery in Ghana",
   },
   {
     icon: <AlertTriangle className="size-3.5 shrink-0" />,
     label: "Detect suspicious facility claims",
-    query: "Facilities in Uganda with unrealistic procedure claims for their size",
+    query: "Facilities in Ghana with unrealistic procedure claims for their size",
   },
   {
     icon: <Stethoscope className="size-3.5 shrink-0" />,
@@ -43,18 +43,18 @@ const SUGGESTED_QUERIES: { icon: ReactNode; label: string; query: string }[] = [
   },
   {
     icon: <Activity className="size-3.5 shrink-0" />,
-    label: "Plan a volunteer mission",
-    query: "Plan a volunteer ophthalmology mission in Tanzania",
+    label: "Plan a volunteer mission in Ghana",
+    query: "Plan a volunteer ophthalmology mission in Ghana",
   },
   {
     icon: <Globe className="size-3.5 shrink-0" />,
-    label: "Compare Austria with the US",
-    query: "Compare healthcare access between Austria and the US",
+    label: "Northern vs Ashanti regions",
+    query: "Compare healthcare access between Northern and Ashanti regions in Ghana",
   },
   {
     icon: <Heart className="size-3.5 shrink-0" />,
-    label: "Maternal care gaps",
-    query: "Maternal care deserts in Ethiopia and where to place new clinics",
+    label: "Maternal care gaps in Ghana",
+    query: "Maternal care deserts in Ghana and where to place new clinics",
   },
 ];
 
