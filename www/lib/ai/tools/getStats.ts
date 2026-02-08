@@ -8,7 +8,7 @@ import { withTimeout, clampNumber, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 
 export const getStats = tool({
   description:
-    'Get aggregated statistics about the facilities in Ghana. Use for overview questions like "How many hospitals are there?", "What are the top regions?".',
+    'Get aggregated statistics about healthcare facilities. Use for overview questions like "How many hospitals are there?", "What are the top regions?".',
   inputSchema: z.object({
     groupBy: z
       .enum(["region", "type", "specialty"])

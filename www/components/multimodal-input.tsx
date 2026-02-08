@@ -123,6 +123,14 @@ function PureMultimodalInput({
 
   useEffect(() => {
     if (textareaRef.current) {
+      // For new chats (no messages), always start with empty input
+      const isNewChat = messages.length === 0;
+      if (isNewChat) {
+        setInput("");
+        setLocalStorageInput("");
+        adjustHeight();
+        return;
+      }
       const domValue = textareaRef.current.value;
       // Prefer DOM value over localStorage to handle hydration
       const finalValue = domValue || localStorageInput || "";
@@ -131,7 +139,7 @@ function PureMultimodalInput({
     }
     // Only run once after hydration
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adjustHeight, localStorageInput, setInput]);
+  }, []);
 
   useEffect(() => {
     setLocalStorageInput(input);

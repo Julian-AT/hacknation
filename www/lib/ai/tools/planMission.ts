@@ -7,6 +7,9 @@ import { tool } from "ai";
 import { createToolLogger } from "./debug";
 import { withTimeout, DB_QUERY_TIMEOUT_MS } from "./safeguards";
 
+// Note: CITY_COORDS used as reference cities for desert zone analysis.
+// Future: augment with cities from other countries for global coverage.
+
 // Haversine distance in km
 function haversineKm(
   lat1: number,
@@ -44,7 +47,7 @@ type Recommendation = {
 
 export const planMission = tool({
   description:
-    "Interactive volunteer deployment planner. Recommends facilities for a volunteer based on their specialty and Ghana's healthcare needs.",
+    "Interactive volunteer deployment planner. Recommends facilities for a volunteer based on their specialty and healthcare needs in the database.",
   inputSchema: z.object({
     specialty: z
       .string()
@@ -99,12 +102,44 @@ export const planMission = tool({
       if (providers.length === 0) {
         // NATIONAL_GAP: No facilities offer this specialty at all
         log.step("National gap detected for specialty", specialty);
+
+        // Find the largest hospitals as potential hosts
+        const largestHospitals = await withTimeout(
+          db
+            .select({
+              id: facilities.id,
+              name: facilities.name,
+              city: facilities.addressCity,
+              region: facilities.addressRegion,
+            })
+            .from(facilities)
+            .where(
+              and(
+                isNotNull(facilities.lat),
+                isNotNull(facilities.lng),
+                ilike(facilities.facilityType, "%Teaching Hospital%")
+              )
+            )
+            .limit(3),
+          DB_QUERY_TIMEOUT_MS,
+          abortSignal
+        );
+
+        const hostName = largestHospitals.length > 0
+          ? largestHospitals[0].name
+          : "a major teaching hospital in the region";
+        const hostRegion = largestHospitals.length > 0
+          ? `${largestHospitals[0].city ?? largestHospitals[0].region ?? "Major City"} (Teaching Hospitals)`
+          : "Major City (Teaching Hospitals)";
+
         recommendations.push({
           priority: "Critical - National Gap",
-          region: "Accra / Kumasi (Teaching Hospitals)",
-          reason: `No facilities in Ghana explicitly list ${specialty}. Recommend starting at a major teaching hospital to build capacity.`,
+          region: hostRegion,
+          reason: `No facilities in the database explicitly list ${specialty}. Recommend starting at a major teaching hospital to build capacity.`,
           suggestedHost: {
-            name: "Korle Bu or Komfo Anokye Teaching Hospital",
+            id: largestHospitals.at(0)?.id,
+            name: hostName,
+            city: largestHospitals.at(0)?.city,
           },
         });
       } else {
@@ -238,15 +273,38 @@ export const planMission = tool({
       // Fallback if no specific gaps were found
       if (recommendations.length === 0) {
         log.step("No specific gaps found, using fallback recommendation");
+
+        // Dynamically find underserved regions from the database
+        const ruralHospital = await withTimeout(
+          db
+            .select({
+              id: facilities.id,
+              name: facilities.name,
+              city: facilities.addressCity,
+              region: facilities.addressRegion,
+            })
+            .from(facilities)
+            .where(
+              and(
+                isNotNull(facilities.lat),
+                isNotNull(facilities.lng),
+                ilike(facilities.facilityType, "%Hospital%")
+              )
+            )
+            .limit(1),
+          DB_QUERY_TIMEOUT_MS,
+          abortSignal
+        );
+
+        const fallbackHost = ruralHospital.at(0);
         recommendations.push({
           priority: "Medium - Rural Support",
-          region: "Northern Region",
+          region: fallbackHost?.region ?? "Underserved Region",
           reason:
-            "General need for specialists in northern rural districts.",
-          suggestedHost: {
-            name: "Tamale Teaching Hospital",
-            city: "Tamale",
-          },
+            "General need for specialists in underserved rural districts.",
+          suggestedHost: fallbackHost
+            ? { id: fallbackHost.id, name: fallbackHost.name, city: fallbackHost.city }
+            : { name: "Contact local health authority for placement" },
         });
       }
 

@@ -24,24 +24,30 @@ import { withTimeout, DB_QUERY_TIMEOUT_MS } from "../safeguards";
 // Validation rules for specific field types
 // ---------------------------------------------------------------------------
 
-const GHANA_REGIONS = [
-  "Greater Accra",
-  "Ashanti",
-  "Northern",
-  "Western",
-  "Eastern",
-  "Central",
-  "Volta",
-  "Upper East",
-  "Upper West",
-  "Brong-Ahafo",
-  "Savannah",
-  "North East",
-  "Oti",
-  "Bono East",
-  "Ahafo",
-  "Western North",
-] as const;
+/**
+ * Known regions by country. Used for soft validation — unknown regions
+ * are flagged but not rejected, since data may cover any country.
+ */
+const KNOWN_REGIONS: Record<string, readonly string[]> = {
+  GH: [
+    "Greater Accra",
+    "Ashanti",
+    "Northern",
+    "Western",
+    "Eastern",
+    "Central",
+    "Volta",
+    "Upper East",
+    "Upper West",
+    "Brong-Ahafo",
+    "Savannah",
+    "North East",
+    "Oti",
+    "Bono East",
+    "Ahafo",
+    "Western North",
+  ],
+} as const;
 
 const VALID_FACILITY_TYPES = [
   "hospital",
@@ -64,18 +70,30 @@ type EnrichmentCheck = {
 };
 
 /**
- * Validate that a proposed region value is a known Ghana region.
+ * Validate that a proposed region value is a known region.
+ * Checks against known regions for the given country code, if available.
+ * Unknown regions are flagged (not rejected) since data may cover any country.
  */
-function validateRegion(value: string): { valid: boolean; reason: string } {
+function validateRegion(value: string, countryCode?: string): { valid: boolean; reason: string } {
   const normalized = value.trim();
-  const match = GHANA_REGIONS.find(
+  const regions = countryCode ? KNOWN_REGIONS[countryCode.toUpperCase()] : undefined;
+
+  if (!regions) {
+    // No known region list for this country — accept but flag
+    return {
+      valid: true,
+      reason: `Region "${normalized}" accepted (no region list available for country ${countryCode ?? "unknown"}).`,
+    };
+  }
+
+  const match = regions.find(
     (r) => r.toLowerCase() === normalized.toLowerCase()
   );
   if (match) {
     return { valid: true, reason: `Matches known region: ${match}` };
   }
   // Fuzzy check for partial matches
-  const partial = GHANA_REGIONS.find((r) =>
+  const partial = regions.find((r) =>
     r.toLowerCase().includes(normalized.toLowerCase())
   );
   if (partial) {
@@ -86,7 +104,7 @@ function validateRegion(value: string): { valid: boolean; reason: string } {
   }
   return {
     valid: false,
-    reason: `"${value}" is not a recognized Ghana region. Valid regions: ${GHANA_REGIONS.join(", ")}`,
+    reason: `"${value}" is not a recognized region. Known regions for ${countryCode}: ${regions.join(", ")}`,
   };
 }
 

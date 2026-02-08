@@ -380,7 +380,7 @@ export const detectAnomalies = tool({
       }
 
       const output = {
-        region: region ?? "All Ghana",
+        region: region ?? "All regions",
         foundAnomalies: anomalies.length,
         details: anomalies,
       };

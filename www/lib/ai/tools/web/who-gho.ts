@@ -145,9 +145,8 @@ export const getWHOData = tool({
     countryCode: z
       .string()
       .length(3)
-      .default("GHA")
       .describe(
-        "ISO 3166-1 alpha-3 country code (default: GHA for Ghana)",
+        "ISO 3166-1 alpha-3 country code (e.g., GHA, NGA, KEN, USA, GBR, IND). Required.",
       ),
     indicators: z
       .array(

@@ -113,7 +113,7 @@ async function fetchBenchmark(
  * health indicators, disease burden, and WHO/international benchmarking.
  *
  * Data is stored in the database (demographics_countries, demographics_regions,
- * demographics_benchmarks tables) and supports any country. Defaults to Ghana.
+ * demographics_benchmarks tables) and supports any country.
  *
  * Covers VF Agent questions:
  * - 2.4: Urban vs rural service gaps
@@ -129,14 +129,14 @@ export const getDemographics = tool({
       .max(3)
       .default("GHA")
       .describe(
-        "ISO 3166-1 alpha-3 country code (default: GHA for Ghana)",
+        "ISO 3166-1 alpha-3 country code (e.g., GHA, NGA, KEN, USA, GBR). Defaults to GHA.",
       ),
     region: z
       .string()
       .max(100)
       .optional()
       .describe(
-        "Get demographics for a specific region (e.g., 'Northern', 'Greater Accra')",
+        "Get demographics for a specific region (e.g., 'Northern', 'Greater Accra', 'Lagos')",
       ),
     query: z
       .enum([
@@ -388,7 +388,7 @@ export const getDemographics = tool({
           output = {
             whoBenchmarks: whoBenchmark,
             developedCountryAverages: developedAvg,
-            ghanaNational: country,
+            nationalData: country,
             regionComparisons: comparisonRegions.map((r) => ({
               region: r.region,
               population: r.population,

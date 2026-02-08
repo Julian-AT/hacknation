@@ -83,9 +83,9 @@ export const FACILITIES_SCHEMA: ColumnDef[] = [
   // Location
   { column: "address_line1", type: "text", description: "Street address" },
   { column: "address_city", type: "text", description: "City name" },
-  { column: "address_region", type: "text", description: "One of 16 regions in Ghana" },
-  { column: "address_country", type: "text", description: "Country (default: Ghana)" },
-  { column: "country_code", type: "text", description: "ISO country code (default: GH)" },
+  { column: "address_region", type: "text", description: "Administrative region" },
+  { column: "address_country", type: "text", description: "Country name" },
+  { column: "country_code", type: "text", description: "ISO country code (e.g., GH, NG, KE)" },
   { column: "lat", type: "double precision", description: "Latitude coordinate" },
   { column: "lng", type: "double precision", description: "Longitude coordinate" },
 
@@ -144,7 +144,7 @@ export const FACILITIES_COLUMNS_HINT =
 // ---------------------------------------------------------------------------
 
 export const DEMOGRAPHICS_COUNTRIES_SCHEMA: ColumnDef[] = [
-  { column: "country_code", type: "varchar(3)", description: "ISO 3166-1 alpha-3 country code (PK, e.g. GHA)" },
+  { column: "country_code", type: "varchar(3)", description: "ISO 3166-1 alpha-3 country code (PK, e.g. GHA, NGA, KEN)" },
   { column: "country_name", type: "text", description: "Country name (NOT NULL)" },
   { column: "total_population", type: "bigint", description: "Total population (national)" },
   { column: "gdp_per_capita_usd", type: "double precision", description: "GDP per capita in USD" },
