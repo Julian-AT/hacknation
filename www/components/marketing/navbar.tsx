@@ -63,7 +63,7 @@ export function MarketingNavbar() {
               className="hidden h-8 items-center justify-center rounded-full border border-border bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95 md:flex"
               href="/chat"
             >
-              Open Chat
+              Try
             </Link>
             <button
               aria-label="Toggle menu"
@@ -143,7 +143,7 @@ export function MarketingNavbar() {
                   className="flex h-9 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
                   href="/chat"
                 >
-                  Open Chat
+                  Try
                 </Link>
               </div>
             </motion.div>

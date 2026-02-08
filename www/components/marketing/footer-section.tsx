@@ -5,7 +5,7 @@ const FOOTER_LINKS = [
   {
     title: "Product",
     links: [
-      { label: "Chat", href: "/chat" },
+      { label: "Try Meridian", href: "/chat" },
       { label: "Features", href: "#features" },
       { label: "How It Works", href: "#how-it-works" },
       { label: "FAQ", href: "#faq" },
