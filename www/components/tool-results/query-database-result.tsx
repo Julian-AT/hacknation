@@ -10,6 +10,19 @@ import {
   CodeBlockHeader,
   CodeBlockTitle,
 } from "@/components/ai-elements/code-block";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface QueryDatabaseResultProps {
@@ -31,59 +44,60 @@ export function QueryDatabaseResult({
     rows.length > 0 ? Object.keys(rows.at(0) as Record<string, unknown>) : [];
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Database className="size-3.5 text-blue-400" />
           <span className="text-xs font-medium text-muted-foreground">
             SQL Query
           </span>
         </div>
-        <span className="rounded-full bg-blue-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-blue-400">
+        <Badge className="font-mono text-[11px]" variant="secondary">
           {count} {count === 1 ? "row" : "rows"}
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
       {rows.length > 0 && (
-        <div className="overflow-x-auto px-3 pb-3">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-border">
-                {columns.map((col) => (
-                  <th
-                    className="whitespace-nowrap px-2 py-1.5 font-mono text-[11px] font-semibold text-muted-foreground"
-                    key={col}
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 10).map((row, i) => (
-                <tr
-                  className={cn(
-                    "border-b border-border/50 last:border-0",
-                    i % 2 === 1 && "bg-muted/30"
-                  )}
-                  key={`row-${String(i)}`}
-                >
+        <CardContent className="px-0 pb-0">
+          <ScrollArea className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
                   {columns.map((col) => (
-                    <td
-                      className="whitespace-nowrap px-2 py-1.5 text-foreground"
-                      key={`${String(i)}-${col}`}
+                    <TableHead
+                      className="h-8 whitespace-nowrap px-3 font-mono text-[11px]"
+                      key={col}
                     >
-                      {formatCellValue(row[col])}
-                    </td>
+                      {col}
+                    </TableHead>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.slice(0, 10).map((row, i) => (
+                  <TableRow
+                    className={cn(i % 2 === 1 && "bg-muted/30")}
+                    key={`row-${String(i)}`}
+                  >
+                    {columns.map((col) => (
+                      <TableCell
+                        className="whitespace-nowrap px-3 py-1.5 tabular-nums text-xs"
+                        key={`${String(i)}-${col}`}
+                      >
+                        {formatCellValue(row[col])}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </CardContent>
       )}
 
-      <div className="flex items-center justify-between border-t border-border px-3 py-2">
+      <Separator />
+      <CardFooter className="flex items-center justify-between px-3 py-2">
         {truncated || rows.length < count ? (
           <span className="text-[11px] text-muted-foreground">
             Showing {Math.min(rows.length, 10)} of {count} results
@@ -93,10 +107,12 @@ export function QueryDatabaseResult({
             {count} {count === 1 ? "result" : "results"}
           </span>
         )}
-        <button
-          className="flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300"
+        <Button
+          className="h-6 gap-1 px-2 text-[11px]"
           onClick={() => setShowSql(!showSql)}
+          size="sm"
           type="button"
+          variant="ghost"
         >
           {showSql ? (
             <ChevronDown className="size-3" />
@@ -104,13 +120,14 @@ export function QueryDatabaseResult({
             <ChevronRight className="size-3" />
           )}
           {showSql ? "Hide SQL" : "Show SQL"}
-        </button>
-      </div>
+        </Button>
+      </CardFooter>
 
       {showSql && query && (
-        <div className="border-t border-border">
+        <>
+          <Separator />
           <CodeBlock
-            className="border-0 rounded-none"
+            className="rounded-none border-0"
             code={query}
             language="sql"
           >
@@ -126,15 +143,15 @@ export function QueryDatabaseResult({
             </CodeBlockHeader>
             <CodeBlockContent code={query} language="sql" />
           </CodeBlock>
-        </div>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
 function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) {
-    return "—";
+    return "\u2014";
   }
   if (typeof value === "number") {
     return value.toLocaleString();

@@ -26,11 +26,15 @@ import {
   CodeBlockHeader,
 } from "@/components/ai-elements/code-block";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
 
@@ -175,7 +179,7 @@ export function ToolTrace({
       }));
       setMapFacilities(markers);
       if (markers.length > 0) {
-        setMapCenter([markers[0].lat, markers[0].lng]);
+        setMapCenter([markers.at(0).lat, markers.at(0).lng]);
         setMapZoom(7);
       }
       setMapVisible(true);
@@ -200,125 +204,129 @@ export function ToolTrace({
     }
   };
 
-  // Determine the input JSON to display
   const inputJson = isAgentTool
     ? String(args?.task ?? JSON.stringify(args, null, 2))
     : JSON.stringify(args, null, 2);
 
   const outputJson = result ? JSON.stringify(result, null, 2) : null;
 
-  // Determine if the input is SQL for syntax highlighting
   const isSqlTool = toolName === "queryDatabase";
   const sqlQuery = isSqlTool ? (args?.query as string) : null;
 
   return (
-    <Collapsible
-      className="not-prose my-2 w-full overflow-hidden rounded-md border border-border bg-muted/50"
-      onOpenChange={setIsOpen}
-      open={isOpen}
-    >
-      {/* Header */}
-      <CollapsibleTrigger className="flex w-full items-center justify-between p-2 text-left transition-colors hover:bg-muted/80">
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="font-mono text-sm font-medium text-foreground">
-            {displayName}
-          </span>
-          {isAgentTool && (
-            <Badge
-              className="px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wider"
-              variant="secondary"
-            >
-              Agent
-            </Badge>
-          )}
-          <span className="max-w-[200px] truncate text-xs text-muted-foreground">
-            {formatArgs(toolName, args, isAgentTool)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {hasGeoData() && (
-            <button
-              aria-label="View on map"
-              className="flex items-center gap-1 rounded border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-xs text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
-              onClick={handleViewOnMap}
-              type="button"
-            >
-              <Eye className="size-3" />
-              Map
-            </button>
-          )}
-          {result ? (
-            <Badge
-              className="gap-1 rounded-full border-green-500/20 bg-green-500/10 text-[10px] text-green-600 dark:text-green-400"
-              variant="outline"
-            >
-              <CheckCircleIcon className="size-3" />
-              Done
-            </Badge>
-          ) : (
-            <Badge
-              className="animate-pulse gap-1 rounded-full border-amber-500/20 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
-              variant="outline"
-            >
-              <ClockIcon className="size-3" />
-              {isAgentTool ? "Working..." : "Running..."}
-            </Badge>
-          )}
-          <ChevronDownIcon
-            className={cn(
-              "size-4 text-muted-foreground transition-transform",
-              isOpen && "rotate-180"
-            )}
-          />
-        </div>
-      </CollapsibleTrigger>
-
-      {/* Expanded content */}
-      <CollapsibleContent className="data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-none data-[state=closed]:animate-out data-[state=open]:animate-in">
-        <div className="space-y-3 border-t border-border p-3">
-          {/* Input section */}
-          <div className="space-y-1">
-            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {isAgentTool ? "Task" : "Parameters"}
-            </h4>
-            {isSqlTool && sqlQuery ? (
-              <CodeBlock className="text-xs" code={sqlQuery} language="sql">
-                <CodeBlockHeader className="px-2 py-1">
-                  <span className="text-[10px] text-muted-foreground">SQL</span>
-                  <CodeBlockActions>
-                    <CodeBlockCopyButton className="size-5" />
-                  </CodeBlockActions>
-                </CodeBlockHeader>
-                <CodeBlockContent code={sqlQuery} language="sql" />
-              </CodeBlock>
-            ) : (
-              <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted p-2.5 font-mono text-xs text-foreground">
-                {inputJson}
-              </pre>
-            )}
-          </div>
-
-          {/* Output section */}
-          {outputJson && (
-            <div className="space-y-1">
-              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {result?.error ? "Error" : "Output"}
-              </h4>
-              <pre
-                className={cn(
-                  "max-h-60 overflow-y-auto whitespace-pre-wrap rounded-md p-2.5 font-mono text-xs",
-                  result?.error
-                    ? "bg-destructive/10 text-destructive"
-                    : "bg-muted text-muted-foreground"
-                )}
+    <Card className="not-prose my-2 w-full overflow-hidden bg-muted/50">
+      <Collapsible onOpenChange={setIsOpen} open={isOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-muted/80">
+          <div className="flex min-w-0 items-center gap-2">
+            {icon}
+            <span className="truncate font-mono text-sm font-medium text-foreground">
+              {displayName}
+            </span>
+            {isAgentTool && (
+              <Badge
+                className="px-1.5 py-0 text-[9px] uppercase tracking-wider"
+                variant="secondary"
               >
-                {outputJson}
-              </pre>
+                Agent
+              </Badge>
+            )}
+            <span className="hidden max-w-[200px] truncate text-xs text-muted-foreground sm:inline">
+              {formatArgs(toolName, args, isAgentTool)}
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {hasGeoData() && (
+              <Button
+                aria-label="View on map"
+                className="h-6 gap-1 px-2 text-xs"
+                onClick={handleViewOnMap}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Eye className="size-3" />
+                <span className="hidden sm:inline">Map</span>
+              </Button>
+            )}
+            {result ? (
+              <Badge
+                className="gap-1 border-green-500/20 bg-green-500/10 text-[10px] text-green-600 dark:text-green-400"
+                variant="outline"
+              >
+                <CheckCircleIcon className="size-3" />
+                Done
+              </Badge>
+            ) : (
+              <Badge
+                className="animate-pulse gap-1 border-amber-500/20 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
+                variant="outline"
+              >
+                <ClockIcon className="size-3" />
+                {isAgentTool ? "Working..." : "Running..."}
+              </Badge>
+            )}
+            <ChevronDownIcon
+              className={cn(
+                "size-4 text-muted-foreground transition-transform",
+                isOpen && "rotate-180"
+              )}
+            />
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
+          <Separator />
+          <CardContent className="space-y-3 p-3">
+            {/* Input section */}
+            <div className="space-y-1.5">
+              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {isAgentTool ? "Task" : "Parameters"}
+              </h4>
+              {isSqlTool && sqlQuery ? (
+                <CodeBlock className="text-xs" code={sqlQuery} language="sql">
+                  <CodeBlockHeader className="px-2 py-1">
+                    <span className="text-[10px] text-muted-foreground">
+                      SQL
+                    </span>
+                    <CodeBlockActions>
+                      <CodeBlockCopyButton className="size-5" />
+                    </CodeBlockActions>
+                  </CodeBlockHeader>
+                  <CodeBlockContent code={sqlQuery} language="sql" />
+                </CodeBlock>
+              ) : (
+                <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted p-2.5 font-mono text-xs text-foreground">
+                  {inputJson}
+                </pre>
+              )}
             </div>
-          )}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+
+            {/* Output section */}
+            {outputJson && (
+              <>
+                <Separator />
+                <div className="space-y-1.5">
+                  <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {result?.error ? "Error" : "Output"}
+                  </h4>
+                  <ScrollArea className="max-h-60">
+                    <pre
+                      className={cn(
+                        "whitespace-pre-wrap rounded-md p-2.5 font-mono text-xs",
+                        result?.error
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {outputJson}
+                    </pre>
+                  </ScrollArea>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }

@@ -1,6 +1,11 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
 import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
 
@@ -51,66 +56,77 @@ export function SearchFacilitiesResult({
   };
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Search className="size-3.5 text-green-400" />
           <span className="text-xs font-medium text-muted-foreground">
-            Facilities matching <span className="text-foreground">{query}</span>
+            Facilities matching{" "}
+            <span className="text-foreground">{query}</span>
           </span>
         </div>
-        <span className="rounded-full bg-green-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-green-400">
+        <Badge className="font-mono text-[11px]" variant="secondary">
           {count} found
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
-      <div className="flex flex-col gap-1.5 px-3 pb-3">
-        {results.map((facility) => (
-          <div
-            className="flex flex-col gap-1.5 rounded-md bg-muted p-2.5"
-            key={facility.id}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {facility.confidence && (
-                  <AnomalyConfidenceBadge
-                    compact
-                    confidence={{
-                      level: facility.confidence.level,
-                      score: facility.confidence.score,
-                      summary: facility.confidence.flagCount > 0
-                        ? `${facility.confidence.flagCount} issue${facility.confidence.flagCount === 1 ? "" : "s"} detected`
-                        : "No issues detected",
-                      flags: [],
-                    }}
-                  />
+      <CardContent className="px-3 pb-3 pt-0">
+        <ul className="flex flex-col gap-1.5">
+          {results.map((facility) => (
+            <li key={facility.id}>
+              <Card className="p-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    {facility.confidence && (
+                      <AnomalyConfidenceBadge
+                        compact
+                        confidence={{
+                          level: facility.confidence.level,
+                          score: facility.confidence.score,
+                          summary:
+                            facility.confidence.flagCount > 0
+                              ? `${facility.confidence.flagCount} issue${facility.confidence.flagCount === 1 ? "" : "s"} detected`
+                              : "No issues detected",
+                          flags: [],
+                        }}
+                      />
+                    )}
+                    <span className="truncate text-[13px] font-medium text-foreground">
+                      {facility.name}
+                    </span>
+                  </div>
+                  <Badge
+                    className="shrink-0 font-mono text-[11px] text-green-400"
+                    variant="outline"
+                  >
+                    {Math.round(facility.similarity * 100)}%
+                  </Badge>
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  {facility.type && (
+                    <Badge
+                      className="border-blue-500/20 bg-blue-500/10 text-[10px] text-blue-400"
+                      variant="outline"
+                    >
+                      {facility.type}
+                    </Badge>
+                  )}
+                  <span className="truncate text-[11px] text-muted-foreground">
+                    {[facility.region, facility.city]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
+                </div>
+                {facility.procedures && (
+                  <p className="mt-1 line-clamp-1 text-pretty text-[11px] text-muted-foreground">
+                    {facility.procedures}
+                  </p>
                 )}
-                <span className="text-[13px] font-medium text-foreground">
-                  {facility.name}
-                </span>
-              </div>
-              <span className="font-mono text-[11px] font-semibold text-green-400">
-                {Math.round(facility.similarity * 100)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {facility.type && (
-                <span className="rounded bg-blue-950/50 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
-                  {facility.type}
-                </span>
-              )}
-              <span className="text-[11px] text-muted-foreground">
-                {[facility.region, facility.city].filter(Boolean).join(", ")}
-              </span>
-            </div>
-            {facility.procedures && (
-              <p className="line-clamp-1 text-[11px] text-muted-foreground">
-                {facility.procedures}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }

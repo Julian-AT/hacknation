@@ -8,6 +8,10 @@ import {
   PhoneIcon,
   StarIcon,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useVF } from "@/lib/vf-context";
 
 interface ProviderData {
@@ -64,34 +68,22 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function TypeBadge({ type }: { type: string }) {
-  const colors: Record<string, string> = {
-    hospital: "bg-blue-950/50 text-blue-400",
-    doctor: "bg-green-950/50 text-green-400",
-    clinic: "bg-purple-950/50 text-purple-400",
-    specialist: "bg-amber-950/50 text-amber-400",
-    dentist: "bg-teal-950/50 text-teal-400",
-    pharmacy: "bg-pink-950/50 text-pink-400",
-  };
-
-  const colorClass =
-    colors[type.toLowerCase()] ?? "bg-muted text-muted-foreground";
-
-  return (
-    <span
-      className={`rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${colorClass}`}
-    >
-      {type}
-    </span>
-  );
-}
+const TYPE_COLORS: Record<string, string> = {
+  hospital: "border-blue-500/20 bg-blue-500/10 text-blue-400",
+  doctor: "border-green-500/20 bg-green-500/10 text-green-400",
+  clinic: "border-purple-500/20 bg-purple-500/10 text-purple-400",
+  specialist: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+  dentist: "border-teal-500/20 bg-teal-500/10 text-teal-400",
+  pharmacy: "border-pink-500/20 bg-pink-500/10 text-pink-400",
+};
 
 export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } =
     useVF();
 
-  const locationParts = [provider.city, provider.region, provider.country]
-    .filter(Boolean);
+  const locationParts = [provider.city, provider.region, provider.country].filter(
+    Boolean
+  );
 
   const handleViewOnMap = () => {
     if (provider.lat && provider.lng) {
@@ -112,15 +104,19 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-muted/50">
-      {/* Header: Name + Type + Rating */}
-      <div className="flex items-start justify-between px-3 py-2.5">
-        <div className="flex flex-col gap-1 min-w-0">
+    <Card className="overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-start justify-between space-y-0 px-3 py-2.5">
+        <div className="flex min-w-0 flex-col gap-1">
           <span className="truncate text-sm font-semibold text-foreground">
             {provider.name}
           </span>
           <div className="flex items-center gap-1.5">
-            <TypeBadge type={provider.type} />
+            <Badge
+              className={`text-[10px] capitalize ${TYPE_COLORS[provider.type.toLowerCase()] ?? ""}`}
+              variant="outline"
+            >
+              {provider.type}
+            </Badge>
             {provider.specialty && (
               <span className="truncate text-[11px] text-muted-foreground">
                 {provider.specialty}
@@ -139,139 +135,148 @@ export function ProviderCard({ provider, compact = false }: ProviderCardProps) {
             </div>
             {provider.reviewCount !== null &&
               provider.reviewCount !== undefined && (
-                <span className="text-[10px] tabular-nums text-muted-foreground">
+                <span className="tabular-nums text-[10px] text-muted-foreground">
                   {provider.reviewCount.toLocaleString()} reviews
                 </span>
               )}
           </div>
         )}
-      </div>
+      </CardHeader>
 
-      {/* Location */}
       {(provider.address || locationParts.length > 0) && (
-        <div className="flex items-start gap-1.5 border-t border-border px-3 py-2">
-          <MapPinIcon className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
-          <div className="flex flex-col gap-0.5 min-w-0">
-            {provider.address && (
-              <span className="truncate text-[11px] text-foreground">
-                {provider.address}
-              </span>
-            )}
-            {locationParts.length > 0 && (
-              <span className="text-[11px] text-muted-foreground">
-                {locationParts.join(", ")}
-              </span>
-            )}
-            {provider.distanceKm !== null &&
-              provider.distanceKm !== undefined && (
-                <span className="font-mono text-[11px] font-medium tabular-nums text-amber-400">
-                  {provider.distanceKm.toFixed(1)} km away
+        <>
+          <Separator />
+          <CardContent className="flex items-start gap-1.5 px-3 py-2">
+            <MapPinIcon className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              {provider.address && (
+                <span className="truncate text-[11px] text-foreground">
+                  {provider.address}
                 </span>
               )}
-          </div>
-        </div>
+              {locationParts.length > 0 && (
+                <span className="text-[11px] text-muted-foreground">
+                  {locationParts.join(", ")}
+                </span>
+              )}
+              {provider.distanceKm !== null &&
+                provider.distanceKm !== undefined && (
+                  <span className="font-mono text-[11px] font-medium tabular-nums text-amber-400">
+                    {provider.distanceKm.toFixed(1)} km away
+                  </span>
+                )}
+            </div>
+          </CardContent>
+        </>
       )}
 
-      {/* Quick info: Hours + Phone */}
       {!compact && (provider.hours || provider.phone) && (
-        <div className="flex items-center gap-3 border-t border-border px-3 py-2">
-          {provider.hours && (
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <ClockIcon className="size-3" />
-              {provider.hours}
-            </span>
-          )}
-          {provider.phone && (
-            <a
-              className="flex items-center gap-1 text-[11px] text-blue-400 hover:underline"
-              href={`tel:${provider.phone}`}
-            >
-              <PhoneIcon className="size-3" />
-              {provider.phone}
-            </a>
-          )}
-        </div>
+        <>
+          <Separator />
+          <CardContent className="flex items-center gap-3 px-3 py-2">
+            {provider.hours && (
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <ClockIcon className="size-3" />
+                {provider.hours}
+              </span>
+            )}
+            {provider.phone && (
+              <a
+                className="flex items-center gap-1 text-[11px] text-blue-400 hover:underline"
+                href={`tel:${provider.phone}`}
+              >
+                <PhoneIcon className="size-3" />
+                {provider.phone}
+              </a>
+            )}
+          </CardContent>
+        </>
       )}
 
-      {/* Insurance */}
       {!compact &&
         provider.insuranceAccepted &&
         Array.isArray(provider.insuranceAccepted) &&
         provider.insuranceAccepted.length > 0 && (
-          <div className="border-t border-border px-3 py-2">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Insurance
-            </span>
-            <div className="flex flex-wrap gap-1">
-              {(provider.insuranceAccepted as string[]).slice(0, 4).map((ins) => (
-                <span
-                  className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                  key={ins}
-                >
-                  {ins}
-                </span>
-              ))}
-              {provider.insuranceAccepted.length > 4 && (
-                <span className="text-[10px] text-muted-foreground">
-                  +{provider.insuranceAccepted.length - 4} more
-                </span>
-              )}
-            </div>
-          </div>
+          <>
+            <Separator />
+            <CardContent className="px-3 py-2">
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Insurance
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {(provider.insuranceAccepted as string[])
+                  .slice(0, 4)
+                  .map((ins) => (
+                    <Badge
+                      className="text-[10px] font-normal"
+                      key={ins}
+                      variant="secondary"
+                    >
+                      {ins}
+                    </Badge>
+                  ))}
+                {provider.insuranceAccepted.length > 4 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    +{provider.insuranceAccepted.length - 4} more
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          </>
         )}
 
-      {/* Action buttons */}
-      <div className="flex items-center justify-between border-t border-border px-3 py-2">
+      <Separator />
+      <CardFooter className="items-center justify-between px-3 py-2">
         <div className="flex items-center gap-2">
           {provider.website && (
-            <a
-              className="flex items-center gap-1 rounded-md bg-background px-2 py-1 text-[11px] text-foreground hover:bg-muted"
-              href={provider.website}
-              rel="noopener"
-              target="_blank"
-            >
-              <GlobeIcon className="size-3" />
-              Website
-              <ExternalLinkIcon className="size-2.5" />
-            </a>
+            <Button asChild className="h-7 gap-1 px-2 text-[11px]" size="sm" variant="outline">
+              <a href={provider.website} rel="noopener" target="_blank">
+                <GlobeIcon className="size-3" />
+                Website
+                <ExternalLinkIcon className="size-2.5" />
+              </a>
+            </Button>
           )}
           {provider.phone && (
-            <a
-              className="flex items-center gap-1 rounded-md bg-background px-2 py-1 text-[11px] text-foreground hover:bg-muted"
-              href={`tel:${provider.phone}`}
-            >
-              <PhoneIcon className="size-3" />
-              Call
-            </a>
+            <Button asChild className="h-7 gap-1 px-2 text-[11px]" size="sm" variant="outline">
+              <a href={`tel:${provider.phone}`}>
+                <PhoneIcon className="size-3" />
+                Call
+              </a>
+            </Button>
           )}
         </div>
 
         {provider.lat && provider.lng && (
-          <button
-            aria-label="View on map"
-            className="flex items-center gap-1 rounded bg-blue-950/30 px-2 py-1 text-[11px] text-blue-400 hover:bg-blue-950/50"
+          <Button
+            aria-label="View provider on map"
+            className="h-7 gap-1 px-2 text-[11px]"
             onClick={handleViewOnMap}
+            size="sm"
             type="button"
+            variant="outline"
           >
             <MapPinIcon className="size-3" />
             Map
-          </button>
+          </Button>
         )}
-      </div>
+      </CardFooter>
 
-      {/* Source attribution */}
       {provider.sourceUrl && (
-        <div className="border-t border-border px-3 py-1.5">
-          <a
-            className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground"
-            href={provider.sourceUrl}
-            rel="noopener"
-            target="_blank"
-          >
-            via {new URL(provider.sourceUrl).hostname}
-          </a>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-1.5">
+            <a
+              className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground"
+              href={provider.sourceUrl}
+              rel="noopener"
+              target="_blank"
+            >
+              via {new URL(provider.sourceUrl).hostname}
+            </a>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }

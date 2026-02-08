@@ -1,6 +1,18 @@
 "use client";
 
 import { Globe, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface WHODataResultProps {
@@ -18,65 +30,68 @@ export function WHODataResult({ result }: WHODataResultProps) {
   const summary = (result.summary as string[]) ?? [];
   const note = result.note as string | undefined;
 
-  // Comparison mode
   if (comparisonTable && comparisonTable.length > 0) {
     const cols = Object.keys(comparisonTable.at(0) as Record<string, unknown>);
     return (
-      <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-        <div className="flex items-center gap-2 px-3 py-2.5">
+      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+        <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
           <Globe className="size-3.5 text-blue-400" />
-          <span className="text-xs font-medium text-muted-foreground">
-            WHO Health Indicators — Country Comparison
+          <span className="text-balance text-xs font-medium text-muted-foreground">
+            WHO Health Indicators &mdash; Country Comparison
           </span>
-        </div>
-        <div className="overflow-x-auto px-3 pb-3">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-border">
-                {cols.map((col) => (
-                  <th
-                    className="whitespace-nowrap px-2 py-1 font-mono text-[11px] font-semibold text-muted-foreground"
-                    key={col}
-                  >
-                    {col === "indicator" ? "Indicator" : col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonTable.map((row, i) => (
-                <tr
-                  className="border-b border-border/50 last:border-0"
-                  key={`cmp-${String(i)}`}
-                >
+        </CardHeader>
+        <CardContent className="px-0 pb-0">
+          <ScrollArea className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
                   {cols.map((col) => (
-                    <td
-                      className={cn(
-                        "whitespace-nowrap px-2 py-1",
-                        col === "indicator"
-                          ? "max-w-[200px] truncate text-muted-foreground"
-                          : "font-mono text-foreground"
-                      )}
-                      key={`${String(i)}-${col}`}
+                    <TableHead
+                      className="h-8 whitespace-nowrap px-3 font-mono text-[11px]"
+                      key={col}
                     >
-                      {String(row[col] ?? "—")}
-                    </td>
+                      {col === "indicator" ? "Indicator" : col}
+                    </TableHead>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {comparisonTable.map((row, i) => (
+                  <TableRow key={`cmp-${String(i)}`}>
+                    {cols.map((col) => (
+                      <TableCell
+                        className={cn(
+                          "whitespace-nowrap px-3 py-1.5 tabular-nums text-xs",
+                          col === "indicator"
+                            ? "max-w-[200px] truncate text-muted-foreground"
+                            : "font-mono text-foreground"
+                        )}
+                        key={`${String(i)}-${col}`}
+                      >
+                        {String(row[col] ?? "\u2014")}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </CardContent>
         {note && (
-          <p className="border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
-            {note}
-          </p>
+          <>
+            <Separator />
+            <CardContent className="px-3 py-2">
+              <p className="text-pretty text-[10px] text-muted-foreground">
+                {note}
+              </p>
+            </CardContent>
+          </>
         )}
-      </div>
+      </Card>
     );
   }
 
-  // Single country mode
   if (!indicators) {
     return null;
   }
@@ -84,82 +99,85 @@ export function WHODataResult({ result }: WHODataResultProps) {
   const entries = Object.entries(indicators);
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Globe className="size-3.5 text-blue-400" />
           <span className="text-xs font-medium text-muted-foreground">
-            WHO Health Indicators — {country ?? "Ghana"}
+            WHO Health Indicators &mdash; {country ?? "Ghana"}
           </span>
         </div>
-        <span className="rounded bg-blue-950/40 px-1.5 py-0.5 text-[10px] text-blue-400">
+        <Badge className="text-[10px]" variant="secondary">
           WHO GHO
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
       {summary.length > 0 && (
-        <div className="px-3 pb-2">
+        <CardContent className="px-3 pb-2 pt-0">
           {summary.map((line) => (
-            <p className="text-[11px] text-foreground" key={line}>
+            <p className="text-pretty text-[11px] text-foreground" key={line}>
               {line}
             </p>
           ))}
-        </div>
+        </CardContent>
       )}
 
-      <div className="overflow-x-auto border-t border-border px-3 py-2">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Indicator
-              </th>
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Value
-              </th>
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Year
-              </th>
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Trend
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map(([key, data]) => (
-              <tr className="border-b border-border/50 last:border-0" key={key}>
-                <td className="max-w-[220px] truncate px-2 py-1.5 text-muted-foreground">
-                  {data.label}
-                </td>
-                <td className="whitespace-nowrap px-2 py-1.5 font-mono font-bold text-emerald-400">
-                  {data.value !== null
-                    ? typeof data.value === "number"
-                      ? data.value.toLocaleString(undefined, {
-                          maximumFractionDigits: 2,
-                        })
-                      : String(data.value)
-                    : "N/A"}
-                </td>
-                <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
-                  {data.year ?? "—"}
-                </td>
-                <td className="px-2 py-1.5">
-                  {data.trend && data.trend.length > 1 && (
-                    <MiniTrend points={data.trend} />
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Separator />
+      <CardContent className="px-0 py-2">
+        <ScrollArea className="w-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 px-3 text-[11px]">
+                  Indicator
+                </TableHead>
+                <TableHead className="h-8 px-3 text-[11px]">Value</TableHead>
+                <TableHead className="h-8 px-3 text-[11px]">Year</TableHead>
+                <TableHead className="h-8 px-3 text-[11px]">Trend</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {entries.map(([key, data]) => (
+                <TableRow key={key}>
+                  <TableCell className="max-w-[220px] truncate px-3 py-1.5 text-xs text-muted-foreground">
+                    {data.label}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap px-3 py-1.5 font-mono font-bold tabular-nums text-xs text-emerald-400">
+                    {data.value !== null
+                      ? typeof data.value === "number"
+                        ? data.value.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                          })
+                        : String(data.value)
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap px-3 py-1.5 tabular-nums text-xs text-muted-foreground">
+                    {data.year ?? "\u2014"}
+                  </TableCell>
+                  <TableCell className="px-3 py-1.5">
+                    {data.trend && data.trend.length > 1 && (
+                      <MiniTrend points={data.trend} />
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </CardContent>
 
       {note && (
-        <p className="border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
-          Source: WHO Global Health Observatory. {note}
-        </p>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <p className="text-pretty text-[10px] text-muted-foreground">
+              Source: WHO Global Health Observatory. {note}
+            </p>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -200,7 +218,7 @@ function MiniTrend({
       />
       <span
         className={cn(
-          "text-[10px]",
+          "tabular-nums text-[10px]",
           isUp ? "text-emerald-400" : "text-rose-400"
         )}
       >

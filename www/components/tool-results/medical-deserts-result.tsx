@@ -1,6 +1,11 @@
 "use client";
 
 import { AlertTriangle, Eye } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useVF } from "@/lib/vf-context";
 
 interface DesertZone {
@@ -44,85 +49,91 @@ export function MedicalDesertsResult({ result }: MedicalDesertsResultProps) {
 
   if (status === "NATIONAL_GAP") {
     return (
-      <div className="my-2 w-full overflow-hidden rounded-lg border border-red-900/50 bg-red-950/20">
-        <div className="flex items-center gap-2 px-3 py-3">
-          <AlertTriangle className="size-4 text-red-400" />
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-red-400">
-              National Gap: {service}
-            </span>
-            <span className="text-[11px] text-zinc-400">{message}</span>
-          </div>
-        </div>
-      </div>
+      <Alert className="my-2" variant="destructive">
+        <AlertTriangle className="size-4" />
+        <AlertTitle>National Gap: {service}</AlertTitle>
+        <AlertDescription>{message}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-zinc-800 bg-muted/50">
-      <div className="flex items-center justify-between bg-red-950/30 px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 bg-red-500/5 px-3 py-2.5">
         <div className="flex items-center gap-1.5">
           <AlertTriangle className="size-3.5 text-red-400" />
-          <span className="text-xs font-semibold text-red-400">
+          <span className="text-balance text-xs font-semibold text-red-400">
             Medical Deserts: {service}
           </span>
         </div>
-        <span className="font-mono text-[11px] font-semibold text-red-400">
+        <Badge
+          className="border-red-500/20 bg-red-500/10 font-mono text-[11px] text-red-400"
+          variant="outline"
+        >
           {desertZoneCount} {desertZoneCount === 1 ? "zone" : "zones"}
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
-      <div className="flex gap-4 px-3 py-2">
+      <CardContent className="flex gap-4 px-3 py-2">
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-muted-foreground">Threshold:</span>
-          <span className="font-mono text-[10px] font-semibold text-zinc-400">
+          <Badge className="font-mono tabular-nums text-[10px]" variant="secondary">
             {thresholdKm}km
-          </span>
+          </Badge>
         </div>
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-muted-foreground">Providers:</span>
-          <span className="font-mono text-[10px] font-semibold text-zinc-400">
+          <Badge className="font-mono tabular-nums text-[10px]" variant="secondary">
             {totalProviders} total
-          </span>
+          </Badge>
         </div>
-      </div>
+      </CardContent>
 
-      <div className="flex flex-col gap-1 px-3 pb-2">
-        {desertZones.map((zone) => (
-          <div
-            className="flex items-center justify-between rounded-md bg-muted/60 px-2.5 py-2"
-            key={zone.city}
-          >
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs font-medium text-zinc-200">
-                {zone.city}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {zone.nearestProvider
-                  ? `Nearest: ${zone.nearestProvider}`
-                  : "No nearby provider"}
-              </span>
-            </div>
-            <span className="ml-2 shrink-0 rounded bg-red-950/50 px-2 py-0.5 font-mono text-[11px] font-bold text-red-400">
-              {zone.distanceKm.toFixed(0)} km
-            </span>
-          </div>
-        ))}
-      </div>
+      <CardContent className="px-3 pb-2 pt-0">
+        <ul className="flex flex-col gap-1">
+          {desertZones.map((zone) => (
+            <li key={zone.city}>
+              <Card className="flex items-center justify-between px-2.5 py-2">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-xs font-medium text-foreground">
+                    {zone.city}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {zone.nearestProvider
+                      ? `Nearest: ${zone.nearestProvider}`
+                      : "No nearby provider"}
+                  </span>
+                </div>
+                <Badge
+                  className="ml-2 shrink-0 border-red-500/20 bg-red-500/10 font-mono tabular-nums text-[11px] font-bold text-red-400"
+                  variant="outline"
+                >
+                  {zone.distanceKm.toFixed(0)} km
+                </Badge>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
 
       {desertZones.length > 0 && (
-        <div className="flex justify-end border-t border-zinc-800 px-3 py-2">
-          <button
-            aria-label="View desert zones on map"
-            className="flex items-center gap-1 rounded bg-blue-950/30 px-2 py-1 text-[11px] font-medium text-blue-400 hover:bg-blue-950/50"
-            onClick={handleViewOnMap}
-            type="button"
-          >
-            <Eye className="size-3" />
-            View on Map
-          </button>
-        </div>
+        <>
+          <Separator />
+          <CardFooter className="justify-end px-3 py-2">
+            <Button
+              aria-label="View desert zones on map"
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={handleViewOnMap}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Eye className="size-3" />
+              View on Map
+            </Button>
+          </CardFooter>
+        </>
       )}
-    </div>
+    </Card>
   );
 }

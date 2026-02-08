@@ -8,6 +8,10 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface WebScrapeResultProps {
   result: Record<string, unknown>;
@@ -27,17 +31,20 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
     : content?.slice(0, previewLength);
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center gap-2 px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
         <FileText className="size-3.5 text-emerald-400" />
         <span className="text-xs font-medium text-muted-foreground">
           Scraped Content
         </span>
-      </div>
+      </CardHeader>
 
-      <div className="border-t border-border px-3 py-2">
+      <Separator />
+      <CardContent className="px-3 py-2">
         {title && (
-          <p className="text-xs font-medium text-foreground">{title}</p>
+          <p className="text-balance text-xs font-medium text-foreground">
+            {title}
+          </p>
         )}
         <a
           className="mt-0.5 flex items-center gap-1 font-mono text-[10px] text-emerald-500/70 hover:text-emerald-400"
@@ -48,44 +55,56 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
           {url}
           <ExternalLink className="size-3 shrink-0" />
         </a>
-        <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-          <span>{contentLength.toLocaleString()} chars</span>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="tabular-nums text-[10px] text-muted-foreground">
+            {contentLength.toLocaleString()} chars
+          </span>
           {truncated && (
-            <span className="rounded bg-amber-950/40 px-1 py-0.5 text-amber-400">
+            <Badge
+              className="border-amber-500/20 bg-amber-500/10 px-1 py-0 text-[10px] text-amber-400"
+              variant="outline"
+            >
               truncated
-            </span>
+            </Badge>
           )}
         </div>
-      </div>
+      </CardContent>
 
       {content && (
-        <div className="border-t border-border px-3 py-2">
-          <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-muted-foreground">
-            {displayContent}
-            {!isExpanded && content.length > previewLength && "..."}
-          </p>
-          {content.length > previewLength && (
-            <button
-              className="mt-1.5 text-[11px] font-medium text-blue-400 hover:text-blue-300"
-              onClick={() => setIsExpanded(!isExpanded)}
-              type="button"
-            >
-              {isExpanded ? "Show less" : "Show more"}
-            </button>
-          )}
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <p className="whitespace-pre-wrap text-pretty text-[11px] leading-relaxed text-muted-foreground">
+              {displayContent}
+              {!isExpanded && content.length > previewLength && "..."}
+            </p>
+            {content.length > previewLength && (
+              <Button
+                className="mt-1.5 h-auto p-0 text-[11px]"
+                onClick={() => setIsExpanded(!isExpanded)}
+                type="button"
+                variant="link"
+              >
+                {isExpanded ? "Show less" : "Show more"}
+              </Button>
+            )}
+          </CardContent>
+        </>
       )}
 
       {url && (
-        <div className="border-t border-border px-3 py-2">
-          <Sources>
-            <SourcesTrigger count={1} />
-            <SourcesContent>
-              <Source href={url} title={title ?? url} />
-            </SourcesContent>
-          </Sources>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <Sources>
+              <SourcesTrigger count={1} />
+              <SourcesContent>
+                <Source href={url} title={title ?? url} />
+              </SourcesContent>
+            </Sources>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }

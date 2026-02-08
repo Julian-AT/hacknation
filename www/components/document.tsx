@@ -1,8 +1,10 @@
 import { memo } from "react";
 import { toast } from "sonner";
 import { useArtifact } from "@/hooks/use-artifact";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { ArtifactKind } from "./artifact";
-import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "./icons";
+import { FileIcon, MessageIcon, PencilEditIcon } from "./icons";
 
 const getActionText = (
   type: "create" | "update" | "request-suggestions",
@@ -36,8 +38,8 @@ function PureDocumentToolResult({
   const { setArtifact } = useArtifact();
 
   return (
-    <button
-      className="flex w-fit cursor-pointer flex-row items-start gap-3 rounded-xl border bg-background px-3 py-2"
+    <Button
+      className="w-fit gap-3 px-3 py-2"
       onClick={(event) => {
         if (isReadonly) {
           toast.error(
@@ -66,8 +68,9 @@ function PureDocumentToolResult({
         }));
       }}
       type="button"
+      variant="outline"
     >
-      <div className="mt-1 text-muted-foreground">
+      <div className="text-muted-foreground">
         {type === "create" ? (
           <FileIcon />
         ) : type === "update" ? (
@@ -76,10 +79,10 @@ function PureDocumentToolResult({
           <MessageIcon />
         ) : null}
       </div>
-      <div className="text-left">
+      <span className="text-left text-sm">
         {`${getActionText(type, "past")} "${result.title}"`}
-      </div>
-    </button>
+      </span>
+    </Button>
   );
 }
 
@@ -88,9 +91,9 @@ export const DocumentToolResult = memo(PureDocumentToolResult, () => true);
 type DocumentToolCallProps = {
   type: "create" | "update" | "request-suggestions";
   args:
-    | { title: string; kind: ArtifactKind } // for create
-    | { id: string; description: string } // for update
-    | { documentId: string }; // for request-suggestions
+    | { title: string; kind: ArtifactKind }
+    | { id: string; description: string }
+    | { documentId: string };
   isReadonly: boolean;
 };
 
@@ -102,8 +105,8 @@ function PureDocumentToolCall({
   const { setArtifact } = useArtifact();
 
   return (
-    <button
-      className="cursor pointer flex w-fit flex-row items-start justify-between gap-3 rounded-xl border px-3 py-2"
+    <Button
+      className="w-fit gap-3 px-3 py-2"
       onClick={(event) => {
         if (isReadonly) {
           toast.error(
@@ -128,33 +131,32 @@ function PureDocumentToolCall({
         }));
       }}
       type="button"
+      variant="outline"
     >
-      <div className="flex flex-row items-start gap-3">
-        <div className="mt-1 text-zinc-500">
-          {type === "create" ? (
-            <FileIcon />
-          ) : type === "update" ? (
-            <PencilEditIcon />
-          ) : type === "request-suggestions" ? (
-            <MessageIcon />
-          ) : null}
-        </div>
-
-        <div className="text-left">
-          {`${getActionText(type, "present")} ${
-            type === "create" && "title" in args && args.title
-              ? `"${args.title}"`
-              : type === "update" && "description" in args
-                ? `"${args.description}"`
-                : type === "request-suggestions"
-                  ? "for document"
-                  : ""
-          }`}
-        </div>
+      <div className="text-muted-foreground">
+        {type === "create" ? (
+          <FileIcon />
+        ) : type === "update" ? (
+          <PencilEditIcon />
+        ) : type === "request-suggestions" ? (
+          <MessageIcon />
+        ) : null}
       </div>
 
-      <div className="mt-1 animate-spin">{<LoaderIcon />}</div>
-    </button>
+      <span className="text-left text-sm">
+        {`${getActionText(type, "present")} ${
+          type === "create" && "title" in args && args.title
+            ? `"${args.title}"`
+            : type === "update" && "description" in args
+              ? `"${args.description}"`
+              : type === "request-suggestions"
+                ? "for document"
+                : ""
+        }`}
+      </span>
+
+      <Skeleton className="size-4 rounded-full" />
+    </Button>
   );
 }
 

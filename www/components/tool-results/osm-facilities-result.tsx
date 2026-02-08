@@ -1,6 +1,19 @@
 "use client";
 
 import { ExternalLink, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface OSMFacilitiesResultProps {
   result: Record<string, unknown>;
@@ -30,14 +43,14 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
 
   if (facilities.length === 0) {
     return (
-      <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-        <div className="flex items-center gap-2 px-3 py-2.5">
+      <Card className="my-2 w-full overflow-hidden bg-muted/50">
+        <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
           <MapPin className="size-3.5 text-orange-400" />
           <span className="text-xs font-medium text-muted-foreground">
-            OpenStreetMap — No facilities found nearby
+            OpenStreetMap &mdash; No facilities found nearby
           </span>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
     );
   }
 
@@ -47,8 +60,8 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
   }
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <MapPin className="size-3.5 text-orange-400" />
           <span className="text-xs font-medium text-muted-foreground">
@@ -58,98 +71,111 @@ export function OSMFacilitiesResult({ result }: OSMFacilitiesResultProps) {
               : ""}
           </span>
         </div>
-        <span className="rounded bg-orange-950/40 px-1.5 py-0.5 text-[10px] text-orange-400">
+        <Badge className="font-mono text-[10px]" variant="secondary">
           {totalFound ?? facilities.length} found
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
-      <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+      <CardContent className="flex flex-wrap gap-1.5 px-3 pb-2 pt-0">
         {Object.entries(amenityCounts).map(([amenity, count]) => (
-          <span
-            className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
-            key={amenity}
-          >
+          <Badge className="text-[10px] font-normal" key={amenity} variant="outline">
             {amenity}: {count}
-          </span>
+          </Badge>
         ))}
-      </div>
+      </CardContent>
 
-      <div className="overflow-x-auto border-t border-border px-3 py-2">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Name
-              </th>
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Type
-              </th>
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Operator
-              </th>
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                Details
-              </th>
-              <th className="px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                OSM
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {facilities.slice(0, 20).map((f) => (
-              <tr
-                className="border-b border-border/50 last:border-0"
-                key={f.osmId}
-              >
-                <td className="max-w-[180px] truncate px-2 py-1.5 font-medium text-foreground">
-                  {f.name}
-                </td>
-                <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
-                  {f.amenity}
-                </td>
-                <td className="max-w-[120px] truncate px-2 py-1.5 text-muted-foreground">
-                  {f.operator ?? "—"}
-                </td>
-                <td className="px-2 py-1.5 text-muted-foreground">
-                  <span className="flex flex-wrap gap-1">
-                    {f.beds !== null && (
-                      <span className="rounded bg-blue-950/30 px-1 py-0.5 text-[10px] text-blue-400">
-                        {f.beds} beds
-                      </span>
-                    )}
-                    {f.emergency === "yes" && (
-                      <span className="rounded bg-rose-950/30 px-1 py-0.5 text-[10px] text-rose-400">
-                        ER
-                      </span>
-                    )}
-                    {f.healthcareSpecialty && (
-                      <span className="rounded bg-emerald-950/30 px-1 py-0.5 text-[10px] text-emerald-400">
-                        {f.healthcareSpecialty}
-                      </span>
-                    )}
-                  </span>
-                </td>
-                <td className="px-2 py-1.5">
-                  <a
-                    className="text-blue-400 hover:underline"
-                    href={f.osmUrl}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <ExternalLink className="size-3" />
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Separator />
+      <CardContent className="px-0 py-2">
+        <ScrollArea className="w-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 px-3 text-[11px]">Name</TableHead>
+                <TableHead className="h-8 px-3 text-[11px]">Type</TableHead>
+                <TableHead className="h-8 px-3 text-[11px]">
+                  Operator
+                </TableHead>
+                <TableHead className="h-8 px-3 text-[11px]">
+                  Details
+                </TableHead>
+                <TableHead className="h-8 px-3 text-[11px]">OSM</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {facilities.slice(0, 20).map((f) => (
+                <TableRow key={f.osmId}>
+                  <TableCell className="max-w-[180px] truncate px-3 py-1.5 text-xs font-medium text-foreground">
+                    {f.name}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap px-3 py-1.5 text-xs text-muted-foreground">
+                    {f.amenity}
+                  </TableCell>
+                  <TableCell className="max-w-[120px] truncate px-3 py-1.5 text-xs text-muted-foreground">
+                    {f.operator ?? "\u2014"}
+                  </TableCell>
+                  <TableCell className="px-3 py-1.5">
+                    <span className="flex flex-wrap gap-1">
+                      {f.beds !== null && (
+                        <Badge
+                          className="border-blue-500/20 bg-blue-500/10 px-1 py-0 text-[10px] text-blue-400"
+                          variant="outline"
+                        >
+                          {f.beds} beds
+                        </Badge>
+                      )}
+                      {f.emergency === "yes" && (
+                        <Badge
+                          className="border-rose-500/20 bg-rose-500/10 px-1 py-0 text-[10px] text-rose-400"
+                          variant="outline"
+                        >
+                          ER
+                        </Badge>
+                      )}
+                      {f.healthcareSpecialty && (
+                        <Badge
+                          className="border-emerald-500/20 bg-emerald-500/10 px-1 py-0 text-[10px] text-emerald-400"
+                          variant="outline"
+                        >
+                          {f.healthcareSpecialty}
+                        </Badge>
+                      )}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-3 py-1.5">
+                    <Button
+                      aria-label={`View ${f.name} on OpenStreetMap`}
+                      asChild
+                      className="size-6"
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <a
+                        href={f.osmUrl}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <ExternalLink className="size-3" />
+                      </a>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </CardContent>
 
       {note && (
-        <p className="border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
-          {note}
-        </p>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <p className="text-pretty text-[10px] text-muted-foreground">
+              {note}
+            </p>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }

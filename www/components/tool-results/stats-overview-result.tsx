@@ -1,6 +1,18 @@
 "use client";
 
 import { BarChart3 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface StatsOverviewResultProps {
   result: Record<string, unknown>;
@@ -17,16 +29,16 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
   const groupBy = result.groupBy as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center gap-2 px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
         <BarChart3 className="size-3.5 text-blue-400" />
         <span className="text-xs font-medium text-muted-foreground">
           Facility Statistics
         </span>
-      </div>
+      </CardHeader>
 
       {(totalFacilities !== undefined || facilitiesByType.length > 0) && (
-        <div className="flex gap-2 px-3 pb-3">
+        <CardContent className="flex flex-wrap gap-2 px-3 pb-3 pt-0">
           {totalFacilities !== undefined && (
             <MetricCard label="TOTAL" value={totalFacilities} />
           )}
@@ -46,56 +58,61 @@ export function StatsOverviewResult({ result }: StatsOverviewResultProps) {
               value={facilitiesWithCoordinates}
             />
           )}
-        </div>
+        </CardContent>
       )}
 
       {stats.length > 0 && (
-        <div className="overflow-x-auto border-t border-border px-3 py-2">
-          {groupBy && (
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Grouped by {groupBy}
-            </span>
-          )}
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-border">
-                {Object.keys(stats.at(0) as Record<string, unknown>).map(
-                  (col) => (
-                    <th
-                      className="whitespace-nowrap px-2 py-1 font-mono text-[11px] font-semibold text-muted-foreground"
-                      key={col}
-                    >
-                      {col}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {stats.slice(0, 10).map((row, i) => (
-                <tr
-                  className="border-b border-border/50 last:border-0"
-                  key={`stat-${String(i)}`}
-                >
-                  {Object.values(row).map((val, j) => (
-                    <td
-                      className="whitespace-nowrap px-2 py-1 text-foreground"
-                      key={`${String(i)}-${String(j)}`}
-                    >
-                      {val === null
-                        ? "—"
-                        : typeof val === "number"
-                          ? val.toLocaleString()
-                          : String(val)}
-                    </td>
+        <>
+          <Separator />
+          <CardContent className="px-0 py-2">
+            {groupBy && (
+              <div className="px-3 pb-1">
+                <Badge className="text-[10px] uppercase" variant="secondary">
+                  Grouped by {groupBy}
+                </Badge>
+              </div>
+            )}
+            <ScrollArea className="w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {Object.keys(
+                      stats.at(0) as Record<string, unknown>
+                    ).map((col) => (
+                      <TableHead
+                        className="h-8 whitespace-nowrap px-3 font-mono text-[11px]"
+                        key={col}
+                      >
+                        {col}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {stats.slice(0, 10).map((row, i) => (
+                    <TableRow key={`stat-${String(i)}`}>
+                      {Object.values(row).map((val, j) => (
+                        <TableCell
+                          className="whitespace-nowrap px-3 py-1.5 tabular-nums text-xs"
+                          key={`${String(i)}-${String(j)}`}
+                        >
+                          {val === null
+                            ? "\u2014"
+                            : typeof val === "number"
+                              ? val.toLocaleString()
+                              : String(val)}
+                        </TableCell>
+                      ))}
+                    </TableRow>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                </TableBody>
+              </Table>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -109,15 +126,15 @@ function MetricCard({
   accent?: boolean;
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-1 rounded-md bg-muted p-3">
+    <Card className="flex flex-1 basis-20 flex-col gap-1 p-3">
       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
       <span
-        className={`font-mono text-lg font-bold ${accent ? "text-blue-400" : "text-foreground"}`}
+        className={`font-mono text-lg font-bold tabular-nums ${accent ? "text-blue-400" : "text-foreground"}`}
       >
         {value.toLocaleString()}
       </span>
-    </div>
+    </Card>
   );
 }

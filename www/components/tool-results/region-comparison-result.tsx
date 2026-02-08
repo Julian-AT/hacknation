@@ -1,6 +1,18 @@
 "use client";
 
 import { GitCompare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface RegionData {
@@ -29,14 +41,13 @@ export function RegionComparisonResult({
     return null;
   }
 
-  const metrics: { key: keyof RegionData; label: string; format?: "number" }[] =
-    [
-      { key: "totalFacilities", label: "Total Facilities", format: "number" },
-      { key: "hospitals", label: "Hospitals", format: "number" },
-      { key: "clinics", label: "Clinics", format: "number" },
-      { key: "totalBeds", label: "Total Beds", format: "number" },
-      { key: "totalDoctors", label: "Total Doctors", format: "number" },
-    ];
+  const metrics: { key: keyof RegionData; label: string }[] = [
+    { key: "totalFacilities", label: "Total Facilities" },
+    { key: "hospitals", label: "Hospitals" },
+    { key: "clinics", label: "Clinics" },
+    { key: "totalBeds", label: "Total Beds" },
+    { key: "totalDoctors", label: "Total Doctors" },
+  ];
 
   const getMaxForMetric = (key: keyof RegionData): number => {
     return Math.max(
@@ -48,8 +59,8 @@ export function RegionComparisonResult({
   };
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <GitCompare className="size-3.5 text-cyan-400" />
           <span className="text-xs font-medium text-muted-foreground">
@@ -57,94 +68,97 @@ export function RegionComparisonResult({
           </span>
         </div>
         {specialtyFilter && (
-          <span className="rounded bg-cyan-950/40 px-1.5 py-0.5 text-[10px] text-cyan-400">
+          <Badge className="text-[10px]" variant="secondary">
             {specialtyFilter}
-          </span>
+          </Badge>
         )}
-      </div>
+      </CardHeader>
 
-      <div className="overflow-x-auto px-3 pb-3">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">
-                Metric
-              </th>
-              {comparison.map((r) => (
-                <th
-                  className="px-2 py-1.5 text-[11px] font-semibold text-foreground"
-                  key={r.region}
-                >
-                  {r.region}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {metrics.map((metric) => {
-              const max = getMaxForMetric(metric.key);
-              return (
-                <tr
-                  className="border-b border-border/50 last:border-0"
-                  key={metric.key}
-                >
-                  <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
-                    {metric.label}
-                  </td>
-                  {comparison.map((r) => {
-                    const val = r[metric.key];
-                    const numVal = typeof val === "number" ? val : 0;
-                    const isMax = numVal === max && max > 0;
-                    return (
-                      <td
-                        className={cn(
-                          "whitespace-nowrap px-2 py-1.5 font-mono",
-                          isMax ? "text-cyan-400" : "text-foreground"
-                        )}
-                        key={`${r.region}-${metric.key}`}
-                      >
-                        {val === null
-                          ? "—"
-                          : typeof val === "number"
-                            ? val.toLocaleString()
-                            : String(val)}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-            <tr className="border-b border-border/50 last:border-0">
-              <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
-                Top Specialties
-              </td>
-              {comparison.map((r) => (
-                <td
-                  className="px-2 py-1.5 text-muted-foreground"
-                  key={`${r.region}-specialties`}
-                >
-                  {r.topSpecialties?.slice(0, 3).join(", ") || "—"}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <CardContent className="px-0 pb-3">
+        <ScrollArea className="w-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 px-3 text-[11px]">Metric</TableHead>
+                {comparison.map((r) => (
+                  <TableHead
+                    className="h-8 px-3 text-[11px] font-semibold text-foreground"
+                    key={r.region}
+                  >
+                    {r.region}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {metrics.map((metric) => {
+                const max = getMaxForMetric(metric.key);
+                return (
+                  <TableRow key={metric.key}>
+                    <TableCell className="px-3 py-1.5 text-xs text-muted-foreground">
+                      {metric.label}
+                    </TableCell>
+                    {comparison.map((r) => {
+                      const val = r[metric.key];
+                      const numVal = typeof val === "number" ? val : 0;
+                      const isMax = numVal === max && max > 0;
+                      return (
+                        <TableCell
+                          className={cn(
+                            "whitespace-nowrap px-3 py-1.5 font-mono tabular-nums text-xs",
+                            isMax
+                              ? "font-semibold text-cyan-400"
+                              : "text-foreground"
+                          )}
+                          key={`${r.region}-${metric.key}`}
+                        >
+                          {val === null
+                            ? "\u2014"
+                            : typeof val === "number"
+                              ? val.toLocaleString()
+                              : String(val)}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })}
+              <TableRow>
+                <TableCell className="px-3 py-1.5 text-xs text-muted-foreground">
+                  Top Specialties
+                </TableCell>
+                {comparison.map((r) => (
+                  <TableCell
+                    className="px-3 py-1.5 text-xs text-muted-foreground"
+                    key={`${r.region}-specialties`}
+                  >
+                    {r.topSpecialties?.slice(0, 3).join(", ") || "\u2014"}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </CardContent>
 
       {gaps.length > 0 && (
-        <div className="border-t border-border px-3 py-2.5">
-          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Identified Gaps
-          </span>
-          <div className="flex flex-col gap-1">
-            {gaps.map((gap) => (
-              <span className="text-[11px] text-amber-400" key={gap}>
-                {gap}
-              </span>
-            ))}
-          </div>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2.5">
+            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Identified Gaps
+            </span>
+            <ul className="flex flex-col gap-1">
+              {gaps.map((gap) => (
+                <li className="text-[11px] text-amber-400" key={gap}>
+                  {gap}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }

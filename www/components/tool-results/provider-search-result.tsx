@@ -1,6 +1,10 @@
 "use client";
 
 import { MapPinIcon, SearchIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useVF } from "@/lib/vf-context";
 import { ProviderCard } from "./provider-card";
 
@@ -31,9 +35,7 @@ interface ProviderData {
   sourceUrl?: string | null;
 }
 
-export function ProviderSearchResult({
-  result,
-}: ProviderSearchResultProps) {
+export function ProviderSearchResult({ result }: ProviderSearchResultProps) {
   const { setMapFacilities, setMapCenter, setMapZoom, setMapVisible } =
     useVF();
 
@@ -46,9 +48,11 @@ export function ProviderSearchResult({
 
   if (error) {
     return (
-      <div className="my-2 rounded-lg border border-border bg-muted/50 px-3 py-3">
-        <span className="text-[11px] text-red-400">{error}</span>
-      </div>
+      <Card className="my-2 bg-destructive/10">
+        <CardContent className="px-3 py-3">
+          <span className="text-[11px] text-destructive">{error}</span>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -72,7 +76,6 @@ export function ProviderSearchResult({
       }))
     );
 
-    // Center on the first provider
     const first = mappableProviders.at(0);
     if (first?.lat && first?.lng) {
       setMapCenter([first.lat, first.lng]);
@@ -83,7 +86,6 @@ export function ProviderSearchResult({
 
   return (
     <div className="my-2 w-full">
-      {/* Header */}
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SearchIcon className="size-3.5 text-muted-foreground" />
@@ -94,42 +96,47 @@ export function ProviderSearchResult({
             {location ? ` in ${location}` : ""}
           </span>
           {source && (
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            <Badge className="text-[10px]" variant="secondary">
               {source}
-            </span>
+            </Badge>
           )}
         </div>
 
         {mappableProviders.length > 1 && (
-          <button
-            className="flex items-center gap-1 rounded-md bg-blue-950/30 px-2 py-1 text-[11px] text-blue-400 hover:bg-blue-950/50"
+          <Button
+            aria-label="View all providers on map"
+            className="h-7 gap-1 px-2 text-[11px]"
             onClick={handleViewAllOnMap}
+            size="sm"
             type="button"
+            variant="outline"
           >
             <MapPinIcon className="size-3" />
             View All on Map
-          </button>
+          </Button>
         )}
       </div>
 
-      {/* Provider list */}
-      <div className="flex max-h-[600px] flex-col gap-2 overflow-y-auto">
-        {providers.map((provider, idx) => (
-          <ProviderCard
-            compact={providers.length > 3}
-            key={provider.id ?? `provider-${String(idx)}`}
-            provider={provider}
-          />
-        ))}
-      </div>
+      <ScrollArea className="max-h-[600px]">
+        <ul className="flex flex-col gap-2">
+          {providers.map((provider, idx) => (
+            <li key={provider.id ?? `provider-${String(idx)}`}>
+              <ProviderCard
+                compact={providers.length > 3}
+                provider={provider}
+              />
+            </li>
+          ))}
+        </ul>
+      </ScrollArea>
 
       {providers.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border px-4 py-6 text-center">
+        <Card className="border-dashed px-4 py-6 text-center">
           <span className="text-sm text-muted-foreground">
             No providers found. Try broadening your search or adjusting the
             location.
           </span>
-        </div>
+        </Card>
       )}
     </div>
   );

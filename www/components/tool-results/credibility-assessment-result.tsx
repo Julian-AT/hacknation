@@ -1,7 +1,10 @@
 "use client";
 
 import { ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { AnomalyConfidenceBadge } from "./anomaly-confidence-badge";
 
@@ -37,11 +40,17 @@ const LEVEL_ICON = {
   red: ShieldX,
 } as const;
 
-const LEVEL_COLORS = {
-  green: { bg: "bg-green-950/50", text: "text-green-400" },
-  yellow: { bg: "bg-amber-950/50", text: "text-amber-400" },
-  red: { bg: "bg-red-950/50", text: "text-red-400" },
-} as const;
+const LEVEL_BADGE: Record<string, string> = {
+  green: "border-green-500/20 bg-green-500/10 text-green-400",
+  yellow: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+  red: "border-red-500/20 bg-red-500/10 text-red-400",
+};
+
+const LEVEL_LABELS: Record<string, string> = {
+  red: "flagged",
+  yellow: "caution",
+  green: "verified",
+};
 
 export function CredibilityAssessmentResult({
   result,
@@ -52,60 +61,60 @@ export function CredibilityAssessmentResult({
   const summary = result.summary as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <ShieldAlert className="size-3.5 text-amber-400" />
           <span className="text-xs font-medium text-muted-foreground">
             Credibility Assessment
           </span>
         </div>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="tabular-nums text-[11px] text-muted-foreground">
           {facilitiesAssessed} assessed
         </span>
-      </div>
+      </CardHeader>
 
-      {/* Distribution badges */}
-      <div className="flex gap-2 px-3 pb-2">
+      <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
         {(["red", "yellow", "green"] as const).map((level) => {
           const count = distribution[level] ?? 0;
-          if (count === 0) return null;
-          const colors = LEVEL_COLORS[level];
+          if (count === 0) {
+            return null;
+          }
           const LevelIcon = LEVEL_ICON[level];
           return (
-            <span
-              className={cn(
-                "flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold",
-                colors.bg,
-                colors.text
-              )}
+            <Badge
+              className={cn("gap-1 text-[10px]", LEVEL_BADGE[level])}
               key={level}
+              variant="outline"
             >
               <LevelIcon className="size-2.5" />
-              {count} {level === "red" ? "flagged" : level === "yellow" ? "caution" : "verified"}
-            </span>
+              {count} {LEVEL_LABELS[level]}
+            </Badge>
           );
         })}
-      </div>
+      </CardContent>
 
-      {/* Facility list */}
-      <div className="flex flex-col gap-1.5 px-3 pb-3">
-        {assessments.map((assessment) => (
-          <FacilityAssessmentItem
-            assessment={assessment}
-            key={assessment.facilityId}
-          />
-        ))}
-      </div>
+      <CardContent className="px-3 pb-3 pt-0">
+        <ul className="flex flex-col gap-1.5">
+          {assessments.map((assessment) => (
+            <li key={assessment.facilityId}>
+              <FacilityAssessmentItem assessment={assessment} />
+            </li>
+          ))}
+        </ul>
+      </CardContent>
 
-      {/* Summary */}
       {summary && (
-        <div className="border-t border-border px-3 py-2">
-          <p className="text-[11px] text-muted-foreground">{summary}</p>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <p className="text-pretty text-[11px] text-muted-foreground">
+              {summary}
+            </p>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -114,37 +123,44 @@ function FacilityAssessmentItem({
 }: {
   assessment: FacilityAssessment;
 }) {
-  const [showDetails, setShowDetails] = useState(false);
   const { confidence } = assessment;
-  const colors = LEVEL_COLORS[confidence.level];
   const LevelIcon = LEVEL_ICON[confidence.level];
+  const badgeClass = LEVEL_BADGE[confidence.level];
 
   return (
-    <div className="rounded-md bg-muted p-2.5">
-      {/* Facility header */}
+    <Card className="p-2.5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <LevelIcon className={cn("size-3.5", colors.text)} />
-          <span className="text-xs font-medium text-foreground">
+        <div className="flex min-w-0 items-center gap-2">
+          <LevelIcon
+            className={cn(
+              "size-3.5 shrink-0",
+              confidence.level === "green"
+                ? "text-green-400"
+                : confidence.level === "yellow"
+                  ? "text-amber-400"
+                  : "text-red-400"
+            )}
+          />
+          <span className="truncate text-xs font-medium text-foreground">
             {assessment.facilityName}
           </span>
         </div>
-        <span
-          className={cn(
-            "font-mono text-[11px] font-bold",
-            colors.text
-          )}
+        <Badge
+          className={cn("shrink-0 font-mono tabular-nums text-[11px]", badgeClass)}
+          variant="outline"
         >
           {confidence.score}
-        </span>
+        </Badge>
       </div>
 
-      {/* Facility meta */}
-      <div className="mt-1 flex items-center gap-2">
+      <div className="mt-1 flex flex-wrap items-center gap-2">
         {assessment.facilityType && (
-          <span className="rounded bg-blue-950/50 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
+          <Badge
+            className="border-blue-500/20 bg-blue-500/10 text-[10px] text-blue-400"
+            variant="outline"
+          >
             {assessment.facilityType}
-          </span>
+          </Badge>
         )}
         {(assessment.region ?? assessment.city) && (
           <span className="text-[10px] text-muted-foreground">
@@ -152,34 +168,22 @@ function FacilityAssessmentItem({
           </span>
         )}
         {assessment.beds !== null && (
-          <span className="text-[10px] text-muted-foreground">
+          <span className="tabular-nums text-[10px] text-muted-foreground">
             {assessment.beds} beds
           </span>
         )}
         {assessment.doctors !== null && (
-          <span className="text-[10px] text-muted-foreground">
+          <span className="tabular-nums text-[10px] text-muted-foreground">
             {assessment.doctors} doctors
           </span>
         )}
       </div>
 
-      {/* Toggle details */}
       {confidence.flags.length > 0 && (
-        <button
-          className="mt-1.5 text-[10px] text-muted-foreground hover:text-foreground"
-          onClick={() => setShowDetails(!showDetails)}
-          type="button"
-        >
-          {showDetails ? "Hide" : "Show"} {confidence.flags.length}{" "}
-          {confidence.flags.length === 1 ? "finding" : "findings"}
-        </button>
-      )}
-
-      {showDetails && (
         <div className="mt-1.5">
           <AnomalyConfidenceBadge confidence={confidence} />
         </div>
       )}
-    </div>
+    </Card>
   );
 }

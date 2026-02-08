@@ -1,7 +1,16 @@
 "use client";
 
-import { Brain, ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { Brain } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 interface ValidationIssue {
@@ -17,11 +26,11 @@ interface ClaimsValidationResultProps {
   result: Record<string, unknown>;
 }
 
-const SEVERITY_COLORS: Record<string, { bg: string; text: string }> = {
-  critical: { bg: "bg-red-950/50", text: "text-red-400" },
-  high: { bg: "bg-orange-950/50", text: "text-orange-400" },
-  medium: { bg: "bg-amber-950/50", text: "text-amber-400" },
-  low: { bg: "bg-green-950/50", text: "text-green-400" },
+const SEVERITY_BADGE: Record<string, string> = {
+  critical: "border-red-500/20 bg-red-500/10 text-red-400",
+  high: "border-orange-500/20 bg-orange-500/10 text-orange-400",
+  medium: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+  low: "border-green-500/20 bg-green-500/10 text-green-400",
 };
 
 export function ClaimsValidationResult({
@@ -33,8 +42,8 @@ export function ClaimsValidationResult({
   const summary = result.summary as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Brain className="size-3.5 text-orange-400" />
           <span className="text-xs font-medium text-muted-foreground">
@@ -42,74 +51,74 @@ export function ClaimsValidationResult({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">
+          <span className="tabular-nums text-[11px] text-muted-foreground">
             {facilitiesChecked} checked
           </span>
-          <span className="rounded-full bg-orange-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-orange-400">
+          <Badge
+            className="border-orange-500/20 bg-orange-500/10 font-mono text-[11px] text-orange-400"
+            variant="outline"
+          >
             {issuesFound} {issuesFound === 1 ? "issue" : "issues"}
-          </span>
+          </Badge>
         </div>
-      </div>
+      </CardHeader>
 
-      {/* Severity distribution */}
       {results.length > 0 && (
-        <div className="flex gap-2 px-3 pb-2">
+        <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
           {(["critical", "high", "medium", "low"] as const).map((sev) => {
             const sevCount = results.filter((r) => r.severity === sev).length;
             if (sevCount === 0) {
               return null;
             }
-            const colors = SEVERITY_COLORS[sev];
             return (
-              <span
-                className={cn(
-                  "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase",
-                  colors.bg,
-                  colors.text
-                )}
+              <Badge
+                className={cn("text-[10px] uppercase", SEVERITY_BADGE[sev])}
                 key={sev}
+                variant="outline"
               >
                 {sevCount} {sev}
-              </span>
+              </Badge>
             );
           })}
-        </div>
+        </CardContent>
       )}
 
-      <div className="flex flex-col gap-1.5 px-3 pb-3">
-        {results.map((issue) => (
-          <ValidationIssueItem
-            issue={issue}
-            key={`${issue.facilityId}-${issue.validationType}`}
-          />
-        ))}
-      </div>
+      <CardContent className="px-3 pb-3 pt-0">
+        <ul className="flex flex-col gap-1.5">
+          {results.map((issue) => (
+            <li key={`${issue.facilityId}-${issue.validationType}`}>
+              <ValidationIssueItem issue={issue} />
+            </li>
+          ))}
+        </ul>
+      </CardContent>
 
       {summary && (
-        <div className="border-t border-border px-3 py-2">
-          <p className="text-[11px] text-muted-foreground">{summary}</p>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <p className="text-pretty text-[11px] text-muted-foreground">
+              {summary}
+            </p>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
 function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
-  const [showEvidence, setShowEvidence] = useState(false);
-  const colors = SEVERITY_COLORS[issue.severity] ?? SEVERITY_COLORS.low;
+  const badgeClass = SEVERITY_BADGE[issue.severity] ?? SEVERITY_BADGE.low;
 
   return (
-    <div className="rounded-md bg-muted p-2.5">
+    <Card className="p-2.5">
       <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-            colors.bg,
-            colors.text
-          )}
+        <Badge
+          className={cn("text-[9px] uppercase tracking-wider", badgeClass)}
+          variant="outline"
         >
           {issue.severity}
-        </span>
+        </Badge>
         <span className="font-mono text-[10px] text-muted-foreground">
           {issue.validationType}
         </span>
@@ -117,28 +126,28 @@ function ValidationIssueItem({ issue }: { issue: ValidationIssue }) {
       <p className="mt-1 text-xs font-medium text-foreground">
         {issue.facilityName}
       </p>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">
+      <p className="mt-0.5 text-pretty text-[11px] text-muted-foreground">
         {issue.finding}
       </p>
 
-      <button
-        className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-muted-foreground"
-        onClick={() => setShowEvidence(!showEvidence)}
-        type="button"
-      >
-        {showEvidence ? (
-          <ChevronDown className="size-3" />
-        ) : (
-          <ChevronRight className="size-3" />
-        )}
-        Evidence
-      </button>
-
-      {showEvidence && (
-        <pre className="mt-1 max-h-24 overflow-y-auto rounded bg-muted/80 p-2 font-mono text-[10px] text-muted-foreground">
-          {JSON.stringify(issue.evidence, null, 2)}
-        </pre>
-      )}
-    </div>
+      <Collapsible className="mt-1.5">
+        <CollapsibleTrigger asChild>
+          <Button
+            className="h-auto gap-1 p-0 text-[10px]"
+            type="button"
+            variant="link"
+          >
+            Evidence
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <ScrollArea className="mt-1 max-h-24">
+            <pre className="rounded-md bg-muted p-2 font-mono text-[10px] text-muted-foreground">
+              {JSON.stringify(issue.evidence, null, 2)}
+            </pre>
+          </ScrollArea>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }

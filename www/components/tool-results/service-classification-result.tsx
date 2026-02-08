@@ -2,13 +2,18 @@
 
 import {
   AlertCircle,
-  ChevronDown,
-  ChevronRight,
   Stethoscope,
   Tent,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 interface Classification {
@@ -30,18 +35,21 @@ interface ServiceClassificationResultProps {
   result: Record<string, unknown>;
 }
 
-const SERVICE_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  permanent: { bg: "bg-green-950/50", text: "text-green-400" },
-  itinerant: { bg: "bg-blue-950/50", text: "text-blue-400" },
-  referral: { bg: "bg-amber-950/50", text: "text-amber-400" },
-  unclear: { bg: "bg-muted", text: "text-muted-foreground" },
+const SERVICE_TYPE_BADGE: Record<string, string> = {
+  permanent: "border-green-500/20 bg-green-500/10 text-green-400",
+  itinerant: "border-blue-500/20 bg-blue-500/10 text-blue-400",
+  referral: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+  unclear: "",
 };
 
-const SUMMARY_COLORS: Record<string, { bg: string; text: string }> = {
-  ...SERVICE_TYPE_COLORS,
-  individualTied: { bg: "bg-purple-950/50", text: "text-purple-400" },
-  campMissionEvidence: { bg: "bg-orange-950/50", text: "text-orange-400" },
-  weakOperationalSignals: { bg: "bg-red-950/50", text: "text-red-400" },
+const SUMMARY_BADGE: Record<string, string> = {
+  permanent: "border-green-500/20 bg-green-500/10 text-green-400",
+  itinerant: "border-blue-500/20 bg-blue-500/10 text-blue-400",
+  referral: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+  unclear: "",
+  individualTied: "border-purple-500/20 bg-purple-500/10 text-purple-400",
+  campMissionEvidence: "border-orange-500/20 bg-orange-500/10 text-orange-400",
+  weakOperationalSignals: "border-red-500/20 bg-red-500/10 text-red-400",
 };
 
 const SUMMARY_LABELS: Record<string, string> = {
@@ -69,57 +77,54 @@ export function ServiceClassificationResult({
   const focusArea = result.focusArea as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <Stethoscope className="size-3.5 text-pink-400" />
           <span className="text-xs font-medium text-muted-foreground">
             Service Classification
           </span>
           {focusArea && focusArea !== "all" && (
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
+            <Badge className="text-[9px]" variant="secondary">
               {focusArea.replaceAll("_", " ")}
-            </span>
+            </Badge>
           )}
         </div>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="tabular-nums text-[11px] text-muted-foreground">
           {facilitiesAnalyzed} analyzed
         </span>
-      </div>
+      </CardHeader>
 
       {summary && (
-        <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+        <CardContent className="flex flex-wrap gap-1.5 px-3 pb-2 pt-0">
           {Object.entries(summary).map(([type, count]) => {
             if (count === 0) {
               return null;
             }
-            const colors = SUMMARY_COLORS[type] ?? SUMMARY_COLORS.unclear;
             const label = SUMMARY_LABELS[type] ?? type;
             return (
-              <span
-                className={cn(
-                  "rounded px-1.5 py-0.5 text-[10px] font-semibold",
-                  colors.bg,
-                  colors.text
-                )}
+              <Badge
+                className={cn("text-[10px]", SUMMARY_BADGE[type])}
                 key={type}
+                variant="outline"
               >
                 {count} {label}
-              </span>
+              </Badge>
             );
           })}
-        </div>
+        </CardContent>
       )}
 
-      <div className="flex flex-col gap-1.5 px-3 pb-3">
-        {classifications.map((c) => (
-          <ClassificationItem
-            classification={c}
-            key={`${c.facilityId}-${c.serviceType}`}
-          />
-        ))}
-      </div>
-    </div>
+      <CardContent className="px-3 pb-3 pt-0">
+        <ul className="flex flex-col gap-1.5">
+          {classifications.map((c) => (
+            <li key={`${c.facilityId}-${c.serviceType}`}>
+              <ClassificationItem classification={c} />
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -128,9 +133,8 @@ function ClassificationItem({
 }: {
   classification: Classification;
 }) {
-  const [showDetails, setShowDetails] = useState(false);
-  const typeColors =
-    SERVICE_TYPE_COLORS[c.serviceType] ?? SERVICE_TYPE_COLORS.unclear;
+  const typeBadge =
+    SERVICE_TYPE_BADGE[c.serviceType] ?? SERVICE_TYPE_BADGE.unclear;
   const confidenceDot = CONFIDENCE_DOTS[c.confidence] ?? CONFIDENCE_DOTS.low;
 
   const hasExtendedFindings =
@@ -139,26 +143,20 @@ function ClassificationItem({
     (c.weakOperationalSignals && c.weakOperationalSignals.length > 0);
 
   return (
-    <div className="rounded-md bg-muted p-2.5">
+    <Card className="p-2.5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "rounded px-1.5 py-0.5 text-[10px] font-semibold",
-              typeColors.bg,
-              typeColors.text
-            )}
+        <div className="flex min-w-0 items-center gap-2">
+          <Badge
+            className={cn("text-[10px]", typeBadge)}
+            variant="outline"
           >
             {c.serviceType}
-          </span>
-          <span className="text-xs font-medium text-foreground">
+          </Badge>
+          <span className="truncate text-xs font-medium text-foreground">
             {c.facilityName}
           </span>
         </div>
-        <div
-          className="flex items-center gap-1"
-          title={`${c.confidence} confidence`}
-        >
+        <div className="flex shrink-0 items-center gap-1" title={`${c.confidence} confidence`}>
           <span className={cn("size-1.5 rounded-full", confidenceDot)} />
           <span className="text-[10px] text-muted-foreground">
             {c.confidence}
@@ -166,26 +164,34 @@ function ClassificationItem({
         </div>
       </div>
 
-      {/* Extended finding badges */}
       {hasExtendedFindings && (
         <div className="mt-1.5 flex flex-wrap gap-1">
           {c.individualTied && (
-            <span className="flex items-center gap-1 rounded bg-purple-950/50 px-1.5 py-0.5 text-[9px] font-semibold text-purple-400">
+            <Badge
+              className="gap-1 border-purple-500/20 bg-purple-500/10 text-[9px] text-purple-400"
+              variant="outline"
+            >
               <User className="size-2.5" />
               Individual-tied
-            </span>
+            </Badge>
           )}
           {c.campMissionEvidence && (
-            <span className="flex items-center gap-1 rounded bg-orange-950/50 px-1.5 py-0.5 text-[9px] font-semibold text-orange-400">
+            <Badge
+              className="gap-1 border-orange-500/20 bg-orange-500/10 text-[9px] text-orange-400"
+              variant="outline"
+            >
               <Tent className="size-2.5" />
               Camp/Mission
-            </span>
+            </Badge>
           )}
           {c.weakOperationalSignals && c.weakOperationalSignals.length > 0 && (
-            <span className="flex items-center gap-1 rounded bg-red-950/50 px-1.5 py-0.5 text-[9px] font-semibold text-red-400">
+            <Badge
+              className="gap-1 border-red-500/20 bg-red-500/10 text-[9px] text-red-400"
+              variant="outline"
+            >
               <AlertCircle className="size-2.5" />
               Weak Ops ({c.weakOperationalSignals.length})
-            </span>
+            </Badge>
           )}
         </div>
       )}
@@ -193,68 +199,63 @@ function ClassificationItem({
       {(c.evidenceQuotes.length > 0 ||
         c.matchedPatterns.length > 0 ||
         hasExtendedFindings) && (
-        <button
-          className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-          onClick={() => setShowDetails(!showDetails)}
-          type="button"
-        >
-          {showDetails ? (
-            <ChevronDown className="size-3" />
-          ) : (
-            <ChevronRight className="size-3" />
-          )}
-          Evidence
-        </button>
-      )}
-
-      {showDetails && (
-        <div className="mt-1.5 space-y-1">
-          {c.evidenceQuotes.map((q) => (
-            <p
-              className="rounded bg-muted/80 px-2 py-1 text-[10px] italic text-muted-foreground"
-              key={q}
+        <Collapsible className="mt-1.5">
+          <CollapsibleTrigger asChild>
+            <Button
+              className="h-auto gap-1 p-0 text-[10px]"
+              type="button"
+              variant="link"
             >
-              &ldquo;{q}&rdquo;
-            </p>
-          ))}
-          {c.matchedPatterns.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {c.matchedPatterns.map((p) => (
-                <span
-                  className="rounded bg-muted/80 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
-                  key={p}
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          )}
-          {c.individualTiedPatterns && c.individualTiedPatterns.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {c.individualTiedPatterns.map((p) => (
-                <span
-                  className="rounded bg-purple-950/40 px-1.5 py-0.5 font-mono text-[9px] text-purple-400"
-                  key={p}
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          )}
-          {c.weakOperationalSignals && c.weakOperationalSignals.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {c.weakOperationalSignals.map((p) => (
-                <span
-                  className="rounded bg-red-950/40 px-1.5 py-0.5 font-mono text-[9px] text-red-400"
-                  key={p}
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+              Evidence
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-1.5 space-y-1">
+            {c.evidenceQuotes.map((q) => (
+              <p
+                className="rounded-md bg-muted px-2 py-1 text-[10px] italic text-muted-foreground"
+                key={q}
+              >
+                &ldquo;{q}&rdquo;
+              </p>
+            ))}
+            {c.matchedPatterns.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {c.matchedPatterns.map((p) => (
+                  <Badge className="font-mono text-[9px] font-normal" key={p} variant="secondary">
+                    {p}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {c.individualTiedPatterns && c.individualTiedPatterns.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {c.individualTiedPatterns.map((p) => (
+                  <Badge
+                    className="border-purple-500/20 bg-purple-500/10 font-mono text-[9px] font-normal text-purple-400"
+                    key={p}
+                    variant="outline"
+                  >
+                    {p}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {c.weakOperationalSignals && c.weakOperationalSignals.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {c.weakOperationalSignals.map((p) => (
+                  <Badge
+                    className="border-red-500/20 bg-red-500/10 font-mono text-[9px] font-normal text-red-400"
+                    key={p}
+                    variant="outline"
+                  >
+                    {p}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
       )}
-    </div>
+    </Card>
   );
 }

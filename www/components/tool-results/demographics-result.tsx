@@ -1,6 +1,18 @@
 "use client";
 
 import { Activity, Globe, TrendingDown, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface DemographicsResultProps {
@@ -49,12 +61,14 @@ function SectionHeader({
     blue: "text-blue-400",
   };
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5">
+    <CardHeader className="flex-row items-center gap-2 space-y-0 px-3 py-2.5">
       <Icon
         className={cn("size-3.5", colorMap[accent] ?? "text-emerald-400")}
       />
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
-    </div>
+      <span className="text-balance text-xs font-medium text-muted-foreground">
+        {label}
+      </span>
+    </CardHeader>
   );
 }
 
@@ -70,19 +84,19 @@ function MetricCard({
   const display =
     typeof value === "number" ? value.toLocaleString() : String(value);
   return (
-    <div className="flex flex-1 flex-col gap-1 rounded-md bg-muted p-3">
+    <Card className="flex flex-1 basis-20 flex-col gap-1 p-3">
       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
       <span
         className={cn(
-          "font-mono text-lg font-bold",
+          "font-mono text-lg font-bold tabular-nums",
           accent ? "text-emerald-400" : "text-foreground"
         )}
       >
         {display}
       </span>
-    </div>
+    </Card>
   );
 }
 
@@ -100,32 +114,29 @@ function DataTable({
   }
   const cols = columns ?? Object.keys(rows.at(0) as Record<string, unknown>);
   return (
-    <div className="overflow-x-auto px-3 py-2">
-      <table className="w-full text-left text-xs">
-        <thead>
-          <tr className="border-b border-border">
+    <ScrollArea className="w-full">
+      <Table>
+        <TableHeader>
+          <TableRow>
             {cols.map((col) => (
-              <th
-                className="whitespace-nowrap px-2 py-1 font-mono text-[11px] font-semibold text-muted-foreground"
+              <TableHead
+                className="h-8 whitespace-nowrap px-3 font-mono text-[11px]"
                 key={col}
               >
                 {formatColumnName(col)}
-              </th>
+              </TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.slice(0, 16).map((row, i) => (
-            <tr
-              className="border-b border-border/50 last:border-0"
-              key={`row-${String(i)}`}
-            >
+            <TableRow key={`row-${String(i)}`}>
               {cols.map((col) => {
                 const val = row[col];
                 return (
-                  <td
+                  <TableCell
                     className={cn(
-                      "whitespace-nowrap px-2 py-1",
+                      "whitespace-nowrap px-3 py-1.5 tabular-nums text-xs",
                       col === highlightColumn
                         ? "font-mono font-bold text-emerald-400"
                         : "text-foreground"
@@ -133,14 +144,15 @@ function DataTable({
                     key={`${String(i)}-${col}`}
                   >
                     {formatCell(val)}
-                  </td>
+                  </TableCell>
                 );
               })}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 }
 
@@ -155,7 +167,7 @@ function formatColumnName(col: string): string {
 
 function formatCell(val: unknown): string {
   if (val === null || val === undefined) {
-    return "—";
+    return "\u2014";
   }
   if (typeof val === "number") {
     return val % 1 === 0 ? val.toLocaleString() : val.toFixed(2);
@@ -180,13 +192,13 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
   const diseases = (region.diseaseBurden as string[]) ?? [];
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader
         icon={Users}
-        label={`${String(region.region)} — Demographics`}
+        label={`${String(region.region)} \u2014 Demographics`}
       />
 
-      <div className="flex flex-wrap gap-2 px-3 pb-2">
+      <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
         <MetricCard
           accent
           label="Population"
@@ -202,88 +214,92 @@ function RegionProfile({ result }: { result: Record<string, unknown> }) {
         />
         <MetricCard
           label="Classification"
-          value={String(region.classification ?? "—")}
+          value={String(region.classification ?? "\u2014")}
         />
-      </div>
+      </CardContent>
 
       {health && (
-        <div className="border-t border-border px-3 py-2">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Health Indicators
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(health).map(([key, val]) => (
-              <span
-                className="rounded bg-muted px-2 py-1 text-[11px] text-foreground"
-                key={key}
-              >
-                <span className="text-muted-foreground">
-                  {formatColumnName(key)}:{" "}
-                </span>
-                {formatCell(val)}
-              </span>
-            ))}
-          </div>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Health Indicators
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(health).map(([key, val]) => (
+                <Badge className="text-[11px] font-normal" key={key} variant="secondary">
+                  <span className="text-muted-foreground">
+                    {formatColumnName(key)}:{" "}
+                  </span>
+                  {formatCell(val)}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </>
       )}
 
       {age && (
-        <div className="border-t border-border px-3 py-2">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Age Distribution
-          </span>
-          <div className="flex gap-2">
-            {Object.entries(age).map(([key, val]) => (
-              <span
-                className="rounded bg-muted px-2 py-1 text-[11px] text-foreground"
-                key={key}
-              >
-                {formatColumnName(key)}: {formatCell(val)}%
-              </span>
-            ))}
-          </div>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Age Distribution
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(age).map(([key, val]) => (
+                <Badge className="text-[11px] font-normal" key={key} variant="secondary">
+                  {formatColumnName(key)}: {formatCell(val)}%
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </>
       )}
 
       {diseases.length > 0 && (
-        <div className="border-t border-border px-3 py-2">
-          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Disease Burden
-          </span>
-          <div className="flex flex-wrap gap-1">
-            {diseases.map((d) => (
-              <span
-                className="rounded bg-rose-950/30 px-1.5 py-0.5 text-[10px] text-rose-400"
-                key={d}
-              >
-                {d}
-              </span>
-            ))}
-          </div>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Disease Burden
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {diseases.map((d) => (
+                <Badge
+                  className="border-rose-500/20 bg-rose-500/10 text-[10px] text-rose-400"
+                  key={d}
+                  variant="outline"
+                >
+                  {d}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </>
       )}
 
       {comparison && (
-        <div className="border-t border-border px-3 py-2.5">
-          <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            vs National Average
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(comparison).map(([key, val]) => (
-              <span
-                className="rounded bg-muted px-2 py-1 text-[11px] text-foreground"
-                key={key}
-              >
-                <span className="text-muted-foreground">
-                  {formatColumnName(key)}:{" "}
-                </span>
-                {String(val)}
-              </span>
-            ))}
-          </div>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2.5">
+            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              vs National Average
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(comparison).map(([key, val]) => (
+                <Badge className="text-[11px] font-normal" key={key} variant="secondary">
+                  <span className="text-muted-foreground">
+                    {formatColumnName(key)}:{" "}
+                  </span>
+                  {String(val)}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -293,30 +309,32 @@ function AllRegions({ result }: { result: Record<string, unknown> }) {
   const nationalPop = result.nationalPopulation as number | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader icon={Globe} label="All Regions Overview" />
       {(total !== undefined || nationalPop !== undefined) && (
-        <div className="flex gap-2 px-3 pb-2">
+        <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
           {total !== undefined && (
             <MetricCard accent label="Regions" value={total} />
           )}
           {nationalPop !== undefined && (
             <MetricCard label="National Pop." value={nationalPop} />
           )}
-        </div>
+        </CardContent>
       )}
-      <DataTable
-        columns={[
-          "region",
-          "population",
-          "urbanPercent",
-          "gdpPerCapitaUsd",
-          "classification",
-          "doctorsPer1000",
-        ]}
-        rows={regions}
-      />
-    </div>
+      <CardContent className="px-0 pb-0">
+        <DataTable
+          columns={[
+            "region",
+            "population",
+            "urbanPercent",
+            "gdpPerCapitaUsd",
+            "classification",
+            "doctorsPer1000",
+          ]}
+          rows={regions}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -325,30 +343,34 @@ function UnderservedRanking({ result }: { result: Record<string, unknown> }) {
   const methodology = result.methodology as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader
         accent="rose"
         icon={TrendingDown}
         label="Underserved Region Rankings"
       />
       {methodology && (
-        <p className="px-3 pb-2 text-[11px] text-muted-foreground">
-          {methodology}
-        </p>
+        <CardContent className="px-3 pb-2 pt-0">
+          <p className="text-pretty text-[11px] text-muted-foreground">
+            {methodology}
+          </p>
+        </CardContent>
       )}
-      <DataTable
-        columns={[
-          "region",
-          "population",
-          "underservedScore",
-          "doctorsPer1000",
-          "maternalMortality",
-          "ruralPercent",
-        ]}
-        highlightColumn="underservedScore"
-        rows={rankings}
-      />
-    </div>
+      <CardContent className="px-0 pb-0">
+        <DataTable
+          columns={[
+            "region",
+            "population",
+            "underservedScore",
+            "doctorsPer1000",
+            "maternalMortality",
+            "ruralPercent",
+          ]}
+          highlightColumn="underservedScore"
+          rows={rankings}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -357,26 +379,33 @@ function AgeDemographics({ result }: { result: Record<string, unknown> }) {
   const note = result.note as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader accent="blue" icon={Users} label="Age Demographics" />
-      <DataTable
-        columns={[
-          "region",
-          "population",
-          "under15",
-          "over65",
-          "estimatedCataractDemand",
-          "estimatedPediatricDemand",
-        ]}
-        highlightColumn="estimatedCataractDemand"
-        rows={regions}
-      />
+      <CardContent className="px-0 pb-0">
+        <DataTable
+          columns={[
+            "region",
+            "population",
+            "under15",
+            "over65",
+            "estimatedCataractDemand",
+            "estimatedPediatricDemand",
+          ]}
+          highlightColumn="estimatedCataractDemand"
+          rows={regions}
+        />
+      </CardContent>
       {note && (
-        <p className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
-          {note}
-        </p>
+        <>
+          <Separator />
+          <CardContent className="px-3 py-2">
+            <p className="text-pretty text-[11px] text-muted-foreground">
+              {note}
+            </p>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -389,63 +418,68 @@ function DiseaseBurden({ result }: { result: Record<string, unknown> }) {
 
   if (singleRegion) {
     return (
-      <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+      <Card className="my-2 w-full overflow-hidden bg-muted/50">
         <SectionHeader
           accent="rose"
           icon={Activity}
-          label={`Disease Burden — ${String(result.region)}`}
+          label={`Disease Burden \u2014 ${String(result.region)}`}
         />
-        <div className="px-3 pb-3">
+        <CardContent className="px-3 pb-3 pt-0">
           <div className="flex flex-wrap gap-1">
             {((result.diseaseBurden as string[]) ?? []).map((d) => (
-              <span
-                className="rounded bg-rose-950/30 px-1.5 py-0.5 text-[10px] text-rose-400"
+              <Badge
+                className="border-rose-500/20 bg-rose-500/10 text-[10px] text-rose-400"
                 key={d}
+                variant="outline"
               >
                 {d}
-              </span>
+              </Badge>
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader
         accent="rose"
         icon={Activity}
         label="Disease Burden by Region"
       />
       {mostPrevalent.length > 0 && (
-        <div className="px-3 pb-2">
+        <CardContent className="px-3 pb-2 pt-0">
           <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Most Prevalent Conditions
           </span>
           <div className="flex flex-wrap gap-1">
             {mostPrevalent.slice(0, 10).map((item) => (
-              <span
-                className="rounded bg-rose-950/30 px-1.5 py-0.5 text-[10px] text-rose-400"
+              <Badge
+                className="border-rose-500/20 bg-rose-500/10 text-[10px] text-rose-400"
                 key={item.disease}
+                variant="outline"
               >
                 {item.disease} ({item.regionCount} regions)
-              </span>
+              </Badge>
             ))}
           </div>
-        </div>
+        </CardContent>
       )}
       {regionDetails.length > 0 && (
-        <div className="border-t border-border px-3 py-2">
-          <DataTable
-            rows={regionDetails.map((r) => ({
-              region: r.region,
-              diseases: (r.diseases ?? []).join(", "),
-            }))}
-          />
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-0 py-2">
+            <DataTable
+              rows={regionDetails.map((r) => ({
+                region: r.region,
+                diseases: (r.diseases ?? []).join(", "),
+              }))}
+            />
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -454,43 +488,47 @@ function WHOBenchmarks({ result }: { result: Record<string, unknown> }) {
     (result.regionComparisons as Record<string, unknown>[]) ?? [];
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader
         accent="amber"
         icon={Globe}
         label="WHO Benchmark Comparison"
       />
-      <DataTable
-        columns={[
-          "region",
-          "population",
-          "doctorsPer1000",
-          "doctorsVsWho",
-          "doctorsVsDeveloped",
-          "maternalMortality",
-          "maternalMortalityVsDeveloped",
-        ]}
-        highlightColumn="doctorsVsWho"
-        rows={comparisons}
-      />
-    </div>
+      <CardContent className="px-0 pb-0">
+        <DataTable
+          columns={[
+            "region",
+            "population",
+            "doctorsPer1000",
+            "doctorsVsWho",
+            "doctorsVsDeveloped",
+            "maternalMortality",
+            "maternalMortalityVsDeveloped",
+          ]}
+          highlightColumn="doctorsVsWho"
+          rows={comparisons}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
 function UrbanRuralGap({ result }: { result: Record<string, unknown> }) {
-  const urbanRegions = (result.urbanRegions as Record<string, unknown>[]) ?? [];
-  const ruralRegions = (result.ruralRegions as Record<string, unknown>[]) ?? [];
+  const urbanRegions =
+    (result.urbanRegions as Record<string, unknown>[]) ?? [];
+  const ruralRegions =
+    (result.ruralRegions as Record<string, unknown>[]) ?? [];
   const gap = result.gap as Record<string, unknown> | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader
         accent="amber"
         icon={TrendingDown}
         label="Urban vs Rural Healthcare Gap"
       />
       {gap && (
-        <div className="flex flex-wrap gap-2 px-3 pb-2">
+        <CardContent className="flex flex-wrap gap-2 px-3 pb-2 pt-0">
           <MetricCard
             accent
             label="Avg Doctors (Urban)"
@@ -504,25 +542,35 @@ function UrbanRuralGap({ result }: { result: Record<string, unknown> }) {
             label="Urban:Rural Ratio"
             value={String(gap.urbanToRuralRatio)}
           />
-        </div>
+        </CardContent>
       )}
       {urbanRegions.length > 0 && (
-        <div className="border-t border-border">
-          <span className="block px-3 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Urban Regions
-          </span>
-          <DataTable rows={urbanRegions} />
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-0 py-2">
+            <div className="px-3 pb-1">
+              <Badge className="text-[10px] uppercase" variant="secondary">
+                Urban Regions
+              </Badge>
+            </div>
+            <DataTable rows={urbanRegions} />
+          </CardContent>
+        </>
       )}
       {ruralRegions.length > 0 && (
-        <div className="border-t border-border">
-          <span className="block px-3 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Rural Regions
-          </span>
-          <DataTable rows={ruralRegions} />
-        </div>
+        <>
+          <Separator />
+          <CardContent className="px-0 py-2">
+            <div className="px-3 pb-1">
+              <Badge className="text-[10px] uppercase" variant="secondary">
+                Rural Regions
+              </Badge>
+            </div>
+            <DataTable rows={ruralRegions} />
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -531,29 +579,33 @@ function HighImpactSites({ result }: { result: Record<string, unknown> }) {
   const methodology = result.methodology as string | undefined;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
       <SectionHeader
         accent="emerald"
         icon={TrendingDown}
         label="High-Impact Intervention Sites"
       />
       {methodology && (
-        <p className="px-3 pb-2 text-[11px] text-muted-foreground">
-          {methodology}
-        </p>
+        <CardContent className="px-3 pb-2 pt-0">
+          <p className="text-pretty text-[11px] text-muted-foreground">
+            {methodology}
+          </p>
+        </CardContent>
       )}
-      <DataTable
-        columns={[
-          "region",
-          "population",
-          "impactScore",
-          "doctorsPer1000",
-          "urbanPercent",
-          "rationale",
-        ]}
-        highlightColumn="impactScore"
-        rows={topSites}
-      />
-    </div>
+      <CardContent className="px-0 pb-0">
+        <DataTable
+          columns={[
+            "region",
+            "population",
+            "impactScore",
+            "doctorsPer1000",
+            "urbanPercent",
+            "rationale",
+          ]}
+          highlightColumn="impactScore"
+          rows={topSites}
+        />
+      </CardContent>
+    </Card>
   );
 }

@@ -1,7 +1,15 @@
 "use client";
 
-import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AnomalyDetail {
   type: string;
@@ -19,65 +27,71 @@ export function AnomalyAlertsResult({ result }: AnomalyAlertsResultProps) {
   const details = (result.details as AnomalyDetail[]) ?? [];
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-center justify-between space-y-0 px-3 py-2.5">
         <div className="flex items-center gap-2">
           <AlertTriangle className="size-3.5 text-red-400" />
           <span className="text-xs font-medium text-muted-foreground">
             Anomalies{region ? ` in ${region}` : " Found"}
           </span>
         </div>
-        <span className="rounded-full bg-red-950/50 px-2 py-0.5 font-mono text-[11px] font-semibold text-red-400">
+        <Badge
+          className="border-red-500/20 bg-red-500/10 font-mono text-[11px] text-red-400"
+          variant="outline"
+        >
           {foundAnomalies} {foundAnomalies === 1 ? "issue" : "issues"}
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
-      <div className="flex flex-col gap-1.5 px-3 pb-3">
-        {details.map((detail) => (
-          <AnomalyItem detail={detail} key={detail.type} />
-        ))}
-      </div>
-    </div>
+      <CardContent className="px-3 pb-3 pt-0">
+        <ul className="flex flex-col gap-1.5">
+          {details.map((detail) => (
+            <li key={detail.type}>
+              <AnomalyItem detail={detail} />
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
 
 function AnomalyItem({ detail }: { detail: AnomalyDetail }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
-    <div className="rounded-md bg-muted p-2.5">
+    <Card className="p-2.5">
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="rounded bg-red-950/50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-orange-400">
-            {detail.type.replaceAll("_", " ")}
-          </span>
-        </div>
-        <p className="text-xs text-muted-foreground">{detail.description}</p>
+        <Badge
+          className="w-fit border-red-500/20 bg-red-500/10 text-[9px] uppercase tracking-wider text-orange-400"
+          variant="outline"
+        >
+          {detail.type.replaceAll("_", " ")}
+        </Badge>
+        <p className="text-pretty text-xs text-muted-foreground">
+          {detail.description}
+        </p>
       </div>
 
       {detail.facilities.length > 0 && (
-        <button
-          className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-          onClick={() => setIsExpanded(!isExpanded)}
-          type="button"
-        >
-          {isExpanded ? (
-            <ChevronDown className="size-3" />
-          ) : (
-            <ChevronRight className="size-3" />
-          )}
-          {detail.facilities.length}{" "}
-          {detail.facilities.length === 1 ? "facility" : "facilities"}
-        </button>
+        <Collapsible className="mt-2">
+          <CollapsibleTrigger asChild>
+            <Button
+              className="h-auto gap-1 p-0 text-[11px]"
+              type="button"
+              variant="link"
+            >
+              {detail.facilities.length}{" "}
+              {detail.facilities.length === 1 ? "facility" : "facilities"}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <ScrollArea className="mt-1.5 max-h-32">
+              <pre className="rounded-md bg-muted p-2 font-mono text-[10px] text-muted-foreground">
+                {JSON.stringify(detail.facilities, null, 2)}
+              </pre>
+            </ScrollArea>
+          </CollapsibleContent>
+        </Collapsible>
       )}
-
-      {isExpanded && (
-        <div className="mt-1.5 rounded bg-muted/80 p-2">
-          <pre className="max-h-32 overflow-y-auto font-mono text-[10px] text-muted-foreground">
-            {JSON.stringify(detail.facilities, null, 2)}
-          </pre>
-        </div>
-      )}
-    </div>
+    </Card>
   );
 }

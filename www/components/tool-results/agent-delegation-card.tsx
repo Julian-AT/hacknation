@@ -2,8 +2,7 @@
 
 import {
   BotIcon,
-  ChevronDown,
-  ChevronRight,
+  ChevronDownIcon,
   Database,
   Globe,
   Map as MapIcon,
@@ -11,8 +10,15 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { Agent, AgentContent } from "@/components/ai-elements/agent";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ToolTrace } from "../vf-ui/ToolTrace";
 import { getToolComponent } from "./tool-component-map";
@@ -30,7 +36,6 @@ const AGENT_CONFIG: Record<
     label: string;
     icon: typeof Database;
     color: string;
-    bgColor: string;
     model: string;
     tools: string[];
     description: string;
@@ -40,7 +45,6 @@ const AGENT_CONFIG: Record<
     label: "Data Analysis Agent",
     icon: Database,
     color: "text-blue-400",
-    bgColor: "bg-blue-950/30",
     model: "gemini-2.5-flash-lite",
     tools: ["queryDatabase", "searchFacilities", "getFacility"],
     description:
@@ -50,7 +54,6 @@ const AGENT_CONFIG: Record<
     label: "Geographic Analysis Agent",
     icon: MapIcon,
     color: "text-amber-400",
-    bgColor: "bg-amber-950/30",
     model: "gemini-2.5-flash-lite",
     tools: [
       "findNearby",
@@ -65,7 +68,6 @@ const AGENT_CONFIG: Record<
     label: "Medical Reasoning Agent",
     icon: Stethoscope,
     color: "text-red-400",
-    bgColor: "bg-red-950/30",
     model: "gemini-2.5-flash-lite",
     tools: ["detectAnomalies", "crossValidateClaims", "classifyServices"],
     description:
@@ -75,7 +77,6 @@ const AGENT_CONFIG: Record<
     label: "Web Research Agent",
     icon: Globe,
     color: "text-emerald-400",
-    bgColor: "bg-emerald-950/30",
     model: "gemini-2.5-flash-lite",
     tools: ["firecrawlSearch", "firecrawlScrape", "firecrawlExtract"],
     description:
@@ -93,10 +94,6 @@ interface NestedPart {
   text?: string;
 }
 
-/**
- * Extracts the tool name from a nested part, handling both
- * "tool-<name>" (static) and "dynamic-tool" (dynamic) formats.
- */
 function extractToolInfo(part: NestedPart): {
   toolName: string;
   toolCallId: string;
@@ -124,25 +121,17 @@ function extractToolInfo(part: NestedPart): {
   };
 }
 
-/**
- * Renders the nested parts from an agent delegation result,
- * routing sub-tool calls to their custom UI components and
- * rendering text output inline.
- */
 function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
   const parts = result.parts as NestedPart[] | undefined;
 
-  // If the result has a parts array (agent response), render each part
   if (Array.isArray(parts) && parts.length > 0) {
     return (
       <div className="space-y-2">
         {parts.map((part, idx) => {
-          // Render sub-tool results with custom UI
           const toolInfo = extractToolInfo(part);
           if (toolInfo) {
             const { toolName, toolCallId, args, result: toolResult } = toolInfo;
 
-            // Try custom component first
             if (toolResult && !("error" in toolResult)) {
               const custom = getToolComponent(toolName, args, toolResult);
               if (custom) {
@@ -150,7 +139,6 @@ function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
               }
             }
 
-            // Fall back to ToolTrace
             return (
               <ToolTrace
                 args={args}
@@ -162,34 +150,35 @@ function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
             );
           }
 
-          // Render text parts
           if (part.type === "text" && part.text?.trim()) {
             return (
-              <div
-                className="rounded-md bg-muted p-2.5 text-xs leading-relaxed text-muted-foreground"
+              <Card
+                className="bg-muted"
                 key={`text-${idx.toString()}`}
               >
-                {part.text}
-              </div>
+                <CardContent className="p-2.5 text-xs leading-relaxed text-muted-foreground">
+                  {part.text}
+                </CardContent>
+              </Card>
             );
           }
 
-          // Skip step-start, reasoning, and other non-visual parts
           return null;
         })}
       </div>
     );
   }
 
-  // Fallback: result has no parts array, show raw JSON
   return (
     <div className="space-y-1.5">
       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Output
       </span>
-      <pre className="max-h-48 overflow-y-auto rounded-md bg-muted p-2.5 font-mono text-[10px] text-muted-foreground">
-        {JSON.stringify(result, null, 2)}
-      </pre>
+      <ScrollArea className="max-h-48">
+        <pre className="rounded-md bg-muted p-2.5 font-mono text-[10px] text-muted-foreground">
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      </ScrollArea>
     </div>
   );
 }
@@ -200,7 +189,7 @@ export function AgentDelegationCard({
   args,
   result,
 }: AgentDelegationCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const config = AGENT_CONFIG[toolName];
   if (!config) {
     return null;
@@ -209,93 +198,104 @@ export function AgentDelegationCard({
   const task = args.task as string | undefined;
 
   return (
-    <Agent className="my-2 border-border bg-muted/50">
-      {/* Agent header */}
-      <button
-        className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-muted/80"
-        onClick={() => setIsExpanded(!isExpanded)}
-        type="button"
-      >
-        <div className="flex items-center gap-2">
-          <Icon className={cn("size-4", config.color)} />
-          <span className="text-xs font-semibold text-foreground">
-            {config.label}
-          </span>
-          <Badge
-            className="gap-1 rounded-full px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wider"
-            variant="secondary"
-          >
-            <BotIcon className="size-2.5" />
-            Agent
-          </Badge>
-          <Badge className="font-mono text-[10px]" variant="outline">
-            {config.model}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          {result ? (
-            <Badge
-              className="rounded-full border-green-900/50 bg-green-950/50 text-[10px] text-green-400"
-              variant="outline"
-            >
-              Completed
-            </Badge>
-          ) : (
-            <Badge
-              className="animate-pulse rounded-full border-amber-900/50 bg-amber-950/50 text-[10px] text-amber-400"
-              variant="outline"
-            >
-              Working...
-            </Badge>
-          )}
-          {isExpanded ? (
-            <ChevronDown className="size-3.5 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="size-3.5 text-muted-foreground" />
-          )}
-        </div>
-      </button>
-
-      {/* Task description */}
-      {task && (
-        <div className="border-t border-border px-3 py-2">
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            {task.length > 200 ? `${task.slice(0, 200)}...` : task}
-          </p>
-        </div>
-      )}
-
-      {/* Expanded: agent details + output */}
-      {isExpanded && (
-        <AgentContent className="border-t border-border p-3">
-          {/* Agent description */}
-          <p className="text-[11px] text-muted-foreground">
-            {config.description}
-          </p>
-
-          {/* Available tools */}
-          <div className="space-y-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Available Tools
+    <Card className="not-prose my-2 overflow-hidden bg-muted/50">
+      <Collapsible onOpenChange={setIsOpen} open={isOpen}>
+        {/* Agent header */}
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-muted/80">
+          <div className="flex min-w-0 items-center gap-2">
+            <Icon className={cn("size-4 shrink-0", config.color)} />
+            <span className="truncate text-xs font-semibold text-foreground">
+              {config.label}
             </span>
-            <div className="flex flex-wrap gap-1">
-              {config.tools.map((tool) => (
-                <Badge
-                  className="gap-1 font-mono text-[10px]"
-                  key={tool}
-                  variant="secondary"
-                >
-                  <WrenchIcon className="size-2.5" />
-                  {tool}
-                </Badge>
-              ))}
-            </div>
+            <Badge
+              className="gap-1 px-1.5 py-0 text-[9px] uppercase tracking-wider"
+              variant="secondary"
+            >
+              <BotIcon className="size-2.5" />
+              Agent
+            </Badge>
+            <Badge
+              className="hidden font-mono text-[10px] sm:inline-flex"
+              variant="outline"
+            >
+              {config.model}
+            </Badge>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {result ? (
+              <Badge
+                className="border-green-500/20 bg-green-500/10 text-[10px] text-green-600 dark:text-green-400"
+                variant="outline"
+              >
+                Completed
+              </Badge>
+            ) : (
+              <Badge
+                className="animate-pulse border-amber-500/20 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
+                variant="outline"
+              >
+                Working...
+              </Badge>
+            )}
+            <ChevronDownIcon
+              className={cn(
+                "size-3.5 text-muted-foreground transition-transform",
+                isOpen && "rotate-180"
+              )}
+            />
+          </div>
+        </CollapsibleTrigger>
 
-          {/* Nested sub-tool results and agent text output */}
-          {result && <AgentNestedParts result={result} />}
-        </AgentContent>
-      )}
-    </Agent>
+        {/* Task description */}
+        {task && (
+          <>
+            <Separator />
+            <div className="px-3 py-2">
+              <p className="text-pretty text-[11px] leading-relaxed text-muted-foreground">
+                {task.length > 200 ? `${task.slice(0, 200)}...` : task}
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Expanded: agent details + output */}
+        <CollapsibleContent className="data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
+          <Separator />
+          <CardContent className="space-y-3 p-3">
+            {/* Agent description */}
+            <p className="text-pretty text-[11px] text-muted-foreground">
+              {config.description}
+            </p>
+
+            {/* Available tools */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Available Tools
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {config.tools.map((tool) => (
+                  <Badge
+                    className="gap-1 font-mono text-[10px]"
+                    key={tool}
+                    variant="secondary"
+                  >
+                    <WrenchIcon className="size-2.5" />
+                    {tool}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Nested sub-tool results and agent text output */}
+            {result && (
+              <>
+                <Separator />
+                <AgentNestedParts result={result} />
+              </>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }

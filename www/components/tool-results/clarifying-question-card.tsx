@@ -2,6 +2,12 @@
 
 import { CheckIcon, MessageCircleQuestionIcon, SendIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { useChatActions } from "@/lib/chat-actions-context";
 
 interface ClarifyingQuestionCardProps {
@@ -25,7 +31,7 @@ export function ClarifyingQuestionCard({
   const handleSelect = useCallback(
     (value: string) => {
       if (selected) {
-        return; // Already answered
+        return;
       }
       setSelected(value);
 
@@ -53,84 +59,94 @@ export function ClarifyingQuestionCard({
   const isAnswered = selected !== null;
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-lg border border-border bg-muted/50">
-      {/* Question header */}
-      <div className="flex items-start gap-2 px-3 py-3">
+    <Card className="my-2 w-full overflow-hidden bg-muted/50">
+      <CardHeader className="flex-row items-start gap-2 space-y-0 px-3 py-3">
         <MessageCircleQuestionIcon className="mt-0.5 size-4 shrink-0 text-blue-400" />
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-foreground">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-balance text-sm font-medium text-foreground">
             {question}
           </span>
           {context && (
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-pretty text-[11px] text-muted-foreground">
               {context}
             </span>
           )}
         </div>
-      </div>
+      </CardHeader>
 
-      {/* Options */}
-      <div className="flex flex-wrap gap-1.5 border-t border-border px-3 py-2.5">
+      <Separator />
+      <CardContent className="flex flex-wrap gap-1.5 px-3 py-2.5">
         {options.map((option) => {
           const isSelected = selected === option.value;
           return (
-            <button
-              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                isSelected
-                  ? "border-blue-500/50 bg-blue-950/40 text-blue-400"
-                  : isAnswered
-                    ? "cursor-default border-border bg-muted/30 text-muted-foreground/50"
-                    : "border-border bg-background text-foreground hover:border-blue-500/30 hover:bg-blue-950/20 hover:text-blue-400"
-              }`}
+            <Button
+              className={cn(
+                "h-auto px-3 py-1.5 text-xs",
+                isSelected &&
+                  "border-blue-500/50 bg-blue-500/10 text-blue-400",
+                isAnswered &&
+                  !isSelected &&
+                  "opacity-50"
+              )}
               disabled={isAnswered}
               key={option.value}
               onClick={() => handleSelect(option.value)}
+              size="sm"
               type="button"
+              variant="outline"
             >
-              {isSelected && <CheckIcon className="mr-1 inline size-3" />}
+              {isSelected && <CheckIcon className="mr-1 size-3" />}
               {option.label}
-            </button>
+            </Button>
           );
         })}
-      </div>
+      </CardContent>
 
-      {/* Custom input */}
       {allowCustomInput && !isAnswered && (
-        <div className="flex items-center gap-2 border-t border-border px-3 py-2">
-          <input
-            className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-blue-500/50 focus:outline-none"
-            onChange={(e) => setCustomValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleCustomSubmit();
-              }
-            }}
-            placeholder="Or type your own answer..."
-            ref={inputRef}
-            type="text"
-            value={customValue}
-          />
-          <button
-            aria-label="Send custom answer"
-            className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            disabled={!customValue.trim()}
-            onClick={handleCustomSubmit}
-            type="button"
-          >
-            <SendIcon className="size-3.5" />
-          </button>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="flex items-center gap-2 px-3 py-2">
+            <Input
+              className="h-8 flex-1 text-xs"
+              onChange={(e) => setCustomValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleCustomSubmit();
+                }
+              }}
+              placeholder="Or type your own answer..."
+              ref={inputRef}
+              type="text"
+              value={customValue}
+            />
+            <Button
+              aria-label="Send custom answer"
+              className="size-8"
+              disabled={!customValue.trim()}
+              onClick={handleCustomSubmit}
+              size="icon"
+              type="button"
+            >
+              <SendIcon className="size-3.5" />
+            </Button>
+          </CardContent>
+        </>
       )}
 
-      {/* Answered state */}
       {isAnswered && (
-        <div className="border-t border-border bg-green-950/10 px-3 py-1.5">
-          <span className="text-[11px] text-green-400">
-            <CheckIcon className="mr-1 inline size-3" />
-            Answered: {selected}
-          </span>
-        </div>
+        <>
+          <Separator />
+          <CardContent className="bg-green-500/5 px-3 py-1.5">
+            <Badge
+              className="gap-1 border-green-500/20 bg-green-500/10 text-[11px] text-green-400"
+              variant="outline"
+            >
+              <CheckIcon className="size-3" />
+              Answered: {selected}
+            </Badge>
+          </CardContent>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
