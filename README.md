@@ -4,6 +4,8 @@
   <strong>An AI agent system for analyzing healthcare facility capabilities and identifying medical deserts</strong>
 </p>
 
+<img width="1727" height="1082" alt="image" src="https://github.com/user-attachments/assets/f88620a8-e886-464d-a065-e530fa40965a" />
+
 <p align="center">
   <a href="https://meridian-ai.vercel.app"><img src="https://img.shields.io/badge/Live_Demo-View-blue?style=flat-square" alt="Live Demo"></a>
   <img src="https://img.shields.io/badge/Hackathon-Hack_Nation_(MIT)-purple?style=flat-square" alt="Hack Nation MIT">
