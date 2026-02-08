@@ -302,6 +302,8 @@ export function AgentDelegationCard({
   const totalTools = nestedParts.filter(
     (p) => extractToolInfo(p) !== null
   ).length;
+  const showTicker = nestedParts.length > 0 || !hasResult;
+  const showTaskPreview = Boolean(task) && !isOpen;
 
   return (
     <Card className="not-prose my-2 overflow-hidden bg-muted/50">
@@ -310,7 +312,7 @@ export function AgentDelegationCard({
         <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-muted/80">
           <div className="flex min-w-0 items-center gap-2">
             <Icon className={cn("size-4 shrink-0", config.color)} />
-            <span className="truncate text-xs font-semibold text-foreground">
+            <span className="truncate text-balance text-xs font-semibold text-foreground">
               {config.label}
             </span>
             <Badge
@@ -350,14 +352,20 @@ export function AgentDelegationCard({
           </div>
         </CollapsibleTrigger>
 
-        {/* Always-visible activity ticker -- shows tool calls in real time */}
-        {(nestedParts.length > 0 || !hasResult) && (
+        {/* Task preview + activity ticker */}
+        {(showTaskPreview || showTicker) && (
           <>
             <Separator />
-            <AgentActivityTicker
-              isRunning={!hasResult}
-              parts={nestedParts}
-            />
+            {showTaskPreview && (
+              <div className={cn("px-3 pt-2", showTicker ? "pb-1" : "pb-2")}>
+                <p className="line-clamp-2 text-pretty text-[11px] text-muted-foreground">
+                  {task}
+                </p>
+              </div>
+            )}
+            {showTicker && (
+              <AgentActivityTicker isRunning={!hasResult} parts={nestedParts} />
+            )}
           </>
         )}
 

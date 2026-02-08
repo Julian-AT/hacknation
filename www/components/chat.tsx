@@ -26,6 +26,7 @@ import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
+import { Artifact } from "./artifact";
 import { ArtifactCanvas } from "./artifact-canvas";
 import { useDataStream } from "./data-stream-provider";
 import { ChatActionsProvider } from "@/lib/chat-actions-context";
@@ -438,6 +439,25 @@ export function Chat({
           </div>
         )}
       </div>
+
+      <Artifact
+        addToolApprovalResponse={addToolApprovalResponse}
+        attachments={attachments}
+        chatId={id}
+        input={input}
+        isReadonly={isReadonly}
+        messages={messages}
+        regenerate={regenerate}
+        selectedModelId={currentModelId}
+        selectedVisibilityType={visibilityType}
+        sendMessage={sendMessage}
+        setAttachments={setAttachments}
+        setInput={setInput}
+        setMessages={setMessages}
+        status={status}
+        stop={stop}
+        votes={votes}
+      />
 
       </ChatActionsProvider>
 
