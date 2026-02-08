@@ -1,17 +1,12 @@
 import { textblockTypeInputRule } from "prosemirror-inputrules";
-import { Schema } from "prosemirror-model";
-import { schema } from "prosemirror-schema-basic";
-import { addListNodes } from "prosemirror-schema-list";
 import type { Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import type { MutableRefObject } from "react";
+import { schema as markdownSchema } from "prosemirror-markdown";
 
 import { buildContentFromDocument } from "./functions";
 
-export const documentSchema = new Schema({
-  nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
-  marks: schema.spec.marks,
-});
+export const documentSchema = markdownSchema;
 
 export function headingRule(level: number) {
   return textblockTypeInputRule(

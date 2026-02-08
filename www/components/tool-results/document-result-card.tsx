@@ -61,7 +61,7 @@ export function DocumentResultCard({ type, result }: DocumentResultCardProps) {
   };
 
   return (
-    <Card className="not-prose w-full bg-muted/50">
+    <Card className="not-prose w-full bg-card py-1">
       <CardContent className="flex items-center gap-3 p-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
           <Icon className="size-4" />

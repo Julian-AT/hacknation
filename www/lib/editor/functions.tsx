@@ -1,19 +1,17 @@
 "use client";
 
-import { marked } from "marked";
-import { defaultMarkdownSerializer } from "prosemirror-markdown";
-import { DOMParser, type Node } from "prosemirror-model";
+import { defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-markdown";
+import type { Node } from "prosemirror-model";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 
-import { documentSchema } from "./config";
 import { createSuggestionWidget, type UISuggestion } from "./suggestions";
 
 export const buildDocumentFromContent = (content: string) => {
-  const parser = DOMParser.fromSchema(documentSchema);
-  const htmlFromMarkdown = marked.parse(content, { async: false }) as string;
-  const tempContainer = document.createElement("div");
-  tempContainer.innerHTML = htmlFromMarkdown;
-  return parser.parse(tempContainer);
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return defaultMarkdownParser.parse("\n");
+  }
+  return defaultMarkdownParser.parse(trimmed);
 };
 
 export const buildContentFromDocument = (document: Node) => {
