@@ -17,7 +17,6 @@ export default function Page(props: { params: Promise<{ id: string }> }) {
   );
 }
 
-import { ArtifactStreamProvider } from "@/components/artifact-stream-provider";
 import { VFProvider } from "@/lib/vf-context";
 
 async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -57,19 +56,17 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const chatModelFromCookie = cookieStore.get("chat-model");
 
   return (
-    <ArtifactStreamProvider>
-      <VFProvider>
-        <Chat
-          autoResume={true}
-          id={chat.id}
-          initialChatModel={chatModelFromCookie?.value || DEFAULT_CHAT_MODEL}
-          initialMessages={uiMessages}
-          initialVisibilityType={chat.visibility}
-          isReadonly={session?.user?.id !== chat.userId}
-          key={chat.id}
-        />
-        <DataStreamHandler />
-      </VFProvider>
-    </ArtifactStreamProvider>
+    <VFProvider>
+      <Chat
+        autoResume={true}
+        id={chat.id}
+        initialChatModel={chatModelFromCookie?.value || DEFAULT_CHAT_MODEL}
+        initialMessages={uiMessages}
+        initialVisibilityType={chat.visibility}
+        isReadonly={session?.user?.id !== chat.userId}
+        key={chat.id}
+      />
+      <DataStreamHandler />
+    </VFProvider>
   );
 }

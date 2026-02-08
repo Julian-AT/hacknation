@@ -95,6 +95,17 @@ export const documentHandlersByArtifactKind: DocumentHandler[] = [
   sheetDocumentHandler,
 ];
 
-export const artifactKinds = ["text", "code", "sheet"] as const;
-
-// test
+export const artifactKinds = [
+  "text",
+  "code",
+  "sheet",
+  "facility-map",
+  "medical-desert",
+  "stats-dashboard",
+  "mission-plan",
+  "heatmap",
+  "region-choropleth",
+  "specialty-map",
+  "data-quality-map",
+  "accessibility-map",
+] as const;

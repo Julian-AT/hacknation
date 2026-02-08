@@ -12,9 +12,23 @@ import { rateLimit } from "@/lib/rate-limit";
 const documentLimiter = rateLimit({ windowMs: 60_000, max: 30 });
 
 const documentPostSchema = z.object({
-  content: z.string().max(1_000_000),
+  content: z.string().max(10_000_000),
   title: z.string().min(1).max(500),
-  kind: z.enum(["text", "code", "image", "sheet"]),
+  kind: z.enum([
+    "text",
+    "code",
+    "image",
+    "sheet",
+    "facility-map",
+    "medical-desert",
+    "stats-dashboard",
+    "mission-plan",
+    "heatmap",
+    "region-choropleth",
+    "specialty-map",
+    "data-quality-map",
+    "accessibility-map",
+  ]),
 });
 
 export async function GET(request: Request) {

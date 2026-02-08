@@ -39,27 +39,16 @@ export type CustomUIDataTypes = {
   clear: null;
   finish: null;
   "chat-title": string;
-  // Canvas artifact streaming (facility-map, medical-desert, etc.)
-  "artifact-stream": {
-    id: string;
-    artifactType: string;
-    payload: unknown;
-  };
-  "artifact-update": {
-    id: string;
-    artifactType: string;
-    payload: unknown;
-  };
-  "artifact-complete": {
-    id: string;
-    artifactType: string;
-    payload: unknown;
-  };
-  "artifact-error": {
-    id: string;
-    artifactType: string;
-    error: string;
-  };
+  // Map / visualization artifact deltas
+  facilityMapDelta: string;
+  medicalDesertDelta: string;
+  statsDashboardDelta: string;
+  missionPlanDelta: string;
+  heatmapDelta: string;
+  regionChoroplethDelta: string;
+  specialtyMapDelta: string;
+  dataQualityMapDelta: string;
+  accessibilityMapDelta: string;
 };
 
 export type ChatMessage = UIMessage<

@@ -12,9 +12,18 @@ import {
 } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { useDebounceCallback, useWindowSize } from "usehooks-ts";
+import { accessibilityMapArtifact } from "@/artifacts/accessibility-map/client";
 import { codeArtifact } from "@/artifacts/code/client";
+import { dataQualityMapArtifact } from "@/artifacts/data-quality-map/client";
+import { facilityMapArtifact } from "@/artifacts/facility-map/client";
+import { heatmapArtifact } from "@/artifacts/heatmap/client";
 import { imageArtifact } from "@/artifacts/image/client";
+import { medicalDesertArtifact } from "@/artifacts/medical-desert/client";
+import { missionPlanArtifact } from "@/artifacts/mission-plan/client";
+import { regionChoroplethArtifact } from "@/artifacts/region-choropleth/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
+import { specialtyMapArtifact } from "@/artifacts/specialty-map/client";
+import { statsDashboardArtifact } from "@/artifacts/stats-dashboard/client";
 import { textArtifact } from "@/artifacts/text/client";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { Document, Vote } from "@/lib/db/schema";
@@ -34,6 +43,15 @@ export const artifactDefinitions = [
   codeArtifact,
   imageArtifact,
   sheetArtifact,
+  facilityMapArtifact,
+  medicalDesertArtifact,
+  statsDashboardArtifact,
+  missionPlanArtifact,
+  heatmapArtifact,
+  regionChoroplethArtifact,
+  specialtyMapArtifact,
+  dataQualityMapArtifact,
+  accessibilityMapArtifact,
 ];
 export type ArtifactKind = (typeof artifactDefinitions)[number]["kind"];
 

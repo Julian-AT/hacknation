@@ -2,10 +2,9 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useArtifactStream } from "./artifact-stream-provider";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -27,7 +26,6 @@ import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn, fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { useVF } from "@/lib/vf-context";
 import { Artifact } from "./artifact";
-import { ArtifactCanvas } from "./artifact-canvas";
 import { useDataStream } from "./data-stream-provider";
 import { ChatActionsProvider } from "@/lib/chat-actions-context";
 import { ChatDocuments } from "./chat-documents";
@@ -63,26 +61,6 @@ export function Chat({
     setMapVisible,
   } = useVF();
 
-  // Track whether the artifact canvas should be visible
-  const {
-    state: artifactState,
-    processDataPart,
-    selectArtifact,
-    reset: resetArtifacts,
-  } = useArtifactStream();
-  const activeArtifact = artifactState.current;
-  const [canvasDismissed, setCanvasDismissed] = useState(false);
-  const isCanvasVisible = activeArtifact !== null && !canvasDismissed;
-
-  // Helper to open a specific artifact from the history (e.g. inline card click)
-  const openArtifact = useCallback(
-    (id: string) => {
-      selectArtifact(id);
-      setCanvasDismissed(false);
-    },
-    [selectArtifact]
-  );
-
   const { visibilityType } = useChatVisibility({
     chatId: id,
     initialVisibilityType,
@@ -102,10 +80,7 @@ export function Chat({
     setMapFacilities([]);
     setMapVisible(false);
 
-    // Reset canvas artifact state
-    resetArtifacts();
-
-    // Reset old artifact SWR state
+    // Reset artifact SWR state
     if (isNewChat) {
       mutate(
         "artifact",
@@ -121,10 +96,7 @@ export function Chat({
         false
       );
     }
-
-    // Reset canvas dismissed state
-    setCanvasDismissed(false);
-  }, [isNewChat, mutate, resetArtifacts, setDataStream, setMapFacilities, setMapVisible]);
+  }, [isNewChat, mutate, setDataStream, setMapFacilities, setMapVisible]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -201,8 +173,6 @@ export function Chat({
       },
     }),
     onData: (dataPart) => {
-      // Route canvas-artifact events to the artifact stream provider
-      processDataPart(dataPart as { type: string; data?: unknown });
       // Forward all parts to the document artifact handler
       setDataStream((ds) => (ds ? [...ds, dataPart as never] : []));
     },
@@ -330,13 +300,6 @@ export function Chat({
     setMessages,
   });
 
-  // Reset canvas dismissed state when a new artifact streams in
-  useEffect(() => {
-    if (activeArtifact) {
-      setCanvasDismissed(false);
-    }
-  }, [activeArtifact?.id, activeArtifact]);
-
   return (
     <>
     <ChatActionsProvider sendMessage={sendMessage}>
@@ -345,7 +308,7 @@ export function Chat({
         <div
           className={cn(
             "flex flex-col h-full",
-            isCanvasVisible || isMapVisible
+            isMapVisible
               ? "w-full md:w-[45%] md:border-r md:border-border"
               : "w-full"
           )}
@@ -359,10 +322,9 @@ export function Chat({
           <Messages
             addToolApprovalResponse={addToolApprovalResponse}
             chatId={id}
-            isArtifactVisible={isCanvasVisible}
+            isArtifactVisible={false}
             isReadonly={isReadonly}
             messages={messages}
-            onOpenArtifact={openArtifact}
             regenerate={regenerate}
             selectedModelId={initialChatModel}
             setMessages={setMessages}
@@ -393,15 +355,8 @@ export function Chat({
           </div>
         </div>
 
-        {/* Artifact Canvas: full-screen overlay on mobile, inline side panel on desktop */}
-        {isCanvasVisible && (
-          <div className="fixed inset-0 z-50 bg-background md:relative md:inset-auto md:z-auto md:w-[55%] md:h-full">
-            <ArtifactCanvas onClose={() => setCanvasDismissed(true)} />
-          </div>
-        )}
-
         {/* Right Panel: Map (only visible when geographic data is available) */}
-        {isMapVisible && !isCanvasVisible && (
+        {isMapVisible && (
           <div className="fixed inset-0 z-50 bg-background md:relative md:inset-auto md:z-auto md:w-[55%] md:h-full">
             <DeckMap />
 

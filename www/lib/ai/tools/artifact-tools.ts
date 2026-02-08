@@ -2,27 +2,19 @@
  * Artifact-enhanced tool wrappers.
  *
  * These thin wrappers call the raw geospatial / stats tools AND stream
- * typed artifacts to the client via the UIMessageStreamWriter so the
- * frontend can render them in a full-width canvas panel.
+ * document-style artifacts to the client via the UIMessageStreamWriter so the
+ * frontend can render them in the unified artifact panel.
  */
 
 import { tool, type UIMessageStreamWriter } from "ai";
+import type { Session } from "next-auth";
 import { and, between, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { saveDocument } from "@/lib/db/queries";
 import { facilities } from "@/lib/db/schema.facilities";
 import type { ChatMessage } from "@/lib/types";
-import {
-  AccessibilityMapArtifact,
-  DataQualityMapArtifact,
-  FacilityMapArtifact,
-  HeatmapArtifact,
-  MedicalDesertArtifact,
-  MissionPlanArtifact,
-  RegionChoroplethArtifact,
-  SpecialtyMapArtifact,
-  StatsDashboardArtifact,
-} from "../artifacts/schemas";
+import { generateUUID } from "@/lib/utils";
 import { findMedicalDeserts as rawFindMedicalDeserts } from "./findMedicalDeserts";
 // Re-use the raw tool logic
 import { findNearby as rawFindNearby } from "./findNearby";
@@ -32,33 +24,39 @@ import { fetchIsochrones } from "./web/openrouteservice";
 
 type ArtifactToolDeps = {
   dataStream: UIMessageStreamWriter<ChatMessage>;
+  session: Session;
 };
 
-// ── findNearby → FacilityMapArtifact ────────────────────────────────
+/** Helper: emit the standard document-open events. */
+function emitDocumentOpen(
+  dataStream: UIMessageStreamWriter<ChatMessage>,
+  kind: string,
+  id: string,
+  title: string
+) {
+  dataStream.write({ type: "data-kind", data: kind, transient: true } as never);
+  dataStream.write({ type: "data-id", data: id, transient: true } as never);
+  dataStream.write({ type: "data-title", data: title, transient: true } as never);
+  dataStream.write({ type: "data-clear", data: null, transient: true } as never);
+}
 
-export const findNearbyArtifact = ({ dataStream }: ArtifactToolDeps) =>
+/** Helper: emit a delta + finish for a document artifact. */
+function emitDocumentFinish(
+  dataStream: UIMessageStreamWriter<ChatMessage>
+) {
+  dataStream.write({ type: "data-finish", data: null, transient: true } as never);
+}
+
+// ── findNearby → facility-map ───────────────────────────────────────
+
+export const findNearbyArtifact = ({ dataStream, session }: ArtifactToolDeps) =>
   tool({
     description: rawFindNearby.description,
     inputSchema: rawFindNearby.inputSchema,
     execute: async (params, opts) => {
-      // Stream loading state
-      const art = FacilityMapArtifact.stream(
-        {
-          title: `Facilities near ${params.location}`,
-          center: { lat: 7.9465, lng: -1.0232 },
-          zoom: 10,
-          radiusKm: params.radiusKm,
-          facilities: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
-
-      await art.update({ stage: "querying", progress: 0.3 } as Record<
-        string,
-        unknown
-      >);
+      const id = generateUUID();
+      const initialTitle = `Facilities near ${params.location}`;
+      emitDocumentOpen(dataStream, "facility-map", id, initialTitle);
 
       // Execute the real tool
       const rawResult = await rawFindNearby.execute?.(params, opts);
@@ -66,17 +64,17 @@ export const findNearbyArtifact = ({ dataStream }: ArtifactToolDeps) =>
       const result = rawResult as any;
 
       if (result.error) {
-        await art.error(result.error);
+        emitDocumentFinish(dataStream);
         return result;
       }
 
-      // Stream final data
-      await art.complete({
-        title: `${result.count} facilities near ${params.location}`,
-        center: { lat: result.center.lat, lng: result.center.lng },
+      const title = `${result.count as number} facilities near ${params.location}`;
+      const payload = JSON.stringify({
+        title,
+        center: { lat: (result.center as Record<string, number>).lat, lng: (result.center as Record<string, number>).lng },
         zoom: 10,
         radiusKm: result.radiusKm,
-        facilities: result.facilities.map((f: Record<string, unknown>) => ({
+        facilities: (result.facilities as Record<string, unknown>[]).map((f) => ({
           id: f.id as number,
           name: f.name as string,
           type: (f.type as string) ?? null,
@@ -91,13 +89,20 @@ export const findNearbyArtifact = ({ dataStream }: ArtifactToolDeps) =>
         progress: 1,
       });
 
+      dataStream.write({ type: "data-facilityMapDelta", data: payload, transient: true } as never);
+
+      if (session?.user?.id) {
+        await saveDocument({ id, title, content: payload, kind: "facility-map", userId: session.user.id });
+      }
+
+      emitDocumentFinish(dataStream);
       return result;
     },
   });
 
-// ── findMedicalDeserts → MedicalDesertArtifact ──────────────────────
+// ── findMedicalDeserts → medical-desert ─────────────────────────────
 
-export const findMedicalDesertsArtifact = ({ dataStream }: ArtifactToolDeps) =>
+export const findMedicalDesertsArtifact = ({ dataStream, session }: ArtifactToolDeps) =>
   tool({
     description:
       rawFindMedicalDeserts.description +
@@ -124,25 +129,9 @@ export const findMedicalDesertsArtifact = ({ dataStream }: ArtifactToolDeps) =>
         ),
     }),
     execute: async (params, opts) => {
-      const art = MedicalDesertArtifact.stream(
-        {
-          title: `Medical deserts: ${params.service}`,
-          service: params.service,
-          thresholdKm: params.thresholdKm ?? 100,
-          totalProviders: 0,
-          providers: [],
-          desertZones: [],
-          providerIsochrones: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
-
-      await art.update({ stage: "analyzing", progress: 0.3 } as Record<
-        string,
-        unknown
-      >);
+      const id = generateUUID();
+      const initialTitle = `Medical deserts: ${params.service}`;
+      emitDocumentOpen(dataStream, "medical-desert", id, initialTitle);
 
       const rawResult = await rawFindMedicalDeserts.execute?.(
         { service: params.service, thresholdKm: params.thresholdKm },
@@ -152,12 +141,12 @@ export const findMedicalDesertsArtifact = ({ dataStream }: ArtifactToolDeps) =>
       const result = rawResult as any;
 
       if (result.error) {
-        await art.error(result.error);
+        emitDocumentFinish(dataStream);
         return result;
       }
 
       if (result.status === "NATIONAL_GAP") {
-        await art.complete({
+        const payload = JSON.stringify({
           title: `National gap: ${params.service}`,
           service: params.service,
           thresholdKm: params.thresholdKm ?? 100,
@@ -168,6 +157,14 @@ export const findMedicalDesertsArtifact = ({ dataStream }: ArtifactToolDeps) =>
           stage: "complete",
           progress: 1,
         });
+
+        dataStream.write({ type: "data-medicalDesertDelta", data: payload, transient: true } as never);
+
+        if (session?.user?.id) {
+          await saveDocument({ id, title: `National gap: ${params.service}`, content: payload, kind: "medical-desert", userId: session.user.id });
+        }
+
+        emitDocumentFinish(dataStream);
         return result;
       }
 
@@ -183,9 +180,6 @@ export const findMedicalDesertsArtifact = ({ dataStream }: ArtifactToolDeps) =>
       }> = [];
 
       if (params.showTravelTime) {
-        await art.update({ progress: 0.6 } as Record<string, unknown>);
-
-        // Query providers with coordinates for isochrone lookup
         const providerRows = await db
           .select({
             name: facilities.name,
@@ -228,63 +222,61 @@ export const findMedicalDesertsArtifact = ({ dataStream }: ArtifactToolDeps) =>
         );
       }
 
-      await art.complete({
-        title: `${result.desertZoneCount} desert zones for ${params.service}`,
+      const title = `${result.desertZoneCount as number} desert zones for ${params.service}`;
+      const payload = JSON.stringify({
+        title,
         service: result.service,
         thresholdKm: result.thresholdKm,
         totalProviders: result.totalProviders,
         providers: [],
-        desertZones: result.desertZones.map((dz: Record<string, unknown>) => ({
+        desertZones: (result.desertZones as Record<string, unknown>[]).map((dz) => ({
           city: dz.city as string,
           nearestProvider: (dz.nearestProvider as string) ?? null,
           distanceKm: dz.distanceKm as number,
-          coordinates: dz.coordinates as {
-            lat: number;
-            lng: number;
-          },
+          coordinates: dz.coordinates as { lat: number; lng: number },
         })),
         providerIsochrones,
         stage: "complete",
         progress: 1,
       });
 
+      dataStream.write({ type: "data-medicalDesertDelta", data: payload, transient: true } as never);
+
+      if (session?.user?.id) {
+        await saveDocument({ id, title, content: payload, kind: "medical-desert", userId: session.user.id });
+      }
+
+      emitDocumentFinish(dataStream);
       return result;
     },
   });
 
-// ── getStats → StatsDashboardArtifact ───────────────────────────────
+// ── getStats → stats-dashboard ──────────────────────────────────────
 
-export const getStatsArtifact = ({ dataStream }: ArtifactToolDeps) =>
+export const getStatsArtifact = ({ dataStream, session }: ArtifactToolDeps) =>
   tool({
     description: rawGetStats.description,
     inputSchema: rawGetStats.inputSchema,
     execute: async (params, opts) => {
-      const art = StatsDashboardArtifact.stream(
-        {
-          title: "Healthcare Statistics",
-          groupBy: params.groupBy,
-          stats: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
+      const id = generateUUID();
+      const initialTitle = "Healthcare Statistics";
+      emitDocumentOpen(dataStream, "stats-dashboard", id, initialTitle);
 
       const rawResult = await rawGetStats.execute?.(params, opts);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = rawResult as any;
 
       if (result.error) {
-        await art.error(result.error);
+        emitDocumentFinish(dataStream);
         return result;
       }
 
-      const stats = result.stats ?? [];
+      const stats = (result.stats as Record<string, unknown>[]) ?? [];
       const title = params.groupBy
         ? `Stats by ${params.groupBy}`
         : "Healthcare Overview";
 
-      await art.complete({
+      const payload = JSON.stringify({
         title,
         groupBy: params.groupBy,
         totalFacilities: result.totalFacilities,
@@ -294,53 +286,43 @@ export const getStatsArtifact = ({ dataStream }: ArtifactToolDeps) =>
         progress: 1,
       });
 
+      dataStream.write({ type: "data-statsDashboardDelta", data: payload, transient: true } as never);
+
+      if (session?.user?.id) {
+        await saveDocument({ id, title, content: payload, kind: "stats-dashboard", userId: session.user.id });
+      }
+
+      emitDocumentFinish(dataStream);
       return result;
     },
   });
 
-// ── planMission → MissionPlanArtifact ───────────────────────────────
+// ── planMission → mission-plan ──────────────────────────────────────
 
-export const planMissionArtifact = ({ dataStream }: ArtifactToolDeps) =>
+export const planMissionArtifact = ({ dataStream, session }: ArtifactToolDeps) =>
   tool({
     description: rawPlanMission.description,
     inputSchema: rawPlanMission.inputSchema,
     execute: async (params, opts) => {
-      const art = MissionPlanArtifact.stream(
-        {
-          title: `Mission plan: ${params.specialty}`,
-          volunteerProfile: {
-            specialty: params.specialty,
-            duration: params.duration,
-            preference: params.preference,
-          },
-          analysis: "",
-          recommendations: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
-
-      await art.update({ stage: "planning", progress: 0.3 } as Record<
-        string,
-        unknown
-      >);
+      const id = generateUUID();
+      const initialTitle = `Mission plan: ${params.specialty}`;
+      emitDocumentOpen(dataStream, "mission-plan", id, initialTitle);
 
       const rawResult = await rawPlanMission.execute?.(params, opts);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = rawResult as any;
 
       if (result.error) {
-        await art.error(result.error);
+        emitDocumentFinish(dataStream);
         return result;
       }
 
-      await art.complete({
+      const payload = JSON.stringify({
         title: `Mission plan: ${params.specialty}`,
         volunteerProfile: result.volunteerProfile,
         analysis: result.analysis,
-        recommendations: result.recommendations.map(
-          (r: Record<string, unknown>) => ({
+        recommendations: (result.recommendations as Record<string, unknown>[]).map(
+          (r) => ({
             priority: r.priority as string,
             region: r.region as string,
             reason: r.reason as string,
@@ -352,13 +334,20 @@ export const planMissionArtifact = ({ dataStream }: ArtifactToolDeps) =>
         progress: 1,
       });
 
+      dataStream.write({ type: "data-missionPlanDelta", data: payload, transient: true } as never);
+
+      if (session?.user?.id) {
+        await saveDocument({ id, title: initialTitle, content: payload, kind: "mission-plan", userId: session.user.id });
+      }
+
+      emitDocumentFinish(dataStream);
       return result;
     },
   });
 
-// ── getHeatmap → HeatmapArtifact ────────────────────────────────────
+// ── getHeatmap → heatmap ────────────────────────────────────────────
 
-export const getHeatmapArtifact = ({ dataStream }: ArtifactToolDeps) =>
+export const getHeatmapArtifact = ({ dataStream, session }: ArtifactToolDeps) =>
   tool({
     description:
       'Generate an interactive heatmap of healthcare facility density. Use for "show me a heatmap of facilities", "where are healthcare resources concentrated?", "visualize facility density".',
@@ -369,16 +358,9 @@ export const getHeatmapArtifact = ({ dataStream }: ArtifactToolDeps) =>
         .describe("Weight heatmap by facility count, bed capacity, or doctor count"),
     }),
     execute: async ({ weightBy }) => {
-      const art = HeatmapArtifact.stream(
-        {
-          title: "Healthcare Facility Heatmap",
-          weightMetric: weightBy,
-          facilities: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
+      const id = generateUUID();
+      const initialTitle = "Healthcare Facility Heatmap";
+      emitDocumentOpen(dataStream, "heatmap", id, initialTitle);
 
       try {
         const rows = await db
@@ -412,13 +394,22 @@ export const getHeatmapArtifact = ({ dataStream }: ArtifactToolDeps) =>
           doctors: "Doctor Count",
         };
 
-        await art.complete({
-          title: `Healthcare Heatmap — ${metricLabels[weightBy]}`,
+        const title = `Healthcare Heatmap — ${metricLabels[weightBy]}`;
+        const payload = JSON.stringify({
+          title,
           weightMetric: weightBy,
           facilities: points,
           stage: "complete",
           progress: 1,
         });
+
+        dataStream.write({ type: "data-heatmapDelta", data: payload, transient: true } as never);
+
+        if (session?.user?.id) {
+          await saveDocument({ id, title, content: payload, kind: "heatmap", userId: session.user.id });
+        }
+
+        emitDocumentFinish(dataStream);
 
         return {
           totalFacilities: points.length,
@@ -428,16 +419,17 @@ export const getHeatmapArtifact = ({ dataStream }: ArtifactToolDeps) =>
       } catch (error: unknown) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        await art.error(message);
+        emitDocumentFinish(dataStream);
         return { error: `Heatmap failed: ${message}` };
       }
     },
   });
 
-// ── getRegionChoropleth → RegionChoroplethArtifact ──────────────────
+// ── getRegionChoropleth → region-choropleth ─────────────────────────
 
 export const getRegionChoroplethArtifact = ({
   dataStream,
+  session,
 }: ArtifactToolDeps) =>
   tool({
     description:
@@ -455,16 +447,9 @@ export const getRegionChoroplethArtifact = ({
         .describe("Metric to visualize by region"),
     }),
     execute: async ({ metric }) => {
-      const art = RegionChoroplethArtifact.stream(
-        {
-          title: "Regional Healthcare Comparison",
-          metric,
-          regions: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
+      const id = generateUUID();
+      const initialTitle = "Regional Healthcare Comparison";
+      emitDocumentOpen(dataStream, "region-choropleth", id, initialTitle);
 
       try {
         const stats = await db
@@ -536,8 +521,9 @@ export const getRegionChoroplethArtifact = ({
             };
           });
 
-        await art.complete({
-          title: `${metricLabels[metric]} by Region`,
+        const title = `${metricLabels[metric]} by Region`;
+        const payload = JSON.stringify({
+          title,
           metric,
           metricLabel: metricLabels[metric],
           regions,
@@ -545,20 +531,29 @@ export const getRegionChoroplethArtifact = ({
           progress: 1,
         });
 
+        dataStream.write({ type: "data-regionChoroplethDelta", data: payload, transient: true } as never);
+
+        if (session?.user?.id) {
+          await saveDocument({ id, title, content: payload, kind: "region-choropleth", userId: session.user.id });
+        }
+
+        emitDocumentFinish(dataStream);
+
         return { metric, regions };
       } catch (error: unknown) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        await art.error(message);
+        emitDocumentFinish(dataStream);
         return { error: `Choropleth failed: ${message}` };
       }
     },
   });
 
-// ── getAccessibilityMap → AccessibilityMapArtifact ──────────────────
+// ── getAccessibilityMap → accessibility-map ─────────────────────────
 
 export const getAccessibilityMapArtifact = ({
   dataStream,
+  session,
 }: ArtifactToolDeps) =>
   tool({
     description:
@@ -622,33 +617,18 @@ export const getAccessibilityMapArtifact = ({
 
       const center = { lat: centerLat, lng: centerLng };
 
-      const art = AccessibilityMapArtifact.stream(
-        {
-          title: facilityName
-            ? `Travel time from ${facilityName}`
-            : "Travel Time Accessibility",
-          center,
-          facilityName,
-          profile,
-          isochrones: [],
-          reachableFacilities: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
+      const id = generateUUID();
+      const initialTitle = facilityName
+        ? `Travel time from ${facilityName}`
+        : "Travel Time Accessibility";
+      emitDocumentOpen(dataStream, "accessibility-map", id, initialTitle);
 
       try {
-        await art.update({ stage: "computing", progress: 0.2 } as Record<
-          string,
-          unknown
-        >);
-
         // Fetch isochrone polygons from ORS
         const isoResult = await fetchIsochrones(center, profile, rangesMinutes);
 
         if (isoResult.error || !isoResult.features) {
-          await art.error(isoResult.error ?? "No isochrone features returned");
+          emitDocumentFinish(dataStream);
           return { error: isoResult.error ?? "No isochrone features returned" };
         }
 
@@ -657,12 +637,8 @@ export const getAccessibilityMapArtifact = ({
           geojson: f as unknown as Record<string, unknown>,
         }));
 
-        await art.update({ progress: 0.6 } as Record<string, unknown>);
-
         // Find nearby facilities within a bounding box of the largest ring
-        // Rough approximation: 1 degree lat ≈ 111km
         const maxRangeMin = Math.max(...rangesMinutes);
-        // Estimate max radius: driving ~80km/h → maxRangeMin/60 * 80 = km
         const maxRadiusKm = (maxRangeMin / 60) * 80;
         const latDelta = maxRadiusKm / 111;
         const lngDelta = maxRadiusKm / (111 * Math.cos((center.lat * Math.PI) / 180));
@@ -686,18 +662,13 @@ export const getAccessibilityMapArtifact = ({
           )
           .limit(100);
 
-        // Classify each facility into the appropriate ring using point-in-ring
-        // approximation (Haversine distance → closest matching ring)
         const reachableFacilities = nearbyRows
           .filter((r) => r.lat && r.lng)
           .map((r) => {
             const distKm = haversineKm(center.lat, center.lng, r.lat as number, r.lng as number);
-            // Estimate travel minutes from straight-line distance
-            // Driving: ~50km/h effective (roads aren't straight)
             const estimatedMinutes = Math.round((distKm / 50) * 60);
-            // Find which ring this facility falls within
             const sortedRanges = [...rangesMinutes].sort((a, b) => a - b);
-            const ring = sortedRanges.find((r) => estimatedMinutes <= r) ?? sortedRanges.at(-1) ?? maxRangeMin;
+            const ring = sortedRanges.find((rng) => estimatedMinutes <= rng) ?? sortedRanges.at(-1) ?? maxRangeMin;
 
             return {
               id: r.id,
@@ -710,14 +681,11 @@ export const getAccessibilityMapArtifact = ({
             };
           })
           .filter((f) => f.travelTimeMinutes <= maxRangeMin)
-          // Exclude the origin facility itself
           .filter((f) => !(facilityId && f.id === facilityId))
           .sort((a, b) => a.travelTimeMinutes - b.travelTimeMinutes);
 
-        await art.complete({
-          title: facilityName
-            ? `Travel time from ${facilityName}`
-            : "Travel Time Accessibility",
+        const payload = JSON.stringify({
+          title: initialTitle,
           center,
           facilityName,
           profile,
@@ -726,6 +694,14 @@ export const getAccessibilityMapArtifact = ({
           stage: "complete",
           progress: 1,
         });
+
+        dataStream.write({ type: "data-accessibilityMapDelta", data: payload, transient: true } as never);
+
+        if (session?.user?.id) {
+          await saveDocument({ id, title: initialTitle, content: payload, kind: "accessibility-map", userId: session.user.id });
+        }
+
+        emitDocumentFinish(dataStream);
 
         return {
           center,
@@ -737,7 +713,7 @@ export const getAccessibilityMapArtifact = ({
       } catch (error: unknown) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        await art.error(message);
+        emitDocumentFinish(dataStream);
         return { error: `Accessibility map failed: ${message}` };
       }
     },
@@ -763,10 +739,11 @@ function haversineKm(
   return R * c;
 }
 
-// ── getDataQualityMap → DataQualityMapArtifact ──────────────────────
+// ── getDataQualityMap → data-quality-map ────────────────────────────
 
 export const getDataQualityMapArtifact = ({
   dataStream,
+  session,
 }: ArtifactToolDeps) =>
   tool({
     description:
@@ -778,15 +755,9 @@ export const getDataQualityMapArtifact = ({
         .describe("Optional region filter"),
     }),
     execute: async ({ region }) => {
-      const art = DataQualityMapArtifact.stream(
-        {
-          title: "Data Quality Overview",
-          facilities: [],
-          stage: "loading",
-          progress: 0,
-        },
-        dataStream
-      );
+      const id = generateUUID();
+      const initialTitle = "Data Quality Overview";
+      emitDocumentOpen(dataStream, "data-quality-map", id, initialTitle);
 
       try {
         const conditions = [
@@ -869,15 +840,25 @@ export const getDataQualityMapArtifact = ({
         ).length;
         const sparse = points.filter((p) => p.qualityScore < 0.4).length;
 
-        await art.complete({
-          title: region
-            ? `Data Quality — ${region}`
-            : "Data Quality Overview",
+        const title = region
+          ? `Data Quality — ${region}`
+          : "Data Quality Overview";
+
+        const payload = JSON.stringify({
+          title,
           facilities: points,
           summary: { complete, partial, sparse },
           stage: "complete",
           progress: 1,
         });
+
+        dataStream.write({ type: "data-dataQualityMapDelta", data: payload, transient: true } as never);
+
+        if (session?.user?.id) {
+          await saveDocument({ id, title, content: payload, kind: "data-quality-map", userId: session.user.id });
+        }
+
+        emitDocumentFinish(dataStream);
 
         return {
           totalFacilities: points.length,
@@ -894,7 +875,7 @@ export const getDataQualityMapArtifact = ({
       } catch (error: unknown) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        await art.error(message);
+        emitDocumentFinish(dataStream);
         return { error: `Data quality map failed: ${message}` };
       }
     },

@@ -267,25 +267,25 @@ export async function createOrchestratorAgent({
     instructions,
     tools: {
       // --- Direct tools (simple or need session/dataStream) ---
-      // --- Artifact-enhanced geospatial tools (stream directly to canvas) ---
-      findNearby: createCached({ ttl: 30 * 60 * 1000 })(findNearbyArtifact({ dataStream }), {
+      // --- Artifact-enhanced geospatial tools (stream to document artifact panel) ---
+      findNearby: createCached({ ttl: 30 * 60 * 1000 })(findNearbyArtifact({ dataStream, session }), {
         ttl: 30 * 60 * 1000,
       }),
-      findMedicalDeserts: createCached({ ttl: 60 * 60 * 1000 })(findMedicalDesertsArtifact({ dataStream }), {
+      findMedicalDeserts: createCached({ ttl: 60 * 60 * 1000 })(findMedicalDesertsArtifact({ dataStream, session }), {
         ttl: 60 * 60 * 1000,
       }),
-      getStats: createCached({ ttl: 30 * 60 * 1000 })(getStatsArtifact({ dataStream }), {
+      getStats: createCached({ ttl: 30 * 60 * 1000 })(getStatsArtifact({ dataStream, session }), {
         ttl: 30 * 60 * 1000,
       }),
-      planMission: createCached({ ttl: 30 * 60 * 1000 })(planMissionArtifact({ dataStream }), {
+      planMission: createCached({ ttl: 30 * 60 * 1000 })(planMissionArtifact({ dataStream, session }), {
         ttl: 30 * 60 * 1000,
       }),
 
-      // --- New visualization artifact tools ---
-      getHeatmap: getHeatmapArtifact({ dataStream }),
-      getRegionChoropleth: getRegionChoroplethArtifact({ dataStream }),
-      getDataQualityMap: getDataQualityMapArtifact({ dataStream }),
-      getAccessibilityMap: getAccessibilityMapArtifact({ dataStream }),
+      // --- Visualization artifact tools ---
+      getHeatmap: getHeatmapArtifact({ dataStream, session }),
+      getRegionChoropleth: getRegionChoroplethArtifact({ dataStream, session }),
+      getDataQualityMap: getDataQualityMapArtifact({ dataStream, session }),
+      getAccessibilityMap: getAccessibilityMapArtifact({ dataStream, session }),
 
       // --- Document artifact tools (text reports, code, sheets) ---
       createDocument: createDocument({ session, dataStream }),

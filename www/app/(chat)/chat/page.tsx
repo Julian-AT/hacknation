@@ -13,7 +13,6 @@ export default function Page() {
   );
 }
 
-import { ArtifactStreamProvider } from "@/components/artifact-stream-provider";
 import { VFProvider } from "@/lib/vf-context";
 
 async function NewChatPage() {
@@ -22,19 +21,17 @@ async function NewChatPage() {
   const id = generateUUID();
 
   return (
-    <ArtifactStreamProvider>
-      <VFProvider>
-        <Chat
-          autoResume={false}
-          id={id}
-          initialChatModel={modelIdFromCookie?.value || DEFAULT_CHAT_MODEL}
-          initialMessages={[]}
-          initialVisibilityType="private"
-          isReadonly={false}
-          key={id}
-        />
-        <DataStreamHandler />
-      </VFProvider>
-    </ArtifactStreamProvider>
+    <VFProvider>
+      <Chat
+        autoResume={false}
+        id={id}
+        initialChatModel={modelIdFromCookie?.value || DEFAULT_CHAT_MODEL}
+        initialMessages={[]}
+        initialVisibilityType="private"
+        isReadonly={false}
+        key={id}
+      />
+      <DataStreamHandler />
+    </VFProvider>
   );
 }
