@@ -253,3 +253,100 @@ function formatDuration(minutes: number): string {
   }
   return `${String(hrs)}h ${String(mins)}min`;
 }
+
+// ── Isochrone API ────────────────────────────────────────────────────
+
+/** GeoJSON Feature from ORS isochrone response */
+export interface IsochroneFeature {
+  type: "Feature";
+  geometry: {
+    type: "Polygon";
+    coordinates: number[][][];
+  };
+  properties: {
+    group_index: number;
+    value: number; // seconds
+    center: [number, number]; // [lng, lat]
+    area?: number; // m²
+    reachfactor?: number;
+  };
+}
+
+interface ORSIsochroneResponse {
+  type: "FeatureCollection";
+  features: IsochroneFeature[];
+}
+
+/**
+ * Fetch isochrone polygons from OpenRouteService.
+ *
+ * Returns GeoJSON polygon features representing the area reachable within
+ * the given time ranges from a center point. Each feature's `properties.value`
+ * contains the range in seconds.
+ *
+ * @param center  - Origin point { lat, lng }
+ * @param profile - Transport mode (default: "driving-car")
+ * @param rangesMinutes - Array of time ranges in minutes (default: [30, 60, 120])
+ * @returns Array of GeoJSON Features (sorted largest-first for correct rendering order)
+ */
+export async function fetchIsochrones(
+  center: { lat: number; lng: number },
+  profile: "driving-car" | "foot-walking" | "cycling-regular" = "driving-car",
+  rangesMinutes: number[] = [30, 60, 120]
+): Promise<
+  | { features: IsochroneFeature[]; error?: never }
+  | { features?: never; error: string }
+> {
+  const apiKey = process.env.ORS_API_KEY;
+  if (!apiKey) {
+    return {
+      error:
+        "ORS_API_KEY environment variable is not set. Sign up free at https://openrouteservice.org/dev/#/signup",
+    };
+  }
+
+  // Convert minutes to seconds, sort descending so largest polygon renders first
+  const rangeSeconds = [...rangesMinutes]
+    .sort((a, b) => b - a)
+    .map((m) => m * 60);
+
+  try {
+    const response = await fetch(
+      `${ORS_BASE}/v2/isochrones/${profile}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          locations: [[center.lng, center.lat]],
+          range: rangeSeconds,
+          range_type: "time",
+          attributes: ["area", "reachfactor"],
+        }),
+        signal: AbortSignal.timeout(30_000),
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(
+        `ORS Isochrone API returned ${String(response.status)}: ${text.slice(0, 200)}`
+      );
+    }
+
+    const json = (await response.json()) as ORSIsochroneResponse;
+
+    // Sort features by value descending (largest polygon first)
+    const sorted = [...json.features].sort(
+      (a, b) => b.properties.value - a.properties.value
+    );
+
+    return { features: sorted };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Unknown ORS isochrone error";
+    return { error: `Isochrone fetch failed: ${message}` };
+  }
+}

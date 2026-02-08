@@ -4,6 +4,10 @@
 export {
   findMedicalDesertsArtifact,
   findNearbyArtifact,
+  getAccessibilityMapArtifact,
+  getDataQualityMapArtifact,
+  getHeatmapArtifact,
+  getRegionChoroplethArtifact,
   getStatsArtifact,
   planMissionArtifact,
 } from "./artifact-tools";

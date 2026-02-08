@@ -1,8 +1,8 @@
 "use client";
 
-import { useArtifacts } from "@ai-sdk-tools/artifacts/client";
-import { useChat } from "@ai-sdk-tools/store";
+import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { useArtifactStream } from "./artifact-stream-provider";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -61,7 +61,9 @@ export function Chat({
   } = useVF();
 
   // Track whether the artifact canvas should be visible
-  const [{ current: activeArtifact }] = useArtifacts();
+  const { state: artifactState, processDataPart, reset: resetArtifacts } =
+    useArtifactStream();
+  const activeArtifact = artifactState.current;
   const [canvasDismissed, setCanvasDismissed] = useState(false);
   const isCanvasVisible = activeArtifact !== null && !canvasDismissed;
 
@@ -84,6 +86,9 @@ export function Chat({
     setMapFacilities([]);
     setMapVisible(false);
 
+    // Reset canvas artifact state
+    resetArtifacts();
+
     // Reset old artifact SWR state
     if (isNewChat) {
       mutate(
@@ -103,7 +108,7 @@ export function Chat({
 
     // Reset canvas dismissed state
     setCanvasDismissed(false);
-  }, [isNewChat, mutate, setDataStream, setMapFacilities, setMapVisible]);
+  }, [isNewChat, mutate, resetArtifacts, setDataStream, setMapFacilities, setMapVisible]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -180,7 +185,10 @@ export function Chat({
       },
     }),
     onData: (dataPart) => {
-      setDataStream((ds) => (ds ? [...ds, dataPart as any] : []));
+      // Route canvas-artifact events to the artifact stream provider
+      processDataPart(dataPart as { type: string; data?: unknown });
+      // Forward all parts to the document artifact handler
+      setDataStream((ds) => (ds ? [...ds, dataPart as never] : []));
     },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));

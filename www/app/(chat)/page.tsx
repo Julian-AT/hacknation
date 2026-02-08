@@ -13,7 +13,7 @@ export default function Page() {
   );
 }
 
-import { Provider as ChatStoreProvider } from "@ai-sdk-tools/store";
+import { ArtifactStreamProvider } from "@/components/artifact-stream-provider";
 import { VFProvider } from "@/lib/vf-context";
 
 async function NewChatPage() {
@@ -22,7 +22,7 @@ async function NewChatPage() {
   const id = generateUUID();
 
   return (
-    <ChatStoreProvider key={id}>
+    <ArtifactStreamProvider>
       <VFProvider>
         <Chat
           autoResume={false}
@@ -35,6 +35,6 @@ async function NewChatPage() {
         />
         <DataStreamHandler />
       </VFProvider>
-    </ChatStoreProvider>
+    </ArtifactStreamProvider>
   );
 }

@@ -1,10 +1,15 @@
 "use client";
 
-import type { ArtifactData } from "@ai-sdk-tools/artifacts";
-import { useArtifacts } from "@ai-sdk-tools/artifacts/client";
+import type { ArtifactData } from "@/lib/ai/artifacts/artifact";
+import { useArtifactStream } from "./artifact-stream-provider";
+import { AccessibilityMapRenderer } from "./artifacts/accessibility-map";
+import { DataQualityMapRenderer } from "./artifacts/data-quality-map";
 import { FacilityMapRenderer } from "./artifacts/facility-map";
+import { HeatmapRenderer } from "./artifacts/heatmap";
 import { MedicalDesertRenderer } from "./artifacts/medical-desert";
 import { MissionPlanRenderer } from "./artifacts/mission-plan";
+import { RegionChoroplethRenderer } from "./artifacts/region-choropleth";
+import { SpecialtyMapRenderer } from "./artifacts/specialty-map";
 import { StatsDashboardRenderer } from "./artifacts/stats-dashboard";
 
 /**
@@ -12,10 +17,11 @@ import { StatsDashboardRenderer } from "./artifacts/stats-dashboard";
  * Switches on artifact type to display the appropriate visualization.
  */
 export function ArtifactCanvas({ onClose }: { onClose?: () => void }) {
-  const [{ current, types }] = useArtifacts();
+  const { state } = useArtifactStream();
 
   // Show the most recently streamed artifact
-  const artifact = current;
+  const artifact = state.current;
+  const { types } = state;
 
   if (!artifact) {
     return (
@@ -138,6 +144,54 @@ function ArtifactRouter({ artifact }: { artifact: ArtifactData<unknown> }) {
           data={
             artifact.payload as Parameters<
               typeof MissionPlanRenderer
+            >[0]["data"]
+          }
+        />
+      );
+    case "healthcare-heatmap":
+      return (
+        <HeatmapRenderer
+          data={
+            artifact.payload as Parameters<typeof HeatmapRenderer>[0]["data"]
+          }
+        />
+      );
+    case "region-choropleth":
+      return (
+        <RegionChoroplethRenderer
+          data={
+            artifact.payload as Parameters<
+              typeof RegionChoroplethRenderer
+            >[0]["data"]
+          }
+        />
+      );
+    case "specialty-map":
+      return (
+        <SpecialtyMapRenderer
+          data={
+            artifact.payload as Parameters<
+              typeof SpecialtyMapRenderer
+            >[0]["data"]
+          }
+        />
+      );
+    case "data-quality-map":
+      return (
+        <DataQualityMapRenderer
+          data={
+            artifact.payload as Parameters<
+              typeof DataQualityMapRenderer
+            >[0]["data"]
+          }
+        />
+      );
+    case "accessibility-map":
+      return (
+        <AccessibilityMapRenderer
+          data={
+            artifact.payload as Parameters<
+              typeof AccessibilityMapRenderer
             >[0]["data"]
           }
         />
