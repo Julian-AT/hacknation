@@ -4,11 +4,12 @@ import { detectAnomalies } from "../tools/detectAnomalies";
 import { crossValidateClaims } from "../tools/medical/crossValidateClaims";
 import { classifyServices } from "../tools/medical/classifyServices";
 import { validateEnrichment } from "../tools/medical/validateEnrichment";
+import { analyzeTextEvidence } from "../tools/medical/analyzeTextEvidence";
 import { medicalReasoningAgentPrompt } from "./prompts";
 
 /**
  * Medical Reasoning Agent — validates data, detects anomalies, classifies services.
- * Tools: detectAnomalies, crossValidateClaims, classifyServices, validateEnrichment
+ * Tools: detectAnomalies, crossValidateClaims, classifyServices, validateEnrichment, analyzeTextEvidence
  */
 export const medicalReasoningAgent = new ToolLoopAgent({
   model: getLanguageModel("google/gemini-2.5-flash-lite"),
@@ -18,6 +19,7 @@ export const medicalReasoningAgent = new ToolLoopAgent({
     crossValidateClaims,
     classifyServices,
     validateEnrichment,
+    analyzeTextEvidence,
   },
   stopWhen: stepCountIs(6),
 });

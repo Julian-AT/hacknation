@@ -6,42 +6,19 @@ import { tool } from "ai";
 import { createToolLogger } from "../debug";
 import { withTimeout, DB_QUERY_TIMEOUT_MS } from "../safeguards";
 
-/**
- * Medical knowledge base: procedure -> minimum required equipment
- */
-const PROCEDURE_EQUIPMENT_MAP: Record<string, string[]> = {
-  "cataract surgery": [
-    "operating microscope",
-    "phaco",
-    "intraocular lens",
-    "IOL",
-  ],
-  neurosurgery: ["CT", "MRI", "ICU", "operating room"],
-  dialysis: ["dialysis machine", "hemodialysis"],
-  "cardiac surgery": [
-    "cardiac bypass",
-    "heart-lung machine",
-    "ICU",
-    "echocardiography",
-  ],
-  endoscopy: ["endoscope", "endoscopy"],
-  radiology: ["X-ray", "CT", "MRI", "ultrasound"],
-  laparoscopy: ["laparoscope", "laparoscopic"],
-};
+import { MEDICAL_KNOWLEDGE } from "../../../medical-knowledge";
 
 /**
- * Minimum infrastructure thresholds for specialties
+ * Procedure → Equipment map drawn from the centralized medical knowledge base.
+ * Covers VF Agent questions 3.1 (completeness assumption) and 3.4.
  */
-const SPECIALTY_THRESHOLDS: Record<
-  string,
-  { minBeds: number; minDoctors: number }
-> = {
-  neurosurgery: { minBeds: 100, minDoctors: 5 },
-  "cardiac surgery": { minBeds: 50, minDoctors: 5 },
-  "organ transplant": { minBeds: 100, minDoctors: 10 },
-  oncology: { minBeds: 50, minDoctors: 3 },
-  neonatology: { minBeds: 30, minDoctors: 3 },
-};
+const PROCEDURE_EQUIPMENT_MAP = MEDICAL_KNOWLEDGE.procedureRequirements;
+
+/**
+ * Specialty → Infrastructure thresholds drawn from centralized knowledge base.
+ * Covers VF Agent question 4.6 (subspecialty-infrastructure mismatch).
+ */
+const SPECIALTY_THRESHOLDS = MEDICAL_KNOWLEDGE.specialtyInfrastructure;
 
 type ValidationResult = {
   facilityId: number;
@@ -152,7 +129,7 @@ export const crossValidateClaims = tool({
           }
         }
 
-        // 2. Specialty-Infrastructure validation
+        // 2. Specialty-Infrastructure validation (Q4.6)
         if (
           validationType === "all" ||
           validationType === "specialty_infrastructure"
@@ -177,6 +154,18 @@ export const crossValidateClaims = tool({
                 issues.push(
                   `${doctors} doctors (minimum ${thresholds.minDoctors} expected)`
                 );
+              }
+
+              // Check required equipment for this specialty
+              if (thresholds.requiredEquipment && equipText.length > 0) {
+                const missingEquipment = thresholds.requiredEquipment.filter(
+                  (eq) => !equipText.includes(eq.toLowerCase())
+                );
+                if (missingEquipment.length === thresholds.requiredEquipment.length) {
+                  issues.push(
+                    `none of the required equipment found (${thresholds.requiredEquipment.join(", ")})`
+                  );
+                }
               }
 
               if (issues.length > 0) {

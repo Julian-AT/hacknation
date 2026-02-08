@@ -3,11 +3,12 @@ import { getLanguageModel } from "../providers";
 import { firecrawlSearch } from "../tools/web/firecrawl-search";
 import { firecrawlScrape } from "../tools/web/firecrawl-scrape";
 import { firecrawlExtract } from "../tools/web/firecrawl-extract";
+import { corroborateClaims } from "../tools/web/corroborateClaims";
 import { webResearchAgentPrompt } from "./prompts";
 
 /**
  * Web Research Agent — searches and scrapes the web for real-time data.
- * Tools: firecrawlSearch, firecrawlScrape, firecrawlExtract
+ * Tools: firecrawlSearch, firecrawlScrape, firecrawlExtract, corroborateClaims
  */
 export const webResearchAgent = new ToolLoopAgent({
   model: getLanguageModel("google/gemini-2.5-flash-lite"),
@@ -16,6 +17,7 @@ export const webResearchAgent = new ToolLoopAgent({
     firecrawlSearch,
     firecrawlScrape,
     firecrawlExtract,
+    corroborateClaims,
   },
   stopWhen: stepCountIs(6),
 });

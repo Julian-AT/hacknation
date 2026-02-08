@@ -2,6 +2,12 @@
 
 import { FileText, ExternalLink } from "lucide-react";
 import { useState } from "react";
+import {
+  Sources,
+  SourcesTrigger,
+  SourcesContent,
+  Source,
+} from "@/components/ai-elements/sources";
 
 interface WebScrapeResultProps {
   result: Record<string, unknown>;
@@ -67,6 +73,17 @@ export function WebScrapeResult({ result }: WebScrapeResultProps) {
               {isExpanded ? "Show less" : "Show more"}
             </button>
           )}
+        </div>
+      )}
+
+      {url && (
+        <div className="border-t border-border px-3 py-2">
+          <Sources>
+            <SourcesTrigger count={1} />
+            <SourcesContent>
+              <Source href={url} title={title ?? url} />
+            </SourcesContent>
+          </Sources>
         </div>
       )}
     </div>

@@ -141,7 +141,7 @@ export async function createOrchestratorAgent({
       // --- Subagent delegation tools (for complex multi-step analysis) ---
       investigateData: createDelegationTool({
         description:
-          "Query and analyze healthcare facility data from the database. Use for counts, aggregations, SQL queries, facility lookups, semantic search, and data filtering.",
+          "Query and analyze healthcare facility data from the database. Use for counts, aggregations, SQL queries, facility lookups, semantic search, data filtering, AND Ghana population/demographics/WHO benchmarks (via getDemographics tool). Use for demand analysis, unmet needs, and benchmarking questions.",
         agent: databaseAgent,
       }),
 
@@ -153,13 +153,13 @@ export async function createOrchestratorAgent({
 
       medicalReasoning: createDelegationTool({
         description:
-          "Apply medical expertise to validate facility data. Use for cross-validating claims against equipment/infrastructure, detecting anomalies, and classifying service types (permanent vs itinerant vs referral).",
+          "Apply medical expertise to validate facility data. Use for: cross-validating procedure claims against equipment (60+ mappings), detecting anomalies (infrastructure mismatches, ratio checks, subspecialty-size mismatches, procedure breadth), classifying service types (permanent vs itinerant vs referral), detecting individual-tied services, surgical camp evidence, weak operational signals, and deep text evidence analysis (temporary equipment, equipment age, NGO substitution).",
         agent: medicalReasoningAgent,
       }),
 
       researchWeb: createDelegationTool({
         description:
-          "Search the web for real-time external data. Use for WHO statistics, GHS reports, disease prevalence, healthcare workforce data, government policies, and any information not in the database.",
+          "Search the web for real-time external data and verify facility claims. Use for WHO statistics, GHS reports, disease prevalence, healthcare workforce data, government policies, multi-source claim corroboration (verifying facility claims across independent web sources), and website quality assessment.",
         agent: webResearchAgent,
       }),
 
