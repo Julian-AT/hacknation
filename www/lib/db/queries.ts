@@ -613,7 +613,11 @@ export async function getChatDocuments({
       .from(chatDocument)
       .where(eq(chatDocument.chatId, chatId))
       .orderBy(asc(chatDocument.createdAt));
-  } catch (_error) {
+  } catch (error) {
+    console.error(
+      "[DB] getChatDocuments failed:",
+      error instanceof Error ? error.message : error
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chat documents"
@@ -650,7 +654,11 @@ export async function saveChatDocument({
       })
       .returning();
     return saved;
-  } catch (_error) {
+  } catch (error) {
+    console.error(
+      "[DB] saveChatDocument failed:",
+      error instanceof Error ? error.message : error
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to save chat document"
@@ -665,7 +673,11 @@ export async function getChatDocumentById({ id }: { id: string }) {
       .from(chatDocument)
       .where(eq(chatDocument.id, id));
     return doc ?? null;
-  } catch (_error) {
+  } catch (error) {
+    console.error(
+      "[DB] getChatDocumentById failed:",
+      error instanceof Error ? error.message : error
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chat document by id"
@@ -679,7 +691,11 @@ export async function deleteChatDocument({ id }: { id: string }) {
       .delete(chatDocument)
       .where(eq(chatDocument.id, id))
       .returning();
-  } catch (_error) {
+  } catch (error) {
+    console.error(
+      "[DB] deleteChatDocument failed:",
+      error instanceof Error ? error.message : error
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete chat document"

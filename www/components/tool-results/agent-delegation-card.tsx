@@ -2,15 +2,18 @@
 
 import {
   BotIcon,
+  CheckCircle2,
   ChevronDownIcon,
+  CircleDot,
   Database,
   Globe,
   HeartPulse,
+  Loader2,
   Map as MapIcon,
   Stethoscope,
   WrenchIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -147,6 +150,72 @@ function extractToolInfo(part: NestedPart): {
   };
 }
 
+/** Compact activity ticker shown outside the collapsible -- always visible */
+function AgentActivityTicker({
+  parts,
+  isRunning,
+}: {
+  parts: NestedPart[];
+  isRunning: boolean;
+}) {
+  const toolParts = useMemo(
+    () =>
+      parts
+        .map((p) => extractToolInfo(p))
+        .filter((t): t is NonNullable<typeof t> => t !== null),
+    [parts]
+  );
+
+  if (toolParts.length === 0 && isRunning) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-muted-foreground">
+        <Loader2 className="size-3 animate-spin" />
+        <span>Initializing agent...</span>
+      </div>
+    );
+  }
+
+  if (toolParts.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5">
+      {toolParts.map((tool) => {
+        const isDone = tool.result !== undefined;
+        const hasError = isDone && "error" in (tool.result ?? {});
+
+        return (
+          <span
+            className="flex items-center gap-1 text-[11px]"
+            key={tool.toolCallId}
+          >
+            {isDone ? (
+              hasError ? (
+                <CircleDot className="size-2.5 text-red-400" />
+              ) : (
+                <CheckCircle2 className="size-2.5 text-green-500" />
+              )
+            ) : (
+              <Loader2 className="size-2.5 animate-spin text-amber-400" />
+            )}
+            <span
+              className={cn(
+                "font-mono",
+                isDone
+                  ? "text-muted-foreground"
+                  : "text-foreground"
+              )}
+            >
+              {tool.toolName}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function AgentNestedParts({ result }: { result: Record<string, unknown> }) {
   const parts = result.parts as NestedPart[] | undefined;
 
@@ -218,19 +287,21 @@ export function AgentDelegationCard({
   const [isOpen, setIsOpen] = useState(false);
   const hasResult = result !== undefined;
 
-  // Auto-collapse when agent completes
-  useEffect(() => {
-    if (hasResult) {
-      setIsOpen(false);
-    }
-  }, [hasResult]);
-
   const config = AGENT_CONFIG[toolName];
   if (!config) {
     return null;
   }
   const Icon = config.icon;
   const task = args.task as string | undefined;
+
+  const nestedParts = (result?.parts as NestedPart[] | undefined) ?? [];
+  const completedTools = nestedParts.filter((p) => {
+    const info = extractToolInfo(p);
+    return info?.result !== undefined;
+  }).length;
+  const totalTools = nestedParts.filter(
+    (p) => extractToolInfo(p) !== null
+  ).length;
 
   return (
     <Card className="not-prose my-2 overflow-hidden bg-muted/50">
@@ -249,26 +320,24 @@ export function AgentDelegationCard({
               <BotIcon className="size-2.5" />
               Agent
             </Badge>
-            <Badge
-              className="hidden font-mono text-[10px] sm:inline-flex"
-              variant="outline"
-            >
-              {config.model}
-            </Badge>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {result ? (
+            {hasResult ? (
               <Badge
-                className="border-green-500/20 bg-green-500/10 text-[10px] text-green-600 dark:text-green-400"
+                className="gap-1 border-green-500/20 bg-green-500/10 text-[10px] text-green-600 dark:text-green-400"
                 variant="outline"
               >
-                Completed
+                <CheckCircle2 className="size-3" />
+                {totalTools > 0
+                  ? `${String(completedTools)} tool${completedTools !== 1 ? "s" : ""}`
+                  : "Done"}
               </Badge>
             ) : (
               <Badge
-                className="animate-pulse border-amber-500/20 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
+                className="animate-pulse gap-1 border-amber-500/20 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
                 variant="outline"
               >
+                <Loader2 className="size-3 animate-spin" />
                 Working...
               </Badge>
             )}
@@ -281,22 +350,28 @@ export function AgentDelegationCard({
           </div>
         </CollapsibleTrigger>
 
-        {/* Task description */}
-        {task && (
+        {/* Always-visible activity ticker -- shows tool calls in real time */}
+        {(nestedParts.length > 0 || !hasResult) && (
           <>
             <Separator />
-            <div className="px-3 py-2">
-              <p className="text-pretty text-[11px] leading-relaxed text-muted-foreground">
-                {task.length > 200 ? `${task.slice(0, 200)}...` : task}
-              </p>
-            </div>
+            <AgentActivityTicker
+              isRunning={!hasResult}
+              parts={nestedParts}
+            />
           </>
         )}
 
-        {/* Expanded: agent details + output */}
+        {/* Expanded: full details + output */}
         <CollapsibleContent className="data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
           <Separator />
           <CardContent className="space-y-3 p-3">
+            {/* Task description */}
+            {task && (
+              <p className="text-pretty text-[11px] leading-relaxed text-muted-foreground">
+                {task.length > 300 ? `${task.slice(0, 300)}...` : task}
+              </p>
+            )}
+
             {/* Agent description */}
             <p className="text-pretty text-[11px] text-muted-foreground">
               {config.description}

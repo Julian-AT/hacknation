@@ -41,6 +41,8 @@ import {
   getStatsArtifact,
   planMissionArtifact,
 } from "../tools/artifact-tools";
+import { createDocument } from "../tools/create-document";
+import { updateDocument } from "../tools/update-document";
 import { databaseAgent } from "./database-agent";
 import { geospatialAgent } from "./geospatial-agent";
 import { healthSearchAgent } from "./health-search-agent";
@@ -233,7 +235,7 @@ function createParallelInvestigateTool() {
  *   - Increased step limit: 15 (from 10) for complex multi-tool workflows
  */
 export async function createOrchestratorAgent({
-  session: _session,
+  session,
   dataStream,
   modelId,
   userId,
@@ -284,6 +286,10 @@ export async function createOrchestratorAgent({
       getRegionChoropleth: getRegionChoroplethArtifact({ dataStream }),
       getDataQualityMap: getDataQualityMapArtifact({ dataStream }),
       getAccessibilityMap: getAccessibilityMapArtifact({ dataStream }),
+
+      // --- Document artifact tools (text reports, code, sheets) ---
+      createDocument: createDocument({ session, dataStream }),
+      updateDocument: updateDocument({ session, dataStream }),
 
       // --- Parallel investigation tool (runs 2-4 sub-agents concurrently) ---
       parallelInvestigate: createParallelInvestigateTool(),

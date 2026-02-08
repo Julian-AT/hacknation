@@ -7,6 +7,9 @@ import {
 } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
 
+const UUID_RE =
+  /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const chatId = searchParams.get("chatId");
@@ -15,6 +18,13 @@ export async function GET(request: Request) {
     return new ChatSDKError(
       "bad_request:api",
       "Parameter chatId is required."
+    ).toResponse();
+  }
+
+  if (!UUID_RE.test(chatId)) {
+    return new ChatSDKError(
+      "bad_request:api",
+      "Parameter chatId must be a valid UUID."
     ).toResponse();
   }
 
