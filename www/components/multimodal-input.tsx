@@ -117,8 +117,11 @@ function PureMultimodalInput({
     ""
   );
 
+  const hasInitialized = useRef(false);
   useEffect(() => {
+    if (hasInitialized.current) return;
     if (textareaRef.current) {
+      hasInitialized.current = true;
       // For new chats (no messages), always start with empty input
       const chatIsNew = messages.length === 0;
       if (chatIsNew) {

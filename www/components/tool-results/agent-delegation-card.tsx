@@ -99,6 +99,15 @@ const AGENT_CONFIG: Record<
     description:
       "Interactive provider discovery — reads medical documents, asks clarifying questions, and searches for matching doctors, hospitals, and clinics.",
   },
+  parallelInvestigate: {
+    label: "Parallel Investigation",
+    icon: BotIcon,
+    color: "text-violet-400",
+    model: "multi-agent",
+    tools: ["database", "geospatial", "medical", "web"],
+    description:
+      "Runs 2-4 specialized sub-agents simultaneously for complex multi-perspective analysis.",
+  },
 };
 
 interface NestedPart {
