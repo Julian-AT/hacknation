@@ -22,7 +22,7 @@ import {
 import type { Session } from "next-auth";
 import { z } from "zod";
 import type { ChatMessage } from "@/lib/types";
-import { cached } from "../cache";
+import { createCached } from "../cache";
 import {
   CAREMAP_MEMORY_TEMPLATE,
   formatWorkingMemory,
@@ -266,16 +266,18 @@ export async function createOrchestratorAgent({
     tools: {
       // --- Direct tools (simple or need session/dataStream) ---
       // --- Artifact-enhanced geospatial tools (stream directly to canvas) ---
-      findNearby: cached(findNearbyArtifact({ dataStream }), {
+      findNearby: createCached({ ttl: 30 * 60 * 1000 })(findNearbyArtifact({ dataStream }), {
         ttl: 30 * 60 * 1000,
       }),
-      findMedicalDeserts: cached(findMedicalDesertsArtifact({ dataStream }), {
+      findMedicalDeserts: createCached({ ttl: 60 * 60 * 1000 })(findMedicalDesertsArtifact({ dataStream }), {
         ttl: 60 * 60 * 1000,
       }),
-      getStats: cached(getStatsArtifact({ dataStream }), {
+      getStats: createCached({ ttl: 30 * 60 * 1000 })(getStatsArtifact({ dataStream }), {
         ttl: 30 * 60 * 1000,
       }),
-      planMission: planMissionArtifact({ dataStream }),
+      planMission: createCached({ ttl: 30 * 60 * 1000 })(planMissionArtifact({ dataStream }), {
+        ttl: 30 * 60 * 1000,
+      }),
 
       // --- New visualization artifact tools ---
       getHeatmap: getHeatmapArtifact({ dataStream }),
@@ -381,11 +383,8 @@ export async function createOrchestratorAgent({
         const userMessages = messages.filter((m) => m.role === "user");
         const lastUserMsg = userMessages.at(-1);
         const userText =
-          lastUserMsg?.parts
-            ?.filter((p): p is { type: "text"; text: string } => p.type === "text")
-            .map((p) => p.text)
-            .join(" ")
-            .toLowerCase() ?? "";
+          lastUserMsg?.content
+            ?.toString().toLowerCase() ?? "";
 
         const isDeploymentQuery =
           /\b(where\s+should\s+we\s+send|where\s+should\s+.+volunteer|deploy|send\s+.+surgeon|send\s+.+doctor|send\s+.+specialist|where\s+should\s+i\s+(go|volunteer))\b/.test(
