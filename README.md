@@ -1,4 +1,4 @@
-# Bridging Medical Deserts: Agentic AI for Healthcare
+<h1 align="center">Bridging Medical Deserts: Agentic AI for Healthcare</h1>
 
 <p align="center">
   <strong>An AI agent system for analyzing healthcare facility capabilities and identifying medical deserts</strong>
