@@ -3,11 +3,12 @@ import { getLanguageModel } from "../providers";
 import { queryDatabase } from "../tools/queryDatabase";
 import { searchFacilities } from "../tools/searchFacilities";
 import { getFacility } from "../tools/getFacility";
+import { getSchema } from "../tools/getSchema";
 import { databaseAgentPrompt } from "./prompts";
 
 /**
  * Database Agent — queries, filters, and analyzes facility data.
- * Tools: queryDatabase, searchFacilities, getFacility
+ * Tools: queryDatabase, searchFacilities, getFacility, getSchema
  */
 export const databaseAgent = new ToolLoopAgent({
   model: getLanguageModel("google/gemini-2.5-flash-lite"),
@@ -16,6 +17,7 @@ export const databaseAgent = new ToolLoopAgent({
     queryDatabase,
     searchFacilities,
     getFacility,
+    getSchema,
   },
   stopWhen: stepCountIs(6),
 });

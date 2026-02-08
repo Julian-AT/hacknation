@@ -56,25 +56,28 @@ which features an interactive 3D globe visualization and rich artifact creation.
 987 healthcare facilities in Ghana (hospitals, clinics, pharmacies, other).
 Data was extracted from web scrapes using LLMs — treat as CLAIMS, not verified facts.
 
-## Database Schema
+## Database Schema (PostgreSQL — all column names are snake_case)
 Table: facilities
-Columns:
-- id: integer (primary key)
+Key columns (use these exact snake_case names in SQL):
+- id: serial (primary key)
 - name: text
-- facilityType: text (hospital, clinic, etc.)
-- addressRegion: text (16 regions in Ghana)
-- addressCity: text
-- numDoctors: integer (often null)
+- facility_type: text (hospital, clinic, doctor, pharmacy, dentist)
+- operator_type: text (public, private)
+- address_region: text (16 regions in Ghana)
+- address_city: text
+- num_doctors: integer (often null)
 - capacity: integer (beds, often null)
+- lat, lng: double precision (coordinates)
 - specialties: text[] (parsed array of medical specialties)
 - procedures: text[] (parsed array of medical procedures)
 - equipment: text[] (parsed array of medical equipment)
-- specialtiesRaw, proceduresRaw, equipmentRaw: text (free-text fields)
+- capabilities: text[] (parsed array)
+- specialties_raw, procedures_raw, equipment_raw, capabilities_raw: text (free-text)
 - description: text
-- lat, lng: float (coordinates)
+- accepts_volunteers: boolean
 
 Key arrays: specialties, procedures, equipment, capabilities (use ANY() for filtering)
-Important: ~733 null regions, ~600 null doctor counts, ~700 null bed counts.
+Important: ~733 null address_region, ~600 null num_doctors, ~700 null capacity.
 
 ## Your Tools (8)
 1. queryDatabase: Execute SQL queries for counts, aggregations, and structured questions.

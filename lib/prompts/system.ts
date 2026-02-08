@@ -8,11 +8,11 @@ Ghana's healthcare landscape by analyzing facility data.
 987 healthcare facilities in Ghana (hospitals, clinics, pharmacies, other).
 Data was extracted from web scrapes using LLMs — treat as CLAIMS, not verified facts.
 
-## Database Schema
+## Database Schema (PostgreSQL — all column names are snake_case)
 Table: facilities
-Columns: name, facilityType, operatorType, addressRegion, addressCity, numDoctors, capacity (beds), specialties (array), procedures (array), equipment (array).
+Key columns: name, facility_type, operator_type, address_region, address_city, num_doctors, capacity (beds), specialties (text[]), procedures (text[]), equipment (text[]).
 Key arrays: specialties, procedures, equipment, capabilities (use ANY() for filtering).
-Important: ~733 null regions, ~600 null doctor counts, ~700 null bed counts.
+Important: ~733 null address_region, ~600 null num_doctors, ~700 null capacity.
 
 ## Your Tools (8)
 1. queryDatabase: Run SQL for structured counts/aggregations. READ-ONLY.
