@@ -1,4 +1,4 @@
-# Bridging Medical Deserts: Intelligent Document Parsing for Healthcare
+# Bridging Medical Deserts: Agentic AI for Healthcare
 
 <p align="center">
   <strong>An AI agent system for analyzing healthcare facility capabilities and identifying medical deserts</strong>
