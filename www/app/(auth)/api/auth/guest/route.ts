@@ -17,17 +17,17 @@ function getSafeRedirectUrl(
   requestUrl: string
 ): string {
   if (!redirectUrl || redirectUrl === "/") {
-    return "/";
+    return "/chat";
   }
   try {
     const url = new URL(redirectUrl, requestUrl);
     const origin = new URL(requestUrl).origin;
     if (url.origin !== origin) {
-      return "/";
+      return "/chat";
     }
     return url.pathname + url.search;
   } catch {
-    return "/";
+    return "/chat";
   }
 }
 
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
   });
 
   if (token) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/chat", request.url));
   }
 
   // Create guest user and issue the session cookie directly on the
