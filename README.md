@@ -194,7 +194,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  Built with ❤️ for the Hack Nation Hackathon at MIT
+  Built with ❤️ for the Hack Nation Hackathon at Vienna
 </p>
 <p align="center">
   Databricks "Bridging Medical Deserts" Track
