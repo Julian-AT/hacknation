@@ -21,6 +21,7 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+import { ToolResultRouter } from "./tool-results";
 import { ToolTrace } from "./vf-ui/ToolTrace";
 import { Weather } from "./weather";
 
@@ -355,7 +356,7 @@ const PurePreviewMessage = ({
               };
 
               return (
-                <ToolTrace
+                <ToolResultRouter
                   key={invocationPart.toolCallId}
                   toolCallId={invocationPart.toolCallId}
                   toolName={invocationPart.toolName}

@@ -7,7 +7,7 @@ import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
 
-import { ToolTrace } from "./vf-ui/ToolTrace";
+import { ToolResultRouter } from "./tool-results";
 
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
@@ -83,7 +83,7 @@ function PureMessages({
                       const { toolCallId, toolName, args } = (part as any).toolInvocation;
                       const result = 'result' in (part as any).toolInvocation ? (part as any).toolInvocation.result : undefined;
                       return (
-                        <ToolTrace 
+                        <ToolResultRouter 
                           key={toolCallId}
                           toolCallId={toolCallId}
                           toolName={toolName}
