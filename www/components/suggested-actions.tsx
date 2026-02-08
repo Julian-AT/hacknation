@@ -16,9 +16,9 @@ type SuggestedActionsProps = {
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const suggestedActions = [
     "Plan a volunteer surgical mission for orthopedic gaps in Ghana",
-    "Find maternal care deserts and suggest optimal clinic sites with staffing estimates",
-    "Flag facilities with suspicious capability vs. volume data and suggest verification",
-    "Compare healthcare access Ghana vs. Austria with coverage ratios and recommendations",
+    "Find maternal care deserts in Ghana and suggest optimal clinic sites with staffing estimates",
+    "Flag facilities in Ghana with suspicious capability vs. volume data and suggest verification",
+    "Compare healthcare access between Northern and Ashanti regions in Ghana",
   ]; 
 
   return (
