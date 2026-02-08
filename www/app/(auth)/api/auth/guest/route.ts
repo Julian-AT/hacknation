@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { signIn } from "@/app/(auth)/auth";
+import { encode, getToken } from "next-auth/jwt";
 import { isDevelopmentEnvironment } from "@/lib/constants";
+import { createGuestUser } from "@/lib/db/queries";
 import { rateLimit } from "@/lib/rate-limit";
 
 const guestLimiter = rateLimit({ windowMs: 60_000, max: 10 });
+
+const isProduction = process.env.NODE_ENV === "production";
+const SESSION_COOKIE_NAME = isProduction
+  ? "__Secure-next-auth.session-token"
+  : "next-auth.session-token";
+const SESSION_MAX_AGE = 7 * 24 * 60 * 60; // 7 days — must match auth.config.ts
 
 function getSafeRedirectUrl(
   redirectUrl: string | null,
@@ -53,5 +59,34 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return signIn("guest", { redirect: true, redirectTo: redirectUrl });
+  // Create guest user and issue the session cookie directly on the
+  // redirect response.  Using NextAuth's `signIn()` helper relies on
+  // `cookies().set()` + `redirect()` from next/navigation which, in
+  // Next.js 16 route handlers, does not reliably attach the Set-Cookie
+  // header to the redirect response — causing an infinite redirect loop.
+  const [guestUser] = await createGuestUser();
+
+  const sessionToken = await encode({
+    token: {
+      sub: guestUser.id,
+      email: guestUser.email,
+      name: guestUser.email,
+      id: guestUser.id,
+      type: "guest" as const,
+    },
+    secret: process.env.AUTH_SECRET!,
+    salt: SESSION_COOKIE_NAME,
+    maxAge: SESSION_MAX_AGE,
+  });
+
+  const response = NextResponse.redirect(new URL(redirectUrl, request.url));
+  response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: isProduction,
+    maxAge: SESSION_MAX_AGE,
+  });
+
+  return response;
 }
