@@ -88,5 +88,15 @@ export async function GET(request: Request) {
     maxAge: SESSION_MAX_AGE,
   });
 
+  // Short-lived marker so middleware can detect when the session cookie was
+  // set but didn't survive the redirect (prevents infinite redirect loops).
+  response.cookies.set("_guest_attempt", "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: isProduction,
+    maxAge: 60,
+  });
+
   return response;
 }
