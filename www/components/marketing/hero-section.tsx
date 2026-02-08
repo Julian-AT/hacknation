@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MeridianLogo } from "@/components/icons";
@@ -45,6 +46,12 @@ export function HeroSection() {
             volunteer missions, and uncover data insights — all through natural
             language.
           </p>
+          <Link
+            className="flex h-10 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
+            href="/chat"
+          >
+            Try Meridian
+          </Link>
         </div>
 
         <div className="w-full max-w-2xl">

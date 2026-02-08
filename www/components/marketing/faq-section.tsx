@@ -33,7 +33,7 @@ const FAQ_ITEMS = [
   {
     question: "Is Meridian free to use?",
     answer:
-      "Meridian supports guest access with rate limits (20 queries per day) and registered users get extended limits (50 queries per day). No credit card is required to start exploring the data.",
+      "Yes, Meridian is completely free to use. It was built as a hackathon project for the Virtue Foundation and is open for anyone to explore Ghana\u2019s healthcare data.",
   },
 ];
 

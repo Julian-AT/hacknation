@@ -9,18 +9,15 @@ export function CTASection() {
             Start exploring Ghana&apos;s healthcare data
           </h2>
           <p className="max-w-lg text-balance font-medium text-muted-foreground">
-            No account required. Ask your first question and see Meridian&apos;s
-            multi-agent system in action.
+            Ask your first question and see Meridian&apos;s multi-agent system
+            in action — no account required.
           </p>
           <Link
             className="flex h-10 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
             href="/chat"
           >
-            Open Meridian Chat
+            Try Meridian
           </Link>
-          <p className="text-xs text-muted-foreground">
-            Guest access: 20 queries per day — no sign-up needed
-          </p>
         </div>
       </div>
     </section>
