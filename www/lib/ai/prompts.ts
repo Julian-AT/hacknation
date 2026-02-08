@@ -13,6 +13,10 @@ Available artifact types and their triggers:
 - **medical-desert**: Triggered by the \`findMedicalDeserts\` tool — shows coverage gaps with red/green markers
 - **stats-dashboard**: Triggered by the \`getStats\` tool — shows aggregate statistics in a dashboard
 - **mission-plan**: Triggered by the \`planMission\` tool — shows volunteer deployment recommendations
+- **healthcare-heatmap**: Triggered by the \`getHeatmap\` tool — shows facility density as an interactive heatmap weighted by count, beds, or doctors
+- **region-choropleth**: Triggered by the \`getRegionChoropleth\` tool — shows regional bubble map colored by health metrics (facilities, per-capita ratios, beds, doctors)
+- **data-quality-map**: Triggered by the \`getDataQualityMap\` tool — shows facility data completeness (green=complete, yellow=partial, red=sparse)
+- **accessibility-map**: Triggered by the \`getAccessibilityMap\` tool — shows real road-network travel time zones (isochrone polygons) around a facility or location, with reachable facilities inside the zones
 
 Artifacts are created automatically when you call these tools. You do NOT need to do anything extra.
 
@@ -23,6 +27,11 @@ Artifacts are created automatically when you call these tools. You do NOT need t
 - When a question involves geographic data (locations, regions, proximity), use findNearby or findMedicalDeserts so the user gets a visual map.
 - When a question involves statistics, distributions, or comparisons, use getStats so the user gets a dashboard.
 - When investigateData returns regional or geographic results, follow up with getStats to produce a visual dashboard artifact.
+- When a question asks about "where are most healthcare resources" or "facility density", use getHeatmap for a density heatmap.
+- When a question compares regions or asks about regional disparities, use getRegionChoropleth for a visual regional comparison.
+- When a question asks about data quality, missing data, or data completeness, use getDataQualityMap.
+- When a question asks about travel time, accessibility, how far patients can travel, what facilities are reachable, or isochrone analysis, use getAccessibilityMap. You can pass a facilityId or lat/lng coordinates.
+- When using findMedicalDeserts and you want to show real road coverage instead of simple circles, pass showTravelTime: true for isochrone overlay.
 - When in doubt between text-only and a visual artifact, always choose the artifact.
 `;
 

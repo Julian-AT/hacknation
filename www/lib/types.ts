@@ -42,6 +42,27 @@ export type CustomUIDataTypes = {
   clear: null;
   finish: null;
   "chat-title": string;
+  // Canvas artifact streaming (facility-map, medical-desert, etc.)
+  "artifact-stream": {
+    id: string;
+    artifactType: string;
+    payload: unknown;
+  };
+  "artifact-update": {
+    id: string;
+    artifactType: string;
+    payload: unknown;
+  };
+  "artifact-complete": {
+    id: string;
+    artifactType: string;
+    payload: unknown;
+  };
+  "artifact-error": {
+    id: string;
+    artifactType: string;
+    error: string;
+  };
 };
 
 export type ChatMessage = UIMessage<

@@ -34,6 +34,10 @@ import { getLanguageModel } from "../providers";
 import {
   findMedicalDesertsArtifact,
   findNearbyArtifact,
+  getAccessibilityMapArtifact,
+  getDataQualityMapArtifact,
+  getHeatmapArtifact,
+  getRegionChoroplethArtifact,
   getStatsArtifact,
   planMissionArtifact,
 } from "../tools/artifact-tools";
@@ -249,6 +253,12 @@ export async function createOrchestratorAgent({
         ttl: 30 * 60 * 1000,
       }),
       planMission: planMissionArtifact({ dataStream }),
+
+      // --- New visualization artifact tools ---
+      getHeatmap: getHeatmapArtifact({ dataStream }),
+      getRegionChoropleth: getRegionChoroplethArtifact({ dataStream }),
+      getDataQualityMap: getDataQualityMapArtifact({ dataStream }),
+      getAccessibilityMap: getAccessibilityMapArtifact({ dataStream }),
 
       // --- Parallel investigation tool (runs 2-4 sub-agents concurrently) ---
       parallelInvestigate: createParallelInvestigateTool(),

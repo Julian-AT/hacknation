@@ -1,19 +1,81 @@
-import type {
-  ConversationMessage,
-  MemoryProvider,
-  MemoryScope,
-  WorkingMemory,
-} from "@ai-sdk-tools/memory";
-
-export {
-  DEFAULT_TEMPLATE,
-  formatWorkingMemory,
-  getWorkingMemoryInstructions,
-} from "@ai-sdk-tools/memory";
-
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { conversationMessages, workingMemory } from "../db/schema";
+
+// ── Types (previously from @ai-sdk-tools/memory) ────────────────────
+
+export type MemoryScope = "chat" | "user";
+
+export type WorkingMemory = {
+  content: string;
+  updatedAt: Date;
+};
+
+export type ConversationMessage = {
+  chatId: string;
+  userId?: string;
+  role: "user" | "assistant" | "system";
+  content: string | unknown;
+  timestamp: Date;
+};
+
+export interface MemoryProvider {
+  getWorkingMemory(params: {
+    chatId?: string;
+    userId?: string;
+    scope: MemoryScope;
+  }): Promise<WorkingMemory | null>;
+
+  updateWorkingMemory(params: {
+    chatId?: string;
+    userId?: string;
+    scope: MemoryScope;
+    content: string;
+  }): Promise<void>;
+
+  saveMessage(message: ConversationMessage): Promise<void>;
+
+  getMessages<T = unknown>(params: {
+    chatId: string;
+    userId?: string;
+    limit?: number;
+  }): Promise<T[]>;
+}
+
+// ── Utilities (previously from @ai-sdk-tools/memory) ─────────────────
+
+export const DEFAULT_TEMPLATE = `# Working Memory
+
+## User Preferences
+- [preferences]
+
+## Context
+- [important context]
+
+## Past Interactions
+- [key findings]
+`;
+
+/**
+ * Format a working memory object into a string for the LLM context.
+ */
+export function formatWorkingMemory(wm: WorkingMemory): string {
+  return wm.content;
+}
+
+/**
+ * Generate instructions for the LLM on how to update working memory.
+ */
+export function getWorkingMemoryInstructions(template: string): string {
+  return [
+    "If you learn important new facts about this user (preferences, regions of interest, role, etc.),",
+    "include an <update_working_memory> block at the end of your response with the updated memory.",
+    "Use the template below as a guide — keep it concise and only include confirmed facts.",
+    "",
+    "Template:",
+    template,
+  ].join("\n");
+}
 
 /**
  * Working memory template for CareMap healthcare analysis.

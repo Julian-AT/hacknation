@@ -171,7 +171,7 @@ export const stream = pgTable(
 
 export type Stream = InferSelectModel<typeof stream>;
 
-// ─── AI Memory tables (@ai-sdk-tools/memory) ──────────────────────────
+// ─── AI Memory tables ──────────────────────────────────────────────────
 
 export const workingMemory = pgTable(
   "WorkingMemory",

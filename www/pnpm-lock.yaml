@@ -8,18 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@ai-sdk-tools/artifacts':
-        specifier: ^1.2.0
-        version: 1.2.0(ai@6.0.37(zod@3.25.76))(react@19.0.1)
-      '@ai-sdk-tools/cache':
-        specifier: ^1.2.0
-        version: 1.2.0(@ai-sdk-tools/artifacts@1.2.0(ai@6.0.37(zod@3.25.76))(react@19.0.1))(ai@6.0.37(zod@3.25.76))
-      '@ai-sdk-tools/memory':
-        specifier: ^1.2.0
-        version: 1.2.0(ai@6.0.37(zod@3.25.76))(drizzle-orm@0.34.1(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.28)(@vercel/postgres@0.10.0)(bun-types@1.3.8)(kysely@0.28.11)(postgres@3.4.8)(react@19.0.1))(redis@5.10.0)
-      '@ai-sdk-tools/store':
-        specifier: ^1.2.0
-        version: 1.2.0(@ai-sdk/react@3.0.39(react@19.0.1)(zod@3.25.76))(react@19.0.1)(zod@3.25.76)(zustand@5.0.11(@types/react@18.3.28)(immer@11.1.3)(react@19.0.1)(use-sync-external-store@1.6.0(react@19.0.1)))
       '@ai-sdk/devtools':
         specifier: ^0.0.12
         version: 0.0.12
@@ -351,57 +339,9 @@ importers:
 
 packages:
 
-  '@ai-sdk-tools/artifacts@1.2.0':
-    resolution: {integrity: sha512-BqvfpnluKVbZjF0rCAX4Oe/yhtiE2PgeII2FN0j+AOX4WBiEUVzydM3oQkT6BS/olG0b5Xgnj3WjMd7Q7hC6uQ==}
-    peerDependencies:
-      ai: ^5.0.82
-      react: ^18.0.0 || ^19.0.0
-
-  '@ai-sdk-tools/cache@1.2.0':
-    resolution: {integrity: sha512-ZjcP002ZsaK8y2H9FI/qSUEhMEjq3pZ6S9ZXNMNb7l9P99x29zzBn4R491PtliSEG9AZR0CSLDBbmwLwh5FY5w==}
-    peerDependencies:
-      '@ai-sdk-tools/artifacts': '*'
-      ai: ^5.0.82
-    peerDependenciesMeta:
-      '@ai-sdk-tools/artifacts':
-        optional: true
-
-  '@ai-sdk-tools/memory@1.2.0':
-    resolution: {integrity: sha512-ET8CQMyHsdEMVSYnBjopHWwR6j6W6tmB+djMybFiloPLF9NfsFr9bXt2hb7+/oFyE9zKAGWQXqUY+Z+kUueR2w==}
-    peerDependencies:
-      '@upstash/redis': ^1.34.3
-      ai: ^5.0.0
-      drizzle-orm: ^0.36.0
-      ioredis: ^5.0.0
-      redis: ^4.0.0
-    peerDependenciesMeta:
-      '@upstash/redis':
-        optional: true
-      ai:
-        optional: true
-      drizzle-orm:
-        optional: true
-      ioredis:
-        optional: true
-      redis:
-        optional: true
-
-  '@ai-sdk-tools/store@1.2.0':
-    resolution: {integrity: sha512-/R01/2KA3fOyjDGDDaRSgYn6TPsGS1gO7dTYlmdC36QrCTVkN4Aqx4T3PcwUnnp4i4/nhEZb0Ar2/mpYEsQvfw==}
-    peerDependencies:
-      '@ai-sdk/react': '>=2.0.0'
-      react: '>=18.0.0'
-      zustand: '>=5.0.0'
-
   '@ai-sdk/devtools@0.0.12':
     resolution: {integrity: sha512-ru9ZQ+qKwnJddP0S264iqylgI/i2M7RkIs1EGBE17VRcm2ELFz1Clf7tPaNtun71QP1y5efG3XVC9WIOP+jFxQ==}
     hasBin: true
-
-  '@ai-sdk/gateway@2.0.35':
-    resolution: {integrity: sha512-fMzhC9artgY2s2GgXEWB+cECRJEHHoFJKzDpzsuneguNQ656vydPHhvDdoMjbWW+UtLc4nGf3VwlqG0t4FeQ/w==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
 
   '@ai-sdk/gateway@3.0.15':
     resolution: {integrity: sha512-OsWcXMfkF9U38YhU7926rYt4IAtJuZlnM1e8STN8hHb4qbiTaORBSXcFaJuOEZ1kYOf3DqqP7CxbmM543ePzIg==}
@@ -427,12 +367,6 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider-utils@3.0.20':
-    resolution: {integrity: sha512-iXHVe0apM2zUEzauqJwqmpC37A5rihrStAih5Ks+JE32iTe4LZ58y17UGBjpQQTCRw9YxMeo2UFLxLpBluyvLQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
   '@ai-sdk/provider-utils@4.0.14':
     resolution: {integrity: sha512-7bzKd9lgiDeXM7O4U4nQ8iTxguAOkg8LZGD9AfDVZYjO5cKYRwBPwVjboFcVrxncRHu0tYxZtXZtiLKpG4pEng==}
     engines: {node: '>=18'}
@@ -444,10 +378,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/provider@2.0.1':
-    resolution: {integrity: sha512-KCUwswvsC5VsW2PWFqF8eJgSCu5Ysj7m1TxiHTVA6g7k360bk0RNQENT8KTMAYEs+8fWPD3Uu4dEmzGHc+jGng==}
-    engines: {node: '>=18'}
 
   '@ai-sdk/provider@3.0.3':
     resolution: {integrity: sha512-qGPYdoAuECaUXPrrz0BPX1SacZQuJ6zky0aakxpW89QW1hrY0eF4gcFm/3L9Pk8C5Fwe+RvBf2z7ZjDhaPjnlg==}
@@ -2856,9 +2786,6 @@ packages:
   '@types/node@22.19.9':
     resolution: {integrity: sha512-PD03/U8g1F9T9MI+1OBisaIARhSzeidsUjQaf51fOxrfjeiKN9bLVO06lHuHYjxdnqLWJijJHfqXPSJri2EM2A==}
 
-  '@types/node@24.10.12':
-    resolution: {integrity: sha512-68e+T28EbdmLSTkPgs3+UacC6rzmqrcWFPQs1C8mwJhI/r5Uxr0yEuQotczNRROd1gq30NGxee+fo0rSIxpyAw==}
-
   '@types/offscreencanvas@2019.7.3':
     resolution: {integrity: sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A==}
 
@@ -3067,12 +2994,6 @@ packages:
     resolution: {integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  ai@5.0.129:
-    resolution: {integrity: sha512-IARdFetNTedDfqpByNMm9p0oHj7JS+SpOrbgLdQdyCiDe70Xk07wnKP4Lub1ckCrxkhAxY3yxOHllGEjbpXgpQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
 
   ai@6.0.37:
     resolution: {integrity: sha512-GUMBYx0TXKxXRcWy6DY3ryHJZ7cATxc99WPT7WCD8hGCYkdhFVItKPTtINeTlK+FlUomDqzjPGtiDcVftcw//w==}
@@ -5292,9 +5213,6 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
-  undici-types@7.16.0:
-    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
-
   undici@5.29.0:
     resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
     engines: {node: '>=14.0'}
@@ -5489,48 +5407,11 @@ packages:
 
 snapshots:
 
-  '@ai-sdk-tools/artifacts@1.2.0(ai@6.0.37(zod@3.25.76))(react@19.0.1)':
-    dependencies:
-      ai: 6.0.37(zod@3.25.76)
-      react: 19.0.1
-      zod: 4.3.6
-
-  '@ai-sdk-tools/cache@1.2.0(@ai-sdk-tools/artifacts@1.2.0(ai@6.0.37(zod@3.25.76))(react@19.0.1))(ai@6.0.37(zod@3.25.76))':
-    dependencies:
-      ai: 6.0.37(zod@3.25.76)
-    optionalDependencies:
-      '@ai-sdk-tools/artifacts': 1.2.0(ai@6.0.37(zod@3.25.76))(react@19.0.1)
-
-  '@ai-sdk-tools/memory@1.2.0(ai@6.0.37(zod@3.25.76))(drizzle-orm@0.34.1(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.28)(@vercel/postgres@0.10.0)(bun-types@1.3.8)(kysely@0.28.11)(postgres@3.4.8)(react@19.0.1))(redis@5.10.0)':
-    dependencies:
-      zod: 4.3.6
-    optionalDependencies:
-      ai: 6.0.37(zod@3.25.76)
-      drizzle-orm: 0.34.1(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@18.3.28)(@vercel/postgres@0.10.0)(bun-types@1.3.8)(kysely@0.28.11)(postgres@3.4.8)(react@19.0.1)
-      redis: 5.10.0
-
-  '@ai-sdk-tools/store@1.2.0(@ai-sdk/react@3.0.39(react@19.0.1)(zod@3.25.76))(react@19.0.1)(zod@3.25.76)(zustand@5.0.11(@types/react@18.3.28)(immer@11.1.3)(react@19.0.1)(use-sync-external-store@1.6.0(react@19.0.1)))':
-    dependencies:
-      '@ai-sdk/react': 3.0.39(react@19.0.1)(zod@3.25.76)
-      '@types/node': 24.10.12
-      ai: 5.0.129(zod@3.25.76)
-      react: 19.0.1
-      zustand: 5.0.11(@types/react@18.3.28)(immer@11.1.3)(react@19.0.1)(use-sync-external-store@1.6.0(react@19.0.1))
-    transitivePeerDependencies:
-      - zod
-
   '@ai-sdk/devtools@0.0.12':
     dependencies:
       '@ai-sdk/provider': 3.0.8
       '@hono/node-server': 1.19.9(hono@4.11.8)
       hono: 4.11.8
-
-  '@ai-sdk/gateway@2.0.35(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.1
-      '@ai-sdk/provider-utils': 3.0.20(zod@3.25.76)
-      '@vercel/oidc': 3.1.0
-      zod: 3.25.76
 
   '@ai-sdk/gateway@3.0.15(zod@3.25.76)':
     dependencies:
@@ -5558,13 +5439,6 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.14(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/provider-utils@3.0.20(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.1
-      '@standard-schema/spec': 1.1.0
-      eventsource-parser: 3.0.6
-      zod: 3.25.76
-
   '@ai-sdk/provider-utils@4.0.14(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 3.0.8
@@ -5578,10 +5452,6 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.0.6
       zod: 3.25.76
-
-  '@ai-sdk/provider@2.0.1':
-    dependencies:
-      json-schema: 0.4.0
 
   '@ai-sdk/provider@3.0.3':
     dependencies:
@@ -8068,10 +7938,6 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/node@24.10.12':
-    dependencies:
-      undici-types: 7.16.0
-
   '@types/offscreencanvas@2019.7.3': {}
 
   '@types/pako@1.0.7': {}
@@ -8326,14 +8192,6 @@ snapshots:
       acorn: 8.15.0
 
   acorn@8.15.0: {}
-
-  ai@5.0.129(zod@3.25.76):
-    dependencies:
-      '@ai-sdk/gateway': 2.0.35(zod@3.25.76)
-      '@ai-sdk/provider': 2.0.1
-      '@ai-sdk/provider-utils': 3.0.20(zod@3.25.76)
-      '@opentelemetry/api': 1.9.0
-      zod: 3.25.76
 
   ai@6.0.37(zod@3.25.76):
     dependencies:
@@ -10884,8 +10742,6 @@ snapshots:
       nypm: 0.6.5
 
   undici-types@6.21.0: {}
-
-  undici-types@7.16.0: {}
 
   undici@5.29.0:
     dependencies:

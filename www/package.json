@@ -20,10 +20,6 @@
     "devtools": "npx @ai-sdk/devtools"
   },
   "dependencies": {
-    "@ai-sdk-tools/artifacts": "^1.2.0",
-    "@ai-sdk-tools/cache": "^1.2.0",
-    "@ai-sdk-tools/memory": "^1.2.0",
-    "@ai-sdk-tools/store": "^1.2.0",
     "@ai-sdk/devtools": "^0.0.12",
     "@ai-sdk/gateway": "^3.0.15",
     "@ai-sdk/google": "^3.0.22",
