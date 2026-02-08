@@ -158,11 +158,11 @@ function createParallelInvestigateTool() {
         tasks.map(async ({ agent, task }) => {
           const agentInstance = agentMap[agent as AgentName];
           try {
-            const result = await agentInstance.stream(
-              { prompt: task, abortSignal } as Parameters<
-                typeof agentInstance.stream
-              >[0]
-            );
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result = await (agentInstance as any).stream({
+              prompt: task,
+              abortSignal,
+            });
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const messages: any[] = [];
             for await (const message of readUIMessageStream({

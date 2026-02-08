@@ -1,5 +1,6 @@
 "use server";
 
+import type { PushSubscription } from "web-push";
 import webpush from "web-push";
 
 webpush.setVapidDetails(

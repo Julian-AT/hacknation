@@ -128,9 +128,7 @@ export const getTravelTime = tool({
 
         const json = (await response.json()) as {
           features?: {
-            properties: ORSDirectionsResponse["routes"] extends (infer T)[]
-              ? T
-              : never;
+            properties: NonNullable<ORSDirectionsResponse["routes"]>[number];
           }[];
         };
 
